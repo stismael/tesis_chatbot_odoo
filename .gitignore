@@ -1,0 +1,39 @@
+# Entorno local y secretos (nunca subir contraseñas ni API keys)
+.env
+config/odoo.conf
+
+# Resultados locales de evaluación
+data/eval/results/
+
+# Runtime y datos persistentes
+runtime/postgres/*
+runtime/odoo/*
+runtime/logs/*
+!runtime/postgres/.gitkeep
+!runtime/odoo/.gitkeep
+!runtime/logs/.gitkeep
+
+# Respaldos
+backups/*
+!backups/.gitkeep
+
+# Temporales
+tmp/*
+!tmp/.gitkeep
+
+# Python / Odoo
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store

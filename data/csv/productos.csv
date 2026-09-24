@@ -1,0 +1,5 @@
+id,name,default_code,type,categ_id/id,list_price,standard_price,sale_ok,purchase_ok
+demo_prod_001,Filtro de aceite M01,FIL-M01,consu,product.product_category_all,18.50,11.10,True,True
+demo_prod_002,Casco Integral Negro,CAS-001,consu,product.product_category_all,120.00,72.00,True,True
+demo_prod_003,Pastillas freno delanteras,PAST-DEL-001,consu,product.product_category_all,45.00,27.00,True,True
+demo_prod_004,Aceite motor 10W40 1L,ACE-10W40-1L,consu,product.product_category_all,12.50,7.50,True,True

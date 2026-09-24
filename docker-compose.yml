@@ -1,0 +1,68 @@
+# =============================================================================
+# Odoo 18 Community + PostgreSQL 16 - Desarrollo local en Windows (disco D:)
+# =============================================================================
+# Uso:
+#   docker compose up -d
+#   docker compose down
+#
+# Todos los bind mounts apuntan a rutas relativas bajo D:\odoo18-community-chatbot
+# =============================================================================
+
+services:
+  db:
+    image: postgres:16
+    container_name: odoo18-chatbot-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-odoo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD requerida en .env}
+      # Subcarpeta PGDATA mejora compatibilidad con bind mounts NTFS en Windows
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./runtime/postgres:/var/lib/postgresql/data
+    networks:
+      - odoo_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-odoo} -d ${POSTGRES_DB:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    # PostgreSQL NO se expone al host; solo accesible desde la red interna Docker
+    expose:
+      - "5432"
+
+  odoo:
+    image: odoo:18.0
+    container_name: odoo18-chatbot-odoo
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${ODOO_PORT:-8069}:8069"
+      - "${ODOO_LONGPOLLING_PORT:-8072}:8072"
+    environment:
+      HOST: db
+      PORT: 5432
+      USER: ${POSTGRES_USER:-odoo}
+      PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD requerida en .env}
+    volumes:
+      - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
+      - ./addons/custom:/mnt/extra-addons
+      - ./runtime/odoo:/var/lib/odoo
+      - ./runtime/logs:/var/log/odoo
+      - ./backups:/backups
+    networks:
+      - odoo_internal
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8069/web/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  odoo_internal:
+    driver: bridge

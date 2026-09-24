@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_chatbot" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.chatbot</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="Chatbot asistente" name="chatbot_assistant"
+                     groups="base.group_system,chatbot_assistant.group_chatbot_manager">
+                    <block title="Proveedor de lenguaje (LLM)">
+                        <setting string="Activar asistente" help="Si se desactiva, el chat no enviará consultas al LLM.">
+                            <field name="chatbot_active"/>
+                        </setting>
+                        <setting string="Proveedor" help="Gemini (Google AI Studio) es la opción recomendada para la tesis (free tier).">
+                            <field name="chatbot_provider"/>
+                        </setting>
+                        <setting string="API Key"
+                                 help="Clave de Google AI Studio o Groq. Campo oculto (password). No use el .env del Docker.">
+                            <field name="chatbot_api_key" password="True"/>
+                        </setting>
+                        <setting string="Modelo"
+                                 help="ID técnico vigente (ej. gemini-2.5-flash). Pulse Listar modelos para ver opciones en una ventana.">
+                            <field name="chatbot_model"/>
+                            <div class="mt8">
+                                <button name="action_chatbot_list_models"
+                                        type="object"
+                                        string="Listar modelos"
+                                        class="btn-secondary"/>
+                                <button name="action_chatbot_test_connection"
+                                        type="object"
+                                        string="Probar conexión"
+                                        class="btn-primary ms-2"/>
+                            </div>
+                        </setting>
+                        <setting string="Temperature" help="Use valores bajos (0.0–0.2) para mayor consistencia en JSON.">
+                            <field name="chatbot_temperature"/>
+                        </setting>
+                        <setting string="Timeout (s)" help="Segundos máximos por intento. Ante demoras se reintenta automáticamente.">
+                            <field name="chatbot_timeout"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_chatbot_config_settings" model="ir.actions.act_window">
+        <field name="name">Ajustes del chatbot</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'module': 'chatbot_assistant'}</field>
+    </record>
+</odoo>

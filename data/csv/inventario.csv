@@ -1,0 +1,29 @@
+# Plantilla de inventario - Chatbot Test Data
+
+La importación de cantidades en inventario depende del flujo habilitado en Odoo 18.
+
+## Opción recomendada: ajuste de inventario
+
+1. Vaya a **Inventario > Operaciones > Ajustes de inventario**.
+2. Cree un ajuste para el almacén principal.
+3. Agregue líneas con producto y cantidad contada.
+
+## CSV orientativo (referencia manual)
+
+```csv
+product_id/id,inventory_quantity,location_id/id
+chatbot_prod_001,0,__import__.location_stock
+chatbot_prod_002,35,__import__.location_stock
+chatbot_prod_003,20,__import__.location_stock
+```
+
+> **Nota:** Los identificadores externos (`id`) deben existir previamente en productos.
+> Para datos complejos use el módulo `chatbot_test_data` vía ORM.
+
+## Campos útiles en vistas de inventario
+
+| Campo | Descripción |
+|-------|-------------|
+| product_id | Producto |
+| inventory_quantity | Cantidad contada |
+| location_id | Ubicación de stock |

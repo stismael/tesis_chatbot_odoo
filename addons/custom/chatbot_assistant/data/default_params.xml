@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="param_chatbot_active" model="ir.config_parameter">
+        <field name="key">chatbot_assistant.active</field>
+        <field name="value">True</field>
+    </record>
+    <record id="param_chatbot_provider" model="ir.config_parameter">
+        <field name="key">chatbot_assistant.provider</field>
+        <field name="value">gemini</field>
+    </record>
+    <record id="param_chatbot_model" model="ir.config_parameter">
+        <field name="key">chatbot_assistant.model</field>
+        <field name="value">gemini-2.5-flash</field>
+    </record>
+    <record id="param_chatbot_temperature" model="ir.config_parameter">
+        <field name="key">chatbot_assistant.temperature</field>
+        <field name="value">0.1</field>
+    </record>
+    <record id="param_chatbot_timeout" model="ir.config_parameter">
+        <field name="key">chatbot_assistant.timeout</field>
+        <field name="value">45</field>
+    </record>
+</odoo>

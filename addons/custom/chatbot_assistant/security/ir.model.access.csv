@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_chatbot_session_user,chatbot.session.user,model_chatbot_session,group_chatbot_user,1,1,1,0
+access_chatbot_session_manager,chatbot.session.manager,model_chatbot_session,group_chatbot_manager,1,1,1,1
+access_chatbot_message_user,chatbot.message.user,model_chatbot_message,group_chatbot_user,1,1,1,0
+access_chatbot_message_manager,chatbot.message.manager,model_chatbot_message,group_chatbot_manager,1,1,1,1
+access_chatbot_query_log_user,chatbot.query.log.user,model_chatbot_query_log,group_chatbot_user,1,0,0,0
+access_chatbot_query_log_manager,chatbot.query.log.manager,model_chatbot_query_log,group_chatbot_manager,1,1,1,1
+access_chatbot_llm_result_wizard_manager,chatbot.llm.result.wizard.manager,model_chatbot_llm_result_wizard,group_chatbot_manager,1,1,1,1
+access_chatbot_llm_result_wizard_system,chatbot.llm.result.wizard.system,model_chatbot_llm_result_wizard,base.group_system,1,1,1,1

@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_chatbot_test_data_generator,access_chatbot_test_data_generator,model_chatbot_test_data_generator,base.group_system,1,1,1,1
+access_chatbot_test_data_wizard,access_chatbot_test_data_wizard,model_chatbot_test_data_wizard,base.group_system,1,1,1,1

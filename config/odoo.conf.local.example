@@ -1,0 +1,3 @@
+# Sincronice estos valores con su archivo .env antes de iniciar Odoo
+# admin_passwd  = valor de ODOO_MASTER_PASSWORD
+# db_password   = valor de POSTGRES_PASSWORD

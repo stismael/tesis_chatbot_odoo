@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_chatbot_test_data_wizard_form" model="ir.ui.view">
+        <field name="name">chatbot.test.data.wizard.form</field>
+        <field name="model">chatbot.test.data.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generar datos de prueba Chatbot">
+                <group>
+                    <field name="confirm"/>
+                </group>
+                <p>
+                    Genera datos sintéticos deterministas (semilla 2026) para pruebas del asistente conversacional.
+                    Solo se puede ejecutar una vez por base de datos.
+                </p>
+                <footer>
+                    <button name="action_generate" type="object" string="Generar datos" class="btn-primary"/>
+                    <button string="Cancelar" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_chatbot_test_data_wizard" model="ir.actions.act_window">
+        <field name="name">Generar datos Chatbot</field>
+        <field name="res_model">chatbot.test.data.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem
+        id="menu_chatbot_test_data_root"
+        name="Chatbot Test Data"
+        parent="base.menu_administration"
+        sequence="99"
+        groups="base.group_system"/>
+
+    <menuitem
+        id="menu_chatbot_test_data_generate"
+        name="Generar datos de prueba"
+        parent="menu_chatbot_test_data_root"
+        action="action_chatbot_test_data_wizard"
+        sequence="10"
+        groups="base.group_system"/>
+</odoo>

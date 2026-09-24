@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Acceso principal: Discuss (DM Asistente ERP). Este menú es solo admin. -->
+    <menuitem id="menu_chatbot_root"
+              name="Chatbot"
+              sequence="90"
+              groups="chatbot_assistant.group_chatbot_manager"/>
+
+    <menuitem id="menu_chatbot_sessions"
+              name="Sesiones"
+              parent="menu_chatbot_root"
+              action="action_chatbot_session"
+              sequence="20"
+              groups="chatbot_assistant.group_chatbot_manager"/>
+
+    <menuitem id="menu_chatbot_logs"
+              name="Auditoría"
+              parent="menu_chatbot_root"
+              action="action_chatbot_query_log"
+              sequence="30"
+              groups="chatbot_assistant.group_chatbot_manager"/>
+
+    <menuitem id="menu_chatbot_config"
+              name="Ajustes"
+              parent="menu_chatbot_root"
+              action="action_chatbot_config_settings"
+              sequence="90"
+              groups="chatbot_assistant.group_chatbot_manager"/>
+</odoo>

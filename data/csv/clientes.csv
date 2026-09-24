@@ -1,0 +1,6 @@
+id,name,company_type,email,phone,street,city,country_id/id,customer_rank,supplier_rank,user_id/login
+demo_cust_001,Comercial Andina S.A.,company,comercial.andina@andina-motors.ec,+593 99 210 0101,Av. Amazonas N24-120,Quito,base.ec,1,0,andrea.villafuerte@demo-motos.ec
+demo_cust_002,Moto Racing Cuenca,company,ventas@motoracingcuenca.ec,+593 99 210 0102,Av. Solano 045 y Remigio Crespo,Cuenca,base.ec,1,0,diego.salinas@demo-motos.ec
+demo_cust_003,Juan Carlos Mendoza,person,juan.carlos.mendoza@demo-motos.ec,+593 99 310 0201,Calle Sucre 245,Quito,base.ec,1,0,patricia.morales@demo-motos.ec
+demo_cust_004,Distribuidora El Oriente Cía. Ltda.,company,distribuidora.el.oriente@demo-motos.ec,+593 4 256 7890,Av. Francisco de Orellana 320,Guayaquil,base.ec,1,0,roberto.cevallos@demo-motos.ec
+demo_supp_001,Importadora Pacífico S.A.,company,importadora.pacifico@demo-motos.ec,+593 4 220 4500,Av. de las Américas 512,Guayaquil,base.ec,0,1,

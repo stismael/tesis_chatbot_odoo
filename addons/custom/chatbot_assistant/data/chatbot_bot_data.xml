@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Contacto del bot en Discuss (similar a OdooBot / partner_root) -->
+    <record id="partner_chatbot_assistant" model="res.partner">
+        <field name="name">Asistente ERP</field>
+        <field name="email">asistente.erp@localhost</field>
+        <field name="active" eval="True"/>
+        <field name="company_id" eval="False"/>
+        <field name="comment">Bot conversacional de solo lectura para consultas comerciales y financieras.</field>
+    </record>
+</odoo>

@@ -1,0 +1,14 @@
+[options]
+admin_passwd = CAMBIAR_MASTER_PASSWORD
+db_host = db
+db_port = 5432
+db_user = odoo
+db_password = CAMBIAR_CONTRASENA_POSTGRES
+addons_path = /mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons
+data_dir = /var/lib/odoo
+proxy_mode = False
+list_db = True
+log_level = info
+logfile = /var/log/odoo/odoo.log
+workers = 0
+max_cron_threads = 1
