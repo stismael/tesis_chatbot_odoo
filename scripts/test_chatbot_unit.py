@@ -61,10 +61,15 @@ def test_dataset_loads():
 
 def test_http_error_mapping():
     from services.llm_client import _map_http_error
-    assert "401" in _map_http_error(401).message or "inválida" in _map_http_error(401).message.lower()
-    assert "429" in _map_http_error(429).message or "cuota" in _map_http_error(429).message.lower()
-    assert "403" in _map_http_error(403).message or "denegado" in _map_http_error(403).message.lower()
-    assert "500" in _map_http_error(500).message or "proveedor" in _map_http_error(500).message.lower()
+    assert _map_http_error(401).code == "auth"
+    assert _map_http_error(403).code == "auth"
+    assert _map_http_error(404).code == "model"
+    assert _map_http_error(429).code == "rate_limit"
+    assert _map_http_error(500).code == "server"
+    # El mensaje al usuario no expone códigos HTTP; el del administrador sí da el detalle.
+    assert "401" not in _map_http_error(401).message
+    assert "401" in _map_http_error(401).admin_message
+    assert "429" in _map_http_error(429).admin_message
 
 
 if __name__ == "__main__":

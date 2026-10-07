@@ -55,7 +55,7 @@ class ChatbotOrchestrator(models.AbstractModel):
             llm_json = json.dumps(raw, ensure_ascii=False)
             validated = validate_llm_output(raw)
 
-            # Completar entidades desde sesión (follow-ups: "este producto", etc.)
+            # Completar entidades desde la sesión (preguntas de seguimiento: "este producto", etc.)
             last_entities = session.get_pending_entities()
             enriched = enrich_entities_from_session(
                 validated["entities"], validated["intent"], last_entities,
@@ -70,7 +70,7 @@ class ChatbotOrchestrator(models.AbstractModel):
                 })
                 validated = revalidated
 
-            # Fusionar con memoria corta si hay pending
+            # Fusionar con la memoria corta si hay una consulta pendiente
             pending_entities = session.get_pending_entities()
             if session.pending_intent and validated["intent"] in (
                 session.pending_intent,
@@ -79,13 +79,13 @@ class ChatbotOrchestrator(models.AbstractModel):
                 "consultar_ventas_cliente",
                 "consultar_vendedor_cliente",
             ):
-                # Si el usuario solo aclara una entidad, conservar intent pendiente
+                # Si el usuario solo aclara una entidad, conservar la intención pendiente
                 if validated["status"] in ("ready", "missing_information", "ambiguous"):
                     if not validated.get("entities") or self._mostly_empty(validated["entities"]):
                         validated["intent"] = session.pending_intent
                     merged = merge_pending_entities(pending_entities, validated["entities"])
                     validated["entities"] = merged
-                    # revalidar requeridos
+                    # Revalidar las entidades requeridas
                     revalidated = validate_llm_output({
                         "intent": validated["intent"] if validated["intent"] != "fuera_de_alcance" else session.pending_intent,
                         "entities": merged,
@@ -137,7 +137,7 @@ class ChatbotOrchestrator(models.AbstractModel):
                         success = True
                     elif result.get("ok"):
                         session.clear_pending()
-                        # Guardar últimas entidades útiles para follow-ups
+                        # Guardar las últimas entidades para preguntas de seguimiento
                         session.set_pending(False, validated["entities"])
                         session.pending_intent = False
                         reply = result.get("message")

@@ -122,7 +122,8 @@ def _format_list(rows, product_label):
 
 def _sales_by_customer(env, partner, entities, user_text=""):
     domain = _order_domain(entities, partner=partner)
-    orders = env["sale.order"].search(domain, order="date_order desc", limit=15)
+    all_orders = env["sale.order"].search(domain, order="date_order desc")
+    orders = all_orders[:15]
     if not orders:
         return {
             "ok": False,
@@ -130,7 +131,7 @@ def _sales_by_customer(env, partner, entities, user_text=""):
             "data": {"partner": partner.name},
         }
 
-    total = sum(orders.mapped("amount_total"))
+    total = sum(all_orders.mapped("amount_total"))
     currency = orders[0].currency_id.symbol or orders[0].currency_id.name or "USD"
     mode = _query_mode(user_text)
 
@@ -139,12 +140,13 @@ def _sales_by_customer(env, partner, entities, user_text=""):
             f"- {o.name}: {currency} {o.amount_total:.2f}"
             for o in orders
         ]
-        message = (
-            f'Pedidos de "{partner.name}" ({len(orders)}):\n' + "\n".join(detail)
-        )
+        count = f"{len(all_orders)}"
+        if len(all_orders) > len(orders):
+            count += f"; se muestran los {len(orders)} más recientes"
+        message = f'Pedidos de "{partner.name}" ({count}):\n' + "\n".join(detail)
     else:
         message = (
-            f'"{partner.name}" tiene {len(orders)} pedido(s) confirmado(s) '
+            f'"{partner.name}" tiene {len(all_orders)} pedido(s) confirmado(s) '
             f"por un total de {currency} {total:.2f}. "
             f"Si quieres verlos, pídeme que los liste."
         )
@@ -154,7 +156,7 @@ def _sales_by_customer(env, partner, entities, user_text=""):
         "message": message,
         "data": {
             "partner": partner.name,
-            "order_count": len(orders),
+            "order_count": len(all_orders),
             "amount_total": total,
         },
     }
