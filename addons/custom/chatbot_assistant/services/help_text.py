@@ -36,6 +36,13 @@ HELP_SECTIONS = [
             "¿Quién es el vendedor de Moto Racing Cuenca?",
         ],
     ),
+    (
+        "Stock y facturación",
+        [
+            "¿Cuánto stock queda del FIL-M01 y cuánto se facturó este mes?",
+            "Stock y facturación de la bujía NGK durante julio",
+        ],
+    ),
 ]
 
 HELP_FOOTER = (
@@ -62,6 +69,6 @@ def build_help_markup():
 def build_welcome_markup():
     return Markup(
         "<p>Hola, soy el <b>Asistente ERP</b>.</p>"
-        "<p>Puedo consultar facturas, inventario, ventas y vendedores.</p>"
+        "<p>Puedo consultar facturas, inventario, ventas, vendedores y facturación por producto.</p>"
         "<p>Escribe tu pregunta o <b>/help</b> para ver ejemplos.</p>"
     )

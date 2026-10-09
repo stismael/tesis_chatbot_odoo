@@ -48,6 +48,39 @@ def test_merge_pending():
     assert merged["invoice_number"] == "INV/2026/00001"
 
 
+def test_stock_facturacion_requires_product():
+    data = {
+        "intent": "consultar_stock_facturacion_producto",
+        "entities": {"date_from": "2026-07-01", "date_to": "2026-07-31"},
+        "status": "ready",
+    }
+    v = validate_llm_output(data)
+    assert v["status"] == "missing_information"
+    assert "product_name" in v["missing_entities"]
+
+    data["entities"]["product_code"] = "FIL-M01"
+    v = validate_llm_output(data)
+    assert v["status"] == "ready"
+    assert v["entities"]["product_code"] == "FIL-M01"
+
+
+def test_dates_normalized():
+    data = {
+        "intent": "consultar_stock_facturacion_producto",
+        "entities": {"product_code": "FIL-M01", "date_from": "2026-07-01T00:00:00", "date_to": "julio"},
+        "status": "ready",
+    }
+    v = validate_llm_output(data)
+    assert v["entities"]["date_from"] == "2026-07-01"
+    assert v["entities"]["date_to"] is None
+
+
+def test_prompt_includes_today():
+    from services.prompt_builder import ALLOWED_INTENTS, build_user_payload
+    assert "consultar_stock_facturacion_producto" in ALLOWED_INTENTS
+    assert "Fecha actual: 2026-07-15" in build_user_payload("stock FIL-M01", today="2026-07-15")
+
+
 def test_dataset_loads():
     path = ROOT / "data" / "eval" / "eval_dataset.jsonl"
     n = 0
@@ -77,6 +110,9 @@ if __name__ == "__main__":
     test_missing_stock()
     test_reject_unknown_intent()
     test_merge_pending()
+    test_stock_facturacion_requires_product()
+    test_dates_normalized()
+    test_prompt_includes_today()
     test_dataset_loads()
     test_http_error_mapping()
     print("OK: validator + dataset + LLM error mapping checks passed")

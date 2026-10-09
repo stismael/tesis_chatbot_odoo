@@ -6,6 +6,7 @@ ALLOWED_INTENTS = (
     "consultar_stock",
     "consultar_ventas_cliente",
     "consultar_vendedor_cliente",
+    "consultar_stock_facturacion_producto",
     "fuera_de_alcance",
 )
 
@@ -18,6 +19,7 @@ Intenciones permitidas (no inventes otras):
 - consultar_stock
 - consultar_ventas_cliente
 - consultar_vendedor_cliente
+- consultar_stock_facturacion_producto
 - fuera_de_alcance
 
 Entidades posibles (usa null si no aplica o no está en el mensaje):
@@ -26,8 +28,8 @@ Entidades posibles (usa null si no aplica o no está en el mensaje):
 - product_name
 - product_code (ej. FIL-M01)
 - location_name
-- date_from
-- date_to
+- date_from (formato AAAA-MM-DD)
+- date_to (formato AAAA-MM-DD)
 
 Estados (status):
 - ready: hay intención válida y entidades suficientes para ejecutar
@@ -60,11 +62,17 @@ Reglas:
    - consultar_ventas_cliente: customer_name O product_name O product_code
      (si preguntan ventas de un producto/código, NO pidas cliente)
    - consultar_vendedor_cliente: customer_name
+   - consultar_stock_facturacion_producto: product_name O product_code
 4. Si falta una requerida, status=missing_information y lista missing_entities.
 5. No inventes números de factura ni códigos.
 6. Si hay contexto de sesión (pending_entities o mensajes recientes), completa entidades cuando el usuario use "este producto", "ese cliente", etc.
 7. "¿Cuántas ventas hay del CAS-001 / casco negro?" → consultar_ventas_cliente con product_code o product_name.
 8. Preguntas de seguimiento sobre el mismo producto/cliente NO repiten el código si ya está en contexto.
+9. Si preguntan por lo FACTURADO de un producto (cantidad o valor en facturas), con o sin el stock,
+   usa consultar_stock_facturacion_producto. Si solo preguntan por existencias, usa consultar_stock.
+   Si preguntan por pedidos o ventas de un producto, usa consultar_ventas_cliente.
+10. Las fechas van siempre en formato AAAA-MM-DD. Calcula periodos relativos ("este mes", "julio",
+    "el año pasado") con la fecha actual indicada en el mensaje. Si no se menciona periodo, usa null.
 
 Ejemplos few-shot:
 
@@ -97,6 +105,20 @@ Salida: {"intent":"consultar_ventas_cliente","entities":{"invoice_number":null,"
 Usuario: Lista los pedidos del CAS-001
 Salida: {"intent":"consultar_ventas_cliente","entities":{"invoice_number":null,"customer_name":null,"product_name":null,"product_code":"CAS-001","location_name":null,"date_from":null,"date_to":null},"status":"ready","missing_entities":[]}
 
+Usuario: ¿Cuánto stock queda del producto FIL-M01 y cuánto se facturó este mes?
+Fecha actual: 2026-07-15
+Salida: {"intent":"consultar_stock_facturacion_producto","entities":{"invoice_number":null,"customer_name":null,"product_name":null,"product_code":"FIL-M01","location_name":null,"date_from":"2026-07-01","date_to":"2026-07-15"},"status":"ready","missing_entities":[]}
+
+Usuario: ¿Cuántas unidades del Filtro de aceite M01 se han facturado y cuántas quedan disponibles?
+Salida: {"intent":"consultar_stock_facturacion_producto","entities":{"invoice_number":null,"customer_name":null,"product_name":"Filtro de aceite M01","product_code":null,"location_name":null,"date_from":null,"date_to":null},"status":"ready","missing_entities":[]}
+
+Usuario: Stock y facturación de la bujía NGK durante julio
+Fecha actual: 2026-09-10
+Salida: {"intent":"consultar_stock_facturacion_producto","entities":{"invoice_number":null,"customer_name":null,"product_name":"bujía NGK","product_code":null,"location_name":null,"date_from":"2026-07-01","date_to":"2026-07-31"},"status":"ready","missing_entities":[]}
+
+Usuario: ¿Cuánto se facturó y cuánto stock hay?
+Salida: {"intent":"consultar_stock_facturacion_producto","entities":{"invoice_number":null,"customer_name":null,"product_name":null,"product_code":null,"location_name":null,"date_from":null,"date_to":null},"status":"missing_information","missing_entities":["product_name"]}
+
 Usuario: ¿Quién es el vendedor de Moto Racing Cuenca?
 Salida: {"intent":"consultar_vendedor_cliente","entities":{"invoice_number":null,"customer_name":"Moto Racing Cuenca","product_name":null,"product_code":null,"location_name":null,"date_from":null,"date_to":null},"status":"ready","missing_entities":[]}
 
@@ -111,9 +133,11 @@ Salida: {"intent":"consultar_stock","entities":{"invoice_number":null,"customer_
 """
 
 
-def build_user_payload(user_text, session_context=None):
-    """Arma el mensaje de usuario incluyendo contexto corto de sesión."""
+def build_user_payload(user_text, session_context=None, today=None):
+    """Arma el mensaje de usuario incluyendo fecha actual y contexto corto de sesión."""
     parts = [f"Consulta del usuario:\n{user_text.strip()}"]
+    if today:
+        parts.append(f"\nFecha actual: {today}")
     if session_context:
         parts.append("\nContexto de sesión (memoria corta):")
         parts.append(str(session_context))

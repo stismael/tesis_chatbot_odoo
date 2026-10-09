@@ -3,7 +3,7 @@ import json
 import logging
 import time
 
-from odoo import api, models, _
+from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 from ..services import llm_client
@@ -27,8 +27,9 @@ MISSING_LABELS = {
 
 OUT_OF_SCOPE_MSG = (
     "Esa solicitud está fuera del alcance del asistente. "
-    "Solo puedo consultar facturas, inventario, ventas por cliente o producto "
-    "y vendedor asignado. No puedo crear ni modificar registros."
+    "Solo puedo consultar facturas, inventario, ventas por cliente o producto, "
+    "vendedor asignado y stock con facturación por producto. "
+    "No puedo crear ni modificar registros."
 )
 
 
@@ -50,7 +51,8 @@ class ChatbotOrchestrator(models.AbstractModel):
 
         try:
             context = session.get_short_context()
-            user_payload = build_user_payload(user_text, context)
+            today = fields.Date.context_today(self).isoformat()
+            user_payload = build_user_payload(user_text, context, today=today)
             raw = llm_client.complete_json(self.env, SYSTEM_PROMPT, user_payload)
             llm_json = json.dumps(raw, ensure_ascii=False)
             validated = validate_llm_output(raw)
@@ -78,6 +80,7 @@ class ChatbotOrchestrator(models.AbstractModel):
                 "consultar_stock",
                 "consultar_ventas_cliente",
                 "consultar_vendedor_cliente",
+                "consultar_stock_facturacion_producto",
             ):
                 # Si el usuario solo aclara una entidad, conservar la intención pendiente
                 if validated["status"] in ("ready", "missing_information", "ambiguous"):
@@ -115,7 +118,7 @@ class ChatbotOrchestrator(models.AbstractModel):
                 missing = validated.get("missing_entities") or []
                 labels = [MISSING_LABELS.get(m, m) for m in missing]
                 if labels:
-                    reply = _("Para continuar, indique: %s.") % ", ".join(labels)
+                    reply = _("Para continuar, indique: %s.") % " o ".join(labels)
                 else:
                     reply = _("Falta información para ejecutar la consulta. Precise los datos.")
                 success = True

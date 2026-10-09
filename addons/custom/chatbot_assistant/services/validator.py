@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 """Validación sintáctica y semántica de la salida JSON del LLM."""
 
+import datetime
+
 from .prompt_builder import ALLOWED_INTENTS
+
+DATE_KEYS = ("date_from", "date_to")
 
 ENTITY_KEYS = (
     "invoice_number",
@@ -20,6 +24,7 @@ REQUIRED_BY_INTENT = {
     "consultar_stock": (("product_name", "product_code"),),
     "consultar_ventas_cliente": (("customer_name",), ("product_name", "product_code")),
     "consultar_vendedor_cliente": (("customer_name",),),
+    "consultar_stock_facturacion_producto": (("product_name", "product_code"),),
     "fuera_de_alcance": (),
 }
 
@@ -39,9 +44,19 @@ def _clean_entities(raw_entities):
         value = raw.get(key)
         if value is None or value == "" or value == "null":
             entities[key] = None
+        elif key in DATE_KEYS:
+            entities[key] = _normalize_date(value)
         else:
             entities[key] = str(value).strip()
     return entities
+
+
+def _normalize_date(value):
+    """Acepta solo fechas ISO (AAAA-MM-DD); cualquier otro texto se descarta."""
+    try:
+        return datetime.date.fromisoformat(str(value).strip()[:10]).isoformat()
+    except ValueError:
+        return None
 
 
 def _has_required(entities, intent):

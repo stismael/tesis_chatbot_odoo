@@ -2,6 +2,23 @@
 """CU-02: consultar stock / inventario."""
 
 
+def available_qty(env, product, location_name=None):
+    """Cantidad disponible del producto; None si la ubicación indicada no existe."""
+    if not location_name:
+        return product.qty_available
+    locations = env["stock.location"].search([
+        ("usage", "=", "internal"),
+        ("complete_name", "ilike", location_name),
+    ], limit=5)
+    if not locations:
+        return None
+    quants = env["stock.quant"].search([
+        ("product_id", "=", product.id),
+        ("location_id", "in", locations.ids),
+    ])
+    return sum(quants.mapped(lambda q: q.quantity - q.reserved_quantity))
+
+
 def handle(env, entities, user_text=""):
     product_code = entities.get("product_code")
     product_name = entities.get("product_name")
@@ -40,24 +57,13 @@ def handle(env, entities, user_text=""):
         }
 
     product = products[0]
-    qty = product.qty_available
-    if entities.get("location_name"):
-        Quant = env["stock.quant"]
-        locations = env["stock.location"].search([
-            ("usage", "=", "internal"),
-            ("complete_name", "ilike", location_name),
-        ], limit=5)
-        if not locations:
-            return {
-                "ok": False,
-                "message": f'No encontré la ubicación "{location_name}".',
-                "data": {},
-            }
-        quants = Quant.search([
-            ("product_id", "=", product.id),
-            ("location_id", "in", locations.ids),
-        ])
-        qty = sum(quants.mapped(lambda q: q.quantity - q.reserved_quantity))
+    qty = available_qty(env, product, location_name)
+    if qty is None:
+        return {
+            "ok": False,
+            "message": f'No encontré la ubicación "{location_name}".',
+            "data": {},
+        }
 
     code = product.default_code or "sin código"
     uom = product.uom_id.name or "Ud"
