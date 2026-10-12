@@ -105,6 +105,28 @@ def test_http_error_mapping():
     assert "429" in _map_http_error(429).admin_message
 
 
+def test_gemini_key_not_in_url():
+    from services import llm_client
+    calls = []
+
+    def fake_http(url, payload, headers, timeout):
+        calls.append((url, headers))
+        return {"candidates": [{"content": {"parts": [{"text": "{}"}]}}]}
+
+    original = llm_client._http_json
+    llm_client._http_json = fake_http
+    try:
+        llm_client._call_gemini(
+            {"api_key": "CLAVE-SECRETA", "model": "gemini-2.5-flash", "temperature": 0.1, "timeout": 5},
+            "sistema", "usuario",
+        )
+    finally:
+        llm_client._http_json = original
+    url, headers = calls[0]
+    assert "CLAVE-SECRETA" not in url
+    assert headers["x-goog-api-key"] == "CLAVE-SECRETA"
+
+
 if __name__ == "__main__":
     test_ready_factura()
     test_missing_stock()
@@ -115,4 +137,5 @@ if __name__ == "__main__":
     test_prompt_includes_today()
     test_dataset_loads()
     test_http_error_mapping()
+    test_gemini_key_not_in_url()
     print("OK: validator + dataset + LLM error mapping checks passed")

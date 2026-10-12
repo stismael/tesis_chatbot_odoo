@@ -48,6 +48,10 @@ def handle(env, entities, user_text=""):
     focus = _focus_from_text(user_text)
 
     domain = [("move_type", "=", "out_invoice"), ("state", "=", "posted")]
+    if entities.get("date_from"):
+        domain.append(("invoice_date", ">=", entities["date_from"]))
+    if entities.get("date_to"):
+        domain.append(("invoice_date", "<=", entities["date_to"]))
     if invoice_number:
         domain.append(("name", "=", invoice_number))
     elif customer_name:

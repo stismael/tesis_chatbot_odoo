@@ -42,7 +42,7 @@ class ResConfigSettings(models.TransientModel):
     chatbot_timeout = fields.Integer(
         string="Timeout (segundos)",
         config_parameter="chatbot_assistant.timeout",
-        default=30,
+        default=45,
     )
 
     def _chatbot_runtime_config(self):

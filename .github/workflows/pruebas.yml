@@ -1,0 +1,45 @@
+name: Pruebas
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  unitarias:
+    name: Pruebas unitarias (sin Odoo)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python scripts/test_chatbot_unit.py
+
+  odoo:
+    name: Pruebas en Odoo 18
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:16
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd "pg_isready -U odoo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ejecutar pruebas de chatbot_assistant
+        run: |
+          set -o pipefail
+          docker run --rm --network ${{ job.services.db.network }} \
+            -e HOST=db -e USER=odoo -e PASSWORD=odoo \
+            -v "$PWD/addons/custom:/mnt/extra-addons:ro" \
+            odoo:18.0 odoo -d pruebas -i chatbot_assistant --without-demo=all \
+            --test-tags /chatbot_assistant --stop-after-init --no-http --log-level=test \
+            2>&1 | tee odoo-tests.log
+          grep -E "FAIL:|ERROR:|tests when loading" odoo-tests.log || true
+          grep -E "tests when loading" odoo-tests.log | tail -1 | grep -q " 0 failed, 0 error(s)"

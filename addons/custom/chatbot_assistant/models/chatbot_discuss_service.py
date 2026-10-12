@@ -8,6 +8,7 @@ from odoo import api, models, _
 from odoo.tools import html2plaintext, html_escape
 
 from ..services.help_text import build_welcome_markup
+from ..services.llm_client import USER_MESSAGES
 
 _logger = logging.getLogger(__name__)
 
@@ -107,9 +108,9 @@ class ChatbotDiscussService(models.AbstractModel):
                 "last_status": result.get("status"),
                 "name": new_name,
             })
-        except Exception as exc:
+        except Exception:
             _logger.exception("Error en Asistente ERP (Discuss)")
-            reply = str(exc)
+            reply = USER_MESSAGES["generic"]
 
         channel.with_context(chatbot_assistant_reply=True).sudo().message_post(
             author_id=bot.id,
