@@ -2,21 +2,39 @@
 """CU-02: consultar stock / inventario."""
 
 
-def available_qty(env, product, location_name=None):
-    """Cantidad disponible del producto; None si la ubicación indicada no existe."""
-    if not location_name:
-        return product.qty_available
-    locations = env["stock.location"].search([
-        ("usage", "=", "internal"),
-        ("complete_name", "ilike", location_name),
-    ], limit=5)
-    if not locations:
-        return None
-    quants = env["stock.quant"].search([
+def stock_levels(env, product, location_name=None):
+    """
+    Existencias del producto en ubicaciones internas, calculadas siempre desde stock.quant:
+    on_hand (en existencia), reserved (reservado para pedidos) y free (libre para vender).
+    Retorna None si la ubicación indicada no existe.
+    """
+    domain = [
         ("product_id", "=", product.id),
-        ("location_id", "in", locations.ids),
-    ])
-    return sum(quants.mapped(lambda q: q.quantity - q.reserved_quantity))
+        ("location_id.usage", "=", "internal"),
+    ]
+    if location_name:
+        locations = env["stock.location"].search([
+            ("usage", "=", "internal"),
+            ("complete_name", "ilike", location_name),
+        ])
+        if not locations:
+            return None
+        domain.append(("location_id", "in", locations.ids))
+    quants = env["stock.quant"].search(domain)
+    on_hand = sum(quants.mapped("quantity"))
+    reserved = sum(quants.mapped("reserved_quantity"))
+    return {"on_hand": on_hand, "reserved": reserved, "free": on_hand - reserved}
+
+
+def format_stock(levels, uom):
+    """Texto común de existencias para CU-02 y CU-05."""
+    text = f"{levels['on_hand']:g} {uom} en existencia"
+    if levels["reserved"]:
+        return text + (
+            f" ({levels['reserved']:g} reservadas para pedidos, "
+            f"{levels['free']:g} disponibles para la venta)"
+        )
+    return text + ", todas disponibles para la venta"
 
 
 def handle(env, entities, user_text=""):
@@ -57,8 +75,8 @@ def handle(env, entities, user_text=""):
         }
 
     product = products[0]
-    qty = available_qty(env, product, location_name)
-    if qty is None:
+    levels = stock_levels(env, product, location_name)
+    if levels is None:
         return {
             "ok": False,
             "message": f'No encontré la ubicación "{location_name}".',
@@ -67,11 +85,8 @@ def handle(env, entities, user_text=""):
 
     code = product.default_code or "sin código"
     uom = product.uom_id.name or "Ud"
-    loc_msg = f' en ubicación "{location_name}"' if location_name else " (ubicaciones internas)"
-    message = (
-        f"El producto {product.display_name} ({code}) tiene "
-        f"{qty:.0f} {uom} disponibles{loc_msg}."
-    )
+    loc_msg = f' en la ubicación "{location_name}"' if location_name else " en ubicaciones internas"
+    message = f"El producto {product.name} ({code}) tiene {format_stock(levels, uom)}{loc_msg}."
     return {
         "ok": True,
         "message": message,
@@ -79,7 +94,10 @@ def handle(env, entities, user_text=""):
             "product_id": product.id,
             "product_name": product.display_name,
             "product_code": code,
-            "qty_available": qty,
+            "qty_on_hand": levels["on_hand"],
+            "qty_reserved": levels["reserved"],
+            "qty_free": levels["free"],
+            "location": location_name,
             "uom": uom,
         },
     }

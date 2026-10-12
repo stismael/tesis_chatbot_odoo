@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """CU-05: consultar stock actual y facturación de un producto en un periodo."""
 
-from .stock import available_qty
+from .stock import format_stock, stock_levels
 from .ventas import _find_product, _product_label
 
 
@@ -63,8 +63,8 @@ def handle(env, entities, user_text=""):
     product = products[0]
     label = _product_label(product)
 
-    qty = available_qty(env, product, location_name)
-    if qty is None:
+    levels = stock_levels(env, product, location_name)
+    if levels is None:
         return {
             "ok": False,
             "message": f'No encontré la ubicación "{location_name}".',
@@ -81,7 +81,7 @@ def handle(env, entities, user_text=""):
     period = _period_label(date_from, date_to)
     loc_msg = f' en la ubicación "{location_name}"' if location_name else " en ubicaciones internas"
 
-    message = f"{label}: {qty:g} {uom} disponibles{loc_msg}. "
+    message = f"{label}: {format_stock(levels, uom)}{loc_msg}. "
     if lines:
         message += (
             f"Facturado {period}: {qty_invoiced:g} {uom} en {len(invoices)} factura(s) "
@@ -96,7 +96,9 @@ def handle(env, entities, user_text=""):
         "data": {
             "product": label,
             "product_code": product.default_code or "",
-            "qty_available": qty,
+            "qty_on_hand": levels["on_hand"],
+            "qty_reserved": levels["reserved"],
+            "qty_free": levels["free"],
             "location": location_name,
             "date_from": date_from,
             "date_to": date_to,
