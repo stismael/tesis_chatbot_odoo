@@ -1,6 +1,6 @@
 {
     "name": "Chatbot Assistant",
-    "version": "18.0.1.3.8",
+    "version": "18.0.1.4.1",
     "category": "Productivity",
     "summary": "Asistente conversacional en Discuss (estilo OdooBot) para Odoo 18",
     "description": """

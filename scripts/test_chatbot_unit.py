@@ -48,6 +48,39 @@ def test_merge_pending():
     assert merged["invoice_number"] == "INV/2026/00001"
 
 
+def test_stock_facturacion_requires_product():
+    data = {
+        "intent": "consultar_stock_facturacion_producto",
+        "entities": {"date_from": "2026-07-01", "date_to": "2026-07-31"},
+        "status": "ready",
+    }
+    v = validate_llm_output(data)
+    assert v["status"] == "missing_information"
+    assert "product_name" in v["missing_entities"]
+
+    data["entities"]["product_code"] = "FIL-M01"
+    v = validate_llm_output(data)
+    assert v["status"] == "ready"
+    assert v["entities"]["product_code"] == "FIL-M01"
+
+
+def test_dates_normalized():
+    data = {
+        "intent": "consultar_stock_facturacion_producto",
+        "entities": {"product_code": "FIL-M01", "date_from": "2026-07-01T00:00:00", "date_to": "julio"},
+        "status": "ready",
+    }
+    v = validate_llm_output(data)
+    assert v["entities"]["date_from"] == "2026-07-01"
+    assert v["entities"]["date_to"] is None
+
+
+def test_prompt_includes_today():
+    from services.prompt_builder import ALLOWED_INTENTS, build_user_payload
+    assert "consultar_stock_facturacion_producto" in ALLOWED_INTENTS
+    assert "Fecha actual: 2026-07-15" in build_user_payload("stock FIL-M01", today="2026-07-15")
+
+
 def test_dataset_loads():
     path = ROOT / "data" / "eval" / "eval_dataset.jsonl"
     n = 0
@@ -61,10 +94,37 @@ def test_dataset_loads():
 
 def test_http_error_mapping():
     from services.llm_client import _map_http_error
-    assert "401" in _map_http_error(401).message or "inválida" in _map_http_error(401).message.lower()
-    assert "429" in _map_http_error(429).message or "cuota" in _map_http_error(429).message.lower()
-    assert "403" in _map_http_error(403).message or "denegado" in _map_http_error(403).message.lower()
-    assert "500" in _map_http_error(500).message or "proveedor" in _map_http_error(500).message.lower()
+    assert _map_http_error(401).code == "auth"
+    assert _map_http_error(403).code == "auth"
+    assert _map_http_error(404).code == "model"
+    assert _map_http_error(429).code == "rate_limit"
+    assert _map_http_error(500).code == "server"
+    # El mensaje al usuario no expone códigos HTTP; el del administrador sí da el detalle.
+    assert "401" not in _map_http_error(401).message
+    assert "401" in _map_http_error(401).admin_message
+    assert "429" in _map_http_error(429).admin_message
+
+
+def test_gemini_key_not_in_url():
+    from services import llm_client
+    calls = []
+
+    def fake_http(url, payload, headers, timeout):
+        calls.append((url, headers))
+        return {"candidates": [{"content": {"parts": [{"text": "{}"}]}}]}
+
+    original = llm_client._http_json
+    llm_client._http_json = fake_http
+    try:
+        llm_client._call_gemini(
+            {"api_key": "CLAVE-SECRETA", "model": "gemini-2.5-flash", "temperature": 0.1, "timeout": 5},
+            "sistema", "usuario",
+        )
+    finally:
+        llm_client._http_json = original
+    url, headers = calls[0]
+    assert "CLAVE-SECRETA" not in url
+    assert headers["x-goog-api-key"] == "CLAVE-SECRETA"
 
 
 if __name__ == "__main__":
@@ -72,6 +132,10 @@ if __name__ == "__main__":
     test_missing_stock()
     test_reject_unknown_intent()
     test_merge_pending()
+    test_stock_facturacion_requires_product()
+    test_dates_normalized()
+    test_prompt_includes_today()
     test_dataset_loads()
     test_http_error_mapping()
+    test_gemini_key_not_in_url()
     print("OK: validator + dataset + LLM error mapping checks passed")

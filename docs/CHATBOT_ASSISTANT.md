@@ -10,7 +10,12 @@ Módulo Odoo `chatbot_assistant` para consultas de **solo lectura**:
 | CU-02 | `consultar_stock` | ¿Cuántas unidades hay del producto FIL-M01? |
 | CU-03 | `consultar_ventas_cliente` | ¿Qué ventas tiene Comercial Andina S.A.? |
 | CU-04 | `consultar_vendedor_cliente` | ¿Quién es el vendedor de Moto Racing Cuenca? |
+| CU-05 | `consultar_stock_facturacion_producto` | ¿Cuánto stock queda del FIL-M01 y cuánto se facturó este mes? |
 | — | `fuera_de_alcance` | Crear/editar/borrar o temas no comerciales |
+
+CU-05 combina `stock.quant` (existencias) con `account.move.line` (líneas de producto de facturas de
+cliente publicadas, `display_type = 'product'`). El periodo es opcional (`date_from`, `date_to` en
+formato AAAA-MM-DD); la fecha actual se envía al LLM para resolver expresiones como "este mes".
 
 Arquitectura: **NL → JSON (LLM) → validación → handler ORM → respuesta con plantilla**.
 

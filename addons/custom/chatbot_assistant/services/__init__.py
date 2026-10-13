@@ -1,1 +1,1 @@
-# Package services: imports explícitos desde models/orchestrator.
+# Paquete services: se importa explícitamente desde models/orchestrator.

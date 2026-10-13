@@ -259,10 +259,8 @@ def list_models(config):
 
 def list_gemini_models(api_key, timeout=None):
     timeout = DEFAULT_TIMEOUT if timeout is None else timeout
-    url = "https://generativelanguage.googleapis.com/v1beta/models?key=%s&pageSize=100" % (
-        urllib.parse.quote(api_key)
-    )
-    data = _http_json_get(url, timeout)
+    url = "https://generativelanguage.googleapis.com/v1beta/models?pageSize=100"
+    data = _http_json_get(url, timeout, headers={"x-goog-api-key": api_key})
     result = []
     for item in data.get("models") or []:
         methods = item.get("supportedGenerationMethods") or []
@@ -412,7 +410,7 @@ def _call_gemini(config, system_prompt, user_message):
     api_key = config["api_key"]
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
-        "%s:generateContent?key=%s" % (urllib.parse.quote(model), urllib.parse.quote(api_key))
+        "%s:generateContent" % urllib.parse.quote(model)
     )
     payload = {
         "systemInstruction": {"parts": [{"text": system_prompt}]},
@@ -422,7 +420,7 @@ def _call_gemini(config, system_prompt, user_message):
             "responseMimeType": "application/json",
         },
     }
-    headers = {"Content-Type": "application/json"}
+    headers = {"Content-Type": "application/json", "x-goog-api-key": api_key}
     data = _http_json(url, payload, headers, config["timeout"])
     try:
         return data["candidates"][0]["content"]["parts"][0]["text"]

@@ -37,7 +37,7 @@ class ResUsers(models.Model):
             welcome = Markup(
                 "<p>Hola, soy el <b>Asistente ERP</b>.</p>"
                 "<p>Puedo consultar en solo lectura: facturas, inventario, "
-                "ventas por cliente y vendedor asignado.</p>"
+                "ventas por cliente, vendedor asignado y facturación por producto.</p>"
                 "<p>Escribe tu pregunta aquí mismo, por ejemplo:<br/>"
                 "<i>¿Quién es el vendedor de Comercial Andina S.A.?</i></p>"
             )
