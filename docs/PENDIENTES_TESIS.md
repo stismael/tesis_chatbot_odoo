@@ -131,13 +131,35 @@ Aplicar cuando cada cambio esté implementado (ver `SEGUIMIENTO_CAMBIOS.md`, pun
       documentos obtiene 0 unidades facturadas donde el administrador obtiene 137.
 - [ ] **Tabla 17:** añadir la fila "Usuario sin permiso" → mensaje en español sin detalles técnicos.
 - [ ] Mencionar que las respuestas se basan solo en los documentos a los que el usuario tiene acceso.
-- [ ] **Nueva tabla en el Capítulo 3: permisos por caso de uso** (CU-01 Facturación o Contabilidad;
-      CU-02 Inventario; CU-03 y CU-04 Ventas; CU-05 Inventario y Facturación), con la opción
-      configurable activada por defecto.
-- [ ] Justificar con el **principio de mínimo privilegio**: Odoo permite lecturas cruzadas entre
-      módulos (por ejemplo, todo usuario interno lee existencias y contactos; Inventario lee pedidos
-      de venta), y el asistente aplica una política más restrictiva y configurable, sin dar nunca más
-      acceso que Odoo.
+- [ ] **Nueva tabla en el Capítulo 3: permisos por caso de uso**, con el grupo mínimo de cada
+      consulta: CU-01 Facturación; CU-02 Inventario / Usuario; CU-03 y CU-04 Ventas / Usuario (solo
+      documentos propios); CU-05 Inventario / Usuario y Facturación. Indicar que los administradores
+      de cada módulo pasan porque en Odoo el Administrador incluye al Usuario.
+- [ ] **Describir el control como una capa adicional** (3.4): tabla editable *Permisos por consulta*,
+      evaluada por usuario y en cada mensaje, después del validador y antes de consultar. Complementa
+      los permisos de Odoo, no los reemplaza ni los modifica; nunca da más acceso que Odoo.
+- [ ] **Diagrama de defensa en profundidad:** validador de la salida de la IA → control por rol del
+      asistente → permisos de Odoo (derechos de acceso y reglas de registro).
+- [ ] **Justificación (mínimo privilegio)** con estos argumentos:
+  - El chatbot es un nuevo canal de acceso: facilita llegar a los datos, así que el control debe
+    acompañar esa facilidad.
+  - Odoo permite lecturas cruzadas para integrar pantallas (por ejemplo, cualquier usuario interno lee
+    existencias para ver disponibilidad en una cotización; Inventario lee pedidos de venta), no para
+    dar acceso de negocio. El asistente responde preguntas de negocio y aplica roles funcionales.
+  - No modifica Odoo (compatible con actualizaciones), es configurable sin programar, es auditable
+    (intentos rechazados en el log) y está probado por perfil.
+  - Evidencia verificada en Odoo 18: regla `access_stock_quant_all` (lectura de `stock.quant` para
+    todo usuario interno) y el ejemplo de CU-05 (administrador 137 unidades facturadas, vendedor 0).
+- [ ] **Referencias para la justificación** (verificar cada una antes de citarla):
+  - OWASP Top 10 for LLM Applications 2025, LLM06 "Excessive Agency".
+  - ISO/IEC 27001:2022, Anexo A: 5.15 Control de acceso y 8.3 Restricción del acceso a la información.
+  - NIST SP 800-53 Rev. 5, AC-6 "Least Privilege".
+  - Ley Orgánica de Protección de Datos Personales del Ecuador (2021), por los datos de contacto del
+    vendedor en CU-04.
+  - Ya citadas: Pandey et al. (2024), Mishra et al. (2026), European Data Protection Board (2025).
+- [ ] **Preguntas probables y respuestas:** "¿por qué no bastan los permisos de Odoo?" (lecturas
+      cruzadas, ejemplo de existencias); "¿no es redundante?" (solo restringe, nunca amplía); "¿y si la
+      empresa quiere que ventas vea stock?" (se agrega el grupo en la tabla, sin código).
 
 ### Defensa ante el tribunal
 - [ ] Preparar la justificación del diseño de dominio cerrado e híbrido (exactitud, seguridad,

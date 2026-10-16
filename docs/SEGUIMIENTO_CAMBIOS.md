@@ -160,11 +160,33 @@ que mejorar son los mensajes y una decisión de diseño.
       | CU-04 Vendedor asignado | Ventas |
       | CU-05 Stock + facturación | Inventario **y** Facturación |
 
-  - [ ] Opción en Ajustes "Exigir el permiso del módulo de cada consulta", **activada por defecto**;
-        desactivada, el asistente se comporta exactamente como Odoo.
-  - [ ] La verificación se hace antes de consultar; sin el grupo, mensaje en español: "No tienes
-        permiso para consultar <módulo>. Pide acceso al administrador."
+  - [ ] **Implementación (opción A, decidida): tabla editable** en *Chatbot → Configuración →
+        Permisos por consulta*, una fila por intención con los grupos exigidos (todos deben
+        cumplirse). Se carga con valores por defecto al instalar (`noupdate`) y el administrador del
+        chatbot puede cambiarla sin tocar código. Una fila sin grupos usa solo los permisos de Odoo.
+  - [ ] **Grupos mínimos por defecto** (nivel Usuario; el Administrador de cada módulo incluye al
+        Usuario en Odoo 18, así que pasa automáticamente con `has_group`):
+
+        | Consulta | Grupo técnico mínimo | Nombre en Ajustes → Usuarios |
+        |---|---|---|
+        | CU-01 Facturas | `account.group_account_invoice` | Facturación / Contabilidad: Facturación |
+        | CU-02 Stock | `stock.group_stock_user` | Inventario: Usuario |
+        | CU-03 Ventas | `sales_team.group_sale_salesman` | Ventas: Usuario, solo documentos propios |
+        | CU-04 Vendedor asignado | `sales_team.group_sale_salesman` | Ventas: Usuario, solo documentos propios |
+        | CU-05 Stock + facturación | `stock.group_stock_user` y `account.group_account_invoice` | Inventario: Usuario y Facturación |
+
+  - [ ] Caso especial: el grupo oculto `account.group_account_readonly` (solo lectura contable) no
+        incluye a Facturación; queda fuera por defecto y el administrador puede agregarlo a la fila.
+  - [ ] **Dónde va el control:** en el orquestador, después del validador y antes de ejecutar el
+        handler. Es solo del chatbot: no modifica ningún permiso de Odoo ni afecta otras pantallas.
+        Se evalúa por usuario y en cada mensaje, con los grupos que tenga en ese momento.
+  - [ ] Sin el grupo: no se consulta nada y se responde en español, por ejemplo "No tienes permiso
+        para consultar inventario. Pide acceso al administrador."
+  - [ ] Registrar el intento rechazado en el log con estado `forbidden` ("sin permiso") para
+        auditoría.
   - [ ] Las reglas de registro de Odoo se siguen aplicando encima (un vendedor ve solo sus documentos).
+  - [ ] Seguridad de la tabla: el administrador del chatbot la edita; los usuarios solo la leen.
+  - [ ] (Opcional) `/help` muestra solo los ejemplos de las consultas que el usuario puede hacer.
 - [ ] Pruebas por perfil y por consulta: usuario interno sin grupos, solo Inventario, vendedor (solo
       sus documentos), usuario de Facturación y administrador; con la opción activada y desactivada.
 
