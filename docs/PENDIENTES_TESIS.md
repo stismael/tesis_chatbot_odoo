@@ -68,8 +68,8 @@ Rama de referencia del código: `feature/cu05-stock-facturacion-producto`.
 
 ### Todavía no implementado en el código: decidir
 
-- [ ] **Tabla 13, `intencion_desconocida`:** no existe; el código trata lo no interpretable como
-      `fuera_de_alcance` o como salida inválida. Quitarla de la tabla o implementarla.
+- [ ] **Tabla 13, `intencion_desconocida`:** se reemplazará por la intención `conversacion` (ver
+      sección 1.1 de este archivo). Esperar a que esté implementada en el código.
 - [ ] **Tablas 14 y 15, entidad `order_state`:** no existe en el código. Quitarla o implementarla.
 - [ ] **Tabla 5, pedidos de venta (~1.000):** el generador define `TARGET_SALE_ORDERS = 350`. Cambiar
       la cifra, o subir el valor en el generador.
@@ -84,6 +84,61 @@ Rama de referencia del código: `feature/cu05-stock-facturacion-producto`.
       citarlo.
 - [ ] **Fase 4 (1.3):** el dataset no tiene "operación estructurada esperada". Quitarlo del texto o
       agregarlo al dataset.
+
+---
+
+## 1.1 Cambios planificados en el código que afectarán el documento
+
+Aplicar cuando cada cambio esté implementado (ver `SEGUIMIENTO_CAMBIOS.md`, puntos 7 a 10).
+
+### Arquitectura híbrida: conversación libre, datos solo desde Odoo (punto 8)
+- [ ] **Describir la arquitectura como híbrida** (3.3, 3.4 y la introducción del Capítulo 3): la IA
+      redacta libremente las respuestas que no involucran datos del negocio (saludos, agradecimientos,
+      capacidades, rechazos), pero todo dato del ERP pasa por una consulta estructurada y validada
+      sobre el ORM. Frase guía: *"la IA puede decir lo que quiera, excepto datos del negocio: esos solo
+      los puede obtener pidiéndolos al sistema"*.
+- [ ] **Tabla 13:** reemplazar `intencion_desconocida` por `conversacion` (saludos, agradecimientos,
+      preguntas sobre lo que puede hacer el asistente y charla general).
+- [ ] **3.3.3, esquema JSON:** añadir el campo `reply` (texto redactado por la IA, solo para
+      `conversacion` y `fuera_de_alcance`) y el estado `chat`. Incluir un ejemplo de saludo.
+- [ ] **3.3.4, validación:** añadir el control anti-invención (una respuesta conversacional con montos,
+      números de factura o códigos de producto se descarta) y el límite de longitud de `reply`.
+- [ ] **3.2.6 y Tablas 12 y 23:** las respuestas fuera de alcance las redacta la IA (explica por qué no
+      puede y qué sí puede hacer); el mensaje fijo queda solo como respaldo.
+- [ ] **Tabla 17:** fila "Consulta no relacionada" → la IA responde con sus palabras e indica el
+      alcance.
+- [ ] **3.5.2:** añadir la categoría de consultas de conversación al dataset.
+
+### Velocidad (punto 7)
+- [ ] **2.4.6 o Capítulo 5, tiempo de respuesta:** distinguir el tiempo de la IA y el de la consulta a
+      Odoo (se registrarán por separado en el log).
+- [ ] **Capítulo 4:** documentar la configuración del modelo (sin "pensamiento" para Gemini 2.5,
+      formato JSON exigido con esquema, timeout y reintentos) y por qué.
+
+### Selección del modelo (punto 9)
+- [ ] **Capítulo 4 (configuración):** el modelo se elige de un desplegable filtrado por proveedor,
+      alimentado por la lista que publica el proveedor, en lugar de escribirlo a mano.
+
+### Respuestas de datos redactadas por la IA (punto 10, opcional)
+- [ ] Si se implementa: describirlo como opción configurable con verificación de que los números de la
+      respuesta coinciden con los datos de Odoo, sin contradecir "sin inventar valores" (3.2.1).
+- [ ] **Capítulo 5:** experimento plantilla vs. redacción por IA (exactitud, latencia, naturalidad).
+
+### Permisos de usuario (punto 11)
+- [ ] **3.1.1 y 3.4.3:** explicar con evidencia que el chatbot respeta los permisos de Odoo: cada
+      consulta corre con el usuario autenticado, así que los derechos de acceso y las reglas de
+      registro se aplican igual que en la interfaz. Ejemplo verificado: un vendedor que solo ve sus
+      documentos obtiene 0 unidades facturadas donde el administrador obtiene 137.
+- [ ] **Tabla 17:** añadir la fila "Usuario sin permiso" → mensaje en español sin detalles técnicos.
+- [ ] Mencionar que las respuestas se basan solo en los documentos a los que el usuario tiene acceso.
+- [ ] Documentar la decisión sobre inventario (Odoo permite a todo usuario interno leer existencias).
+
+### Defensa ante el tribunal
+- [ ] Preparar la justificación del diseño de dominio cerrado e híbrido (exactitud, seguridad,
+      auditabilidad, evaluación y alcance del TIC), citando Bi et al. (2025), Béchard y Ayala (2024),
+      Mishra et al. (2026) y Pandey et al. (2024).
+- [ ] **Trabajo futuro:** agente con *function calling* que reutilice los handlers como herramientas
+      sin perder el validador ni los permisos; operaciones de escritura con confirmación del usuario.
 
 ---
 
