@@ -127,9 +127,16 @@ Aplicar cuando cada cambio esté implementado (ver `SEGUIMIENTO_CAMBIOS.md`, pun
 - [ ] Justificar la elección: cuota gratuita suficiente para un prototipo académico, baja latencia
       (familia Flash de Gemini, inferencia rápida de Groq) y salida JSON nativa.
 
-### Selección del modelo (punto 9)
+### Selección y validación del modelo (punto 9)
 - [ ] **Capítulo 4 (configuración):** el modelo se elige de un desplegable filtrado por proveedor,
-      alimentado por la lista que publica el proveedor, en lugar de escribirlo a mano.
+      alimentado por el catálogo que publica el proveedor, en lugar de escribirlo a mano. Explicar que
+      el catálogo se sincroniza (agrega, actualiza y marca como no disponibles los modelos retirados,
+      sin borrarlos).
+- [ ] **Validación de la configuración:** al guardar se prueba la conexión si cambió el proveedor, la
+      API key o el modelo; una configuración que no funciona no se guarda.
+- [ ] **Separar dos tipos de fallo:** los de configuración se detectan al guardar; los externos
+      (caída del proveedor, sin internet, cuota agotada) se manejan en el chat con reintentos,
+      mensajes claros y, si se implementa, un modelo de respaldo.
 
 ### Respuestas de datos redactadas por la IA (punto 10, opcional)
 - [ ] Si se implementa: describirlo como opción configurable con verificación de que los números de la

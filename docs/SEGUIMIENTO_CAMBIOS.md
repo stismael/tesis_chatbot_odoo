@@ -114,20 +114,65 @@ Va primero, porque con el punto 8 los saludos también llaman a la IA.
       disfrazada de charla ("¿cuánto vendí ayer?").
 - [ ] Consultas de conversación en el dataset de evaluación.
 
-### Punto 9: selección del modelo
-- [ ] Botón "Actualizar modelos" que consulta al proveedor y guarda la lista en Odoo.
-- [ ] Desplegable en lugar del campo de texto, filtrado por proveedor, solo modelos de texto, con el
-      recomendado marcado.
-- [ ] Al cambiar de proveedor, elegir automáticamente el modelo recomendado de ese proveedor.
+### Punto 9: selección y validación del modelo
+
+**Defecto verificado en Odoo 18:** al cambiar de Groq a Gemini, el campo "Modelo" solo se corrige si
+el nombre contiene "llama" o "groq". Con `openai/gpt-oss-120b` o `qwen/qwen3-32b` el campo se queda
+con el modelo de Groq aunque el proveedor sea Gemini, y el chat falla con "modelo no encontrado".
+(La lista de "Listar modelos" sí es correcta: con Gemini solo consulta a Google y con Groq solo a
+Groq; los modelos Gemma que aparecen con Gemini son de Google.)
+
+**Arreglo inmediato**
+- [ ] Al cambiar de proveedor, reemplazar **siempre** el modelo por el recomendado del nuevo proveedor
+      (Gemini → `gemini-2.5-flash`; Groq → `llama-3.3-70b-versatile`), sin adivinar por el nombre.
+
+**Catálogo de modelos en Odoo**
+- [ ] Tabla de modelos por proveedor (proveedor, ID, nombre, descripción, límite de tokens,
+      disponible) y botón **"Actualizar modelos"**.
+- [ ] La actualización **sincroniza, no borra**, y solo toca el proveedor consultado:
+  - modelo nuevo → se agrega;
+  - modelo existente → se actualizan sus datos;
+  - modelo que ya no aparece → se marca **"No disponible"** y sale del desplegable;
+  - modelo que vuelve a aparecer → se marca disponible otra vez.
+- [ ] Guardar la fecha de la última actualización y mostrarla en Ajustes.
+- [ ] (Opcional) Tarea programada que actualice el catálogo una vez por semana.
+- [ ] El campo "Modelo" pasa a ser un **desplegable filtrado por el proveedor elegido**, solo con
+      modelos de texto disponibles y el recomendado marcado; así no se puede elegir un modelo de otro
+      proveedor.
 - [ ] Filtrar también la lista de Groq: hoy muestra todo su catálogo, incluidos modelos que no son
       de texto (por ejemplo, Whisper para audio).
-- [ ] Avisar en Ajustes si el modelo configurado ya no aparece en el catálogo del proveedor (por
-      ejemplo, si lo retiraron), en lugar de que el chat falle sin explicación.
 - [ ] Leer todas las páginas del listado de Gemini (hoy pide hasta 100 y no sigue `nextPageToken`).
-- [ ] Mostrar en el desplegable los datos que sí entrega la API (nombre, descripción, límite de
-      tokens) y un enlace a la página de precios del proveedor, ya que la API no informa si un modelo
-      es gratuito.
-- [ ] Pruebas del filtrado y de la lista.
+- [ ] Mostrar los datos que entrega la API (nombre, descripción, límite de tokens) y un enlace a la
+      página de precios del proveedor, ya que la API no informa si un modelo es gratuito.
+- [ ] Aviso en Ajustes si el modelo configurado quedó **"No disponible"**: "El modelo configurado ya
+      no está disponible en <proveedor>. Elige otro."
+
+**Validación al guardar la configuración**
+- [ ] Al pulsar **Guardar**, si cambió el proveedor, la API key o el modelo, probar la conexión
+      automáticamente:
+  - si funciona, guardar y mostrar "Conexión verificada el <fecha> con <modelo>";
+  - si falla, no guardar y explicar el motivo (API key inválida, modelo inexistente en el proveedor,
+    sin conexión, cuota agotada).
+- [ ] No probar cuando solo cambian otros datos (temperatura, timeout) ni al **desactivar** el
+      chatbot, para que una caída del proveedor no impida apagar el asistente.
+- [ ] Validar también que el modelo pertenezca al proveedor elegido ("El modelo 'qwen/qwen3-32b' no
+      pertenece a Google Gemini").
+- [ ] Mantener el botón **"Probar conexión"** para verificar en cualquier momento sin guardar.
+
+**Fallos después de guardar (fuera del control del sistema)**
+- [ ] Indicador en Ajustes con el último error del proveedor y su fecha.
+- [ ] (Opcional) **Modelo de respaldo**: si el principal falla (caída, cuota agotada), intentar con
+      otro configurado, incluso de otro proveedor, y registrar en el log qué modelo respondió.
+
+**Pruebas**
+- [ ] Cambio Groq → Gemini con `llama-3.3-70b-versatile`, `openai/gpt-oss-120b`, `qwen/qwen3-32b` y
+      `deepseek-r1-distill-llama-70b`: el campo debe quedar en `gemini-2.5-flash`. Y el cambio
+      inverso Gemini → Groq.
+- [ ] Sincronización del catálogo: agregar, actualizar, marcar "No disponible" y reactivar.
+- [ ] El desplegable solo muestra modelos disponibles del proveedor elegido.
+- [ ] Guardar con conexión fallida no guarda y muestra el motivo; desactivar el chatbot guarda sin
+      probar.
+- [ ] (Si se implementa) el modelo de respaldo responde cuando el principal falla.
 
 ### Punto 10 (opcional): respuestas de datos redactadas por la IA
 - [ ] Interruptor en Ajustes "Respuestas redactadas por la IA", apagado por defecto.
