@@ -119,6 +119,14 @@ Va primero, porque con el punto 8 los saludos también llaman a la IA.
 - [ ] Desplegable en lugar del campo de texto, filtrado por proveedor, solo modelos de texto, con el
       recomendado marcado.
 - [ ] Al cambiar de proveedor, elegir automáticamente el modelo recomendado de ese proveedor.
+- [ ] Filtrar también la lista de Groq: hoy muestra todo su catálogo, incluidos modelos que no son
+      de texto (por ejemplo, Whisper para audio).
+- [ ] Avisar en Ajustes si el modelo configurado ya no aparece en el catálogo del proveedor (por
+      ejemplo, si lo retiraron), en lugar de que el chat falle sin explicación.
+- [ ] Leer todas las páginas del listado de Gemini (hoy pide hasta 100 y no sigue `nextPageToken`).
+- [ ] Mostrar en el desplegable los datos que sí entrega la API (nombre, descripción, límite de
+      tokens) y un enlace a la página de precios del proveedor, ya que la API no informa si un modelo
+      es gratuito.
 - [ ] Pruebas del filtrado y de la lista.
 
 ### Punto 10 (opcional): respuestas de datos redactadas por la IA

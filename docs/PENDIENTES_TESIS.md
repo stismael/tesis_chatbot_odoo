@@ -115,6 +115,18 @@ Aplicar cuando cada cambio esté implementado (ver `SEGUIMIENTO_CAMBIOS.md`, pun
 - [ ] **Capítulo 4:** documentar la configuración del modelo (sin "pensamiento" para Gemini 2.5,
       formato JSON exigido con esquema, timeout y reintentos) y por qué.
 
+### Proveedores de IA (aclaración pedida por la tutora)
+- [ ] **Capítulo 2 o 4:** distinguir tres roles: desarrollador del modelo (Google, Meta, OpenAI,
+      Anthropic, Mistral), proveedor de la API o de inferencia (Google AI Studio/Vertex AI, Groq,
+      OpenAI, Azure, AWS Bedrock) y agregadores (OpenRouter, Together AI, Hugging Face).
+- [ ] Indicar que el prototipo se conecta directamente a dos proveedores de inferencia: **Google AI
+      Studio** (modelos Gemini, desarrollados por Google) y **Groq** (modelos abiertos como Llama, de
+      Meta). La lista de modelos disponibles la entrega cada proveedor por su API de listado
+      (`models.list` de Gemini y *List models* de Groq), se consulta en tiempo real al pulsar "Listar
+      modelos" y no incluye precios: los límites gratuitos se consultan en las páginas de precios.
+- [ ] Justificar la elección: cuota gratuita suficiente para un prototipo académico, baja latencia
+      (familia Flash de Gemini, inferencia rápida de Groq) y salida JSON nativa.
+
 ### Selección del modelo (punto 9)
 - [ ] **Capítulo 4 (configuración):** el modelo se elige de un desplegable filtrado por proveedor,
       alimentado por la lista que publica el proveedor, en lugar de escribirlo a mano.
