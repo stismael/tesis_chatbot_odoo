@@ -144,12 +144,29 @@ que mejorar son los mensajes y una decisión de diseño.
       facturas y el vendedor ve 0 en 0, porque Odoo filtra las facturas que puede ver. Es correcto
       por seguridad, pero la respuesta debe aclarar "según los documentos a los que tienes acceso"
       cuando el usuario no tiene acceso total.
-- [ ] **Decidir sobre inventario:** Odoo permite a **todo usuario interno** leer existencias
-      (`stock.quant`), aunque no tenga el módulo de Inventario, así que el chatbot también se las
-      muestra. Opciones: (a) dejarlo igual que Odoo (recomendado: el chatbot no da más ni menos acceso
-      que Odoo); (b) exigir el grupo "Inventario / Usuario" para CU-02 y CU-05.
-- [ ] Pruebas por perfil: usuario interno sin grupos, vendedor (solo sus documentos), usuario de
-      facturación y administrador.
+- [ ] **Permiso del módulo de cada consulta (decidido).** Odoo reparte la lectura entre módulos de
+      forma cruzada (verificado en los `ir.model.access.csv` de Odoo 18):
+      - `stock.quant` y `res.partner`: los lee **cualquier usuario interno**.
+      - `sale.order`: también Facturación, Inventario, Fabricación y Proyectos.
+      - `account.move`: también Ventas (solo sus documentos), Compras, Punto de Venta y Gastos.
+
+      El asistente exigirá, además de los permisos de Odoo, el grupo del módulo de cada consulta:
+
+      | Consulta | Grupo exigido |
+      |---|---|
+      | CU-01 Facturas | Facturación o Contabilidad |
+      | CU-02 Stock | Inventario (Usuario o Administrador) |
+      | CU-03 Ventas | Ventas |
+      | CU-04 Vendedor asignado | Ventas |
+      | CU-05 Stock + facturación | Inventario **y** Facturación |
+
+  - [ ] Opción en Ajustes "Exigir el permiso del módulo de cada consulta", **activada por defecto**;
+        desactivada, el asistente se comporta exactamente como Odoo.
+  - [ ] La verificación se hace antes de consultar; sin el grupo, mensaje en español: "No tienes
+        permiso para consultar <módulo>. Pide acceso al administrador."
+  - [ ] Las reglas de registro de Odoo se siguen aplicando encima (un vendedor ve solo sus documentos).
+- [ ] Pruebas por perfil y por consulta: usuario interno sin grupos, solo Inventario, vendedor (solo
+      sus documentos), usuario de Facturación y administrador; con la opción activada y desactivada.
 
 ### Otros
 - [ ] Probar el chat completo en la interfaz web con Gemini real (CU-01 a CU-05).

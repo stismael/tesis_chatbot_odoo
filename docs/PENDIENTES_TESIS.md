@@ -131,7 +131,13 @@ Aplicar cuando cada cambio esté implementado (ver `SEGUIMIENTO_CAMBIOS.md`, pun
       documentos obtiene 0 unidades facturadas donde el administrador obtiene 137.
 - [ ] **Tabla 17:** añadir la fila "Usuario sin permiso" → mensaje en español sin detalles técnicos.
 - [ ] Mencionar que las respuestas se basan solo en los documentos a los que el usuario tiene acceso.
-- [ ] Documentar la decisión sobre inventario (Odoo permite a todo usuario interno leer existencias).
+- [ ] **Nueva tabla en el Capítulo 3: permisos por caso de uso** (CU-01 Facturación o Contabilidad;
+      CU-02 Inventario; CU-03 y CU-04 Ventas; CU-05 Inventario y Facturación), con la opción
+      configurable activada por defecto.
+- [ ] Justificar con el **principio de mínimo privilegio**: Odoo permite lecturas cruzadas entre
+      módulos (por ejemplo, todo usuario interno lee existencias y contactos; Inventario lee pedidos
+      de venta), y el asistente aplica una política más restrictiva y configurable, sin dar nunca más
+      acceso que Odoo.
 
 ### Defensa ante el tribunal
 - [ ] Preparar la justificación del diseño de dominio cerrado e híbrido (exactitud, seguridad,
