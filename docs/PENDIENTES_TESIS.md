@@ -110,10 +110,20 @@ Aplicar cuando cada cambio esté implementado (ver `SEGUIMIENTO_CAMBIOS.md`, pun
 - [ ] **3.5.2:** añadir la categoría de consultas de conversación al dataset.
 
 ### Velocidad (punto 7)
-- [ ] **2.4.6 o Capítulo 5, tiempo de respuesta:** distinguir el tiempo de la IA y el de la consulta a
-      Odoo (se registrarán por separado en el log).
 - [ ] **Capítulo 4:** documentar la configuración del modelo (sin "pensamiento" para Gemini 2.5,
       formato JSON exigido con esquema, timeout y reintentos) y por qué.
+- [ ] **Capítulo 5:** comparar los tiempos antes y después de estas mejoras, con los datos del punto 12.
+
+### Métricas y monitoreo (punto 12, observación de la tutora)
+- [ ] **2.4.6, métricas:** añadir las métricas de operación: tasa por tipo de resultado,
+      disponibilidad del servicio (consultas sin fallo de la IA / total), latencia por etapa (IA,
+      consulta a Odoo, total) y satisfacción del usuario (👍 / 👎).
+- [ ] **Capítulo 4:** describir el log clasificado (resultado, código de error, tiempos por etapa,
+      proveedor, modelo, tokens) y el panel de análisis en Odoo (gráficos, tabla dinámica, filtros).
+- [ ] **Capítulo 5:** presentar dos fuentes de métricas: **evaluación controlada** con el dataset
+      (precisión de intención, de entidades y de ejecución) y **monitoreo en uso real** con el log
+      (resultados, latencias, disponibilidad, satisfacción).
+- [ ] Mencionar la retención limitada del log como medida de privacidad.
 
 ### Proveedores de IA (aclaración pedida por la tutora)
 - [ ] **Capítulo 2 o 4:** distinguir tres roles: desarrollador del modelo (Google, Meta, OpenAI,

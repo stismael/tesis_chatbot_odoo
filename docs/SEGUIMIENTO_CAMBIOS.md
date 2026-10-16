@@ -11,6 +11,7 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `claude/repository-analysis-84h0jn` | Totales de ventas, privacidad, test corregido | Fusionada en `main` (PR #1) |
 | `feature/cu05-stock-facturacion-producto` | CU-05, stock unificado, lista de la tesis | Fusionada en `main` (PR #1) |
 | `fix/correcciones-handlers-y-pruebas-odoo` | Correcciones del punto 1 y pruebas en Odoo | Fusionada en `main` (PR #1) |
+| `feature/metricas-y-monitoreo` | Punto 12 (métricas y monitoreo); conviene hacerlo antes del 7 | Por crear |
 | `feature/mejoras-llm-modelo-y-latencia` | Puntos 7 a 10 (velocidad, conversación, modelos, redacción) | Por crear |
 
 ---
@@ -89,9 +90,8 @@ Los cambios pendientes en el **documento de la tesis** están en
 - [ ] Ejecutar `run-chatbot-eval.ps1` con la API key y guardar resultados por modelo.
 
 ### Punto 7: velocidad de la llamada a la IA
-Va primero, porque con el punto 8 los saludos también llaman a la IA.
-- [ ] Registrar en el log, por separado, el tiempo de la IA y el de la consulta a Odoo (métrica para
-      el Capítulo 5 y para saber dónde está la demora).
+Va antes del punto 8, porque con el 8 los saludos también llaman a la IA. Conviene hacer primero el
+punto 12 (métricas) para medir los tiempos antes y después de estas mejoras.
 - [ ] Desactivar el "pensamiento" de Gemini 2.5 (`thinkingConfig: {thinkingBudget: 0}`); la tarea es
       clasificar y extraer datos, no razonar.
 - [ ] Exigir el formato con `responseSchema` (Gemini) y `json_object` (Groq) para evitar JSON inválido.
@@ -242,6 +242,50 @@ que mejorar son los mensajes y una decisión de diseño.
   - [ ] (Opcional) `/help` muestra solo los ejemplos de las consultas que el usuario puede hacer.
 - [ ] Pruebas por perfil y por consulta: usuario interno sin grupos, solo Inventario, vendedor (solo
       sus documentos), usuario de Facturación y administrador; con la opción activada y desactivada.
+
+### Punto 12: métricas y monitoreo (observación de la tutora)
+Objetivo: saber cuándo el chatbot responde bien, cuándo no, cuándo la IA no está disponible y dónde
+se demora. Hoy *Chatbot → Auditoría de consultas* guarda la latencia total, un "éxito" sí/no y el
+error como texto libre, lo que no basta para analizar.
+
+**Resultado clasificado de cada mensaje** (lista fija, para filtrar y agrupar)
+- [ ] Respondida con datos · Sin resultados · Aclaración pedida · Conversación · Rechazada (fuera de
+      alcance) · Sin permiso · IA no disponible · IA respondió mal (JSON inválido o intención
+      inventada) · Error interno.
+- [ ] Código de error de la IA como campo propio: timeout, sin conexión, cuota agotada (429), API key
+      inválida, modelo inexistente, servicio caído (5xx), respuesta bloqueada.
+
+**Tiempos y datos de la llamada**
+- [ ] Tiempo de la IA, tiempo de la consulta a Odoo y tiempo total, por separado.
+- [ ] Número de reintentos.
+- [ ] Proveedor y modelo que respondieron.
+- [ ] Tokens usados (entrada y salida), que Gemini y Groq informan en cada respuesta.
+
+**Coherencia de las respuestas**
+- [ ] Evaluación controlada con el dataset (`run-chatbot-eval.ps1`): métrica principal del
+      Capítulo 5.
+- [ ] Opinión del usuario en el chat: reacciones 👍 / 👎 en la respuesta del bot (Discuss ya las
+      tiene), registradas en el log para revisar las respuestas con 👎.
+
+**Panel de análisis en Odoo** (vistas nativas)
+- [ ] Gráficos: consultas por día, por resultado, por intención y por modelo.
+- [ ] Tabla dinámica: latencia promedio y máxima por etapa, intención y modelo; porcentaje de cada
+      resultado.
+- [ ] Filtros listos: "IA no disponible", "Lentas (> 5 s)", "Con 👎", "Sin permiso", "Hoy",
+      "Esta semana".
+- [ ] Exportación a Excel para los gráficos de la tesis.
+
+**Disponibilidad y retención**
+- [ ] Disponibilidad del servicio = consultas sin fallo de la IA / total de consultas.
+- [ ] (Opcional) Tarea programada que pruebe la conexión periódicamente y registre caídas aunque nadie
+      use el chat.
+- [ ] Opción para borrar registros con más de N días (privacidad).
+
+**Pruebas**
+- [ ] Cada tipo de resultado queda bien clasificado (con la IA simulada).
+- [ ] Los tiempos por etapa suman el total y se registran también cuando hay error.
+- [ ] Una reacción 👍 / 👎 en el chat queda asociada a su registro del log.
+- [ ] La limpieza por antigüedad borra solo los registros vencidos.
 
 ### Otros
 - [ ] Probar el chat completo en la interfaz web con Gemini real (CU-01 a CU-05).
