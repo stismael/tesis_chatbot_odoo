@@ -68,9 +68,13 @@ Rama de referencia del código: `feature/cu05-stock-facturacion-producto`.
 
 ### Todavía no implementado en el código: decidir
 
-- [ ] **Tabla 13, `intencion_desconocida`:** se reemplazará por la intención `conversacion` (ver
-      sección 1.1 de este archivo). Esperar a que esté implementada en el código.
-- [ ] **Tablas 14 y 15, entidad `order_state`:** no existe en el código. Quitarla o implementarla.
+- [ ] **Tabla 13, `intencion_desconocida`:** reemplazarla por la intención `conversacion`, ya
+      implementada en el código (ver sección 1.1 de este archivo).
+- [ ] **Tablas 14 y 15, entidad `order_state`:** ya implementada en el código (valores `cotizacion`,
+      `pedido`, `cancelado`; sin valor se consultan los pedidos confirmados). Revisar que las tablas
+      usen esos valores.
+- [ ] **Memoria de la sesión (sección de memoria corta):** describir la regla: un seguimiento solo
+      hereda el sujeto que falta (cliente, producto o factura); una aclaración conserva lo ya dicho.
 - [ ] **Tabla 5, pedidos de venta (~1.000):** el generador define `TARGET_SALE_ORDERS = 350`. Cambiar
       la cifra, o subir el valor en el generador.
 
