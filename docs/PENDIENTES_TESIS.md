@@ -68,8 +68,8 @@ Rama de referencia del código: `feature/cu05-stock-facturacion-producto`.
 
 ### Todavía no implementado en el código: decidir
 
-- [ ] **Tabla 13, `intencion_desconocida`:** no existe; el código trata lo no interpretable como
-      `fuera_de_alcance` o como salida inválida. Quitarla de la tabla o implementarla.
+- [ ] **Tabla 13, `intencion_desconocida`:** se reemplazará por la intención `conversacion` (ver
+      sección 1.1 de este archivo). Esperar a que esté implementada en el código.
 - [ ] **Tablas 14 y 15, entidad `order_state`:** no existe en el código. Quitarla o implementarla.
 - [ ] **Tabla 5, pedidos de venta (~1.000):** el generador define `TARGET_SALE_ORDERS = 350`. Cambiar
       la cifra, o subir el valor en el generador.
@@ -84,6 +84,168 @@ Rama de referencia del código: `feature/cu05-stock-facturacion-producto`.
       citarlo.
 - [ ] **Fase 4 (1.3):** el dataset no tiene "operación estructurada esperada". Quitarlo del texto o
       agregarlo al dataset.
+
+---
+
+## 1.1 Cambios planificados en el código que afectarán el documento
+
+Aplicar cuando cada cambio esté implementado (ver `SEGUIMIENTO_CAMBIOS.md`, puntos 7 a 10).
+
+### Arquitectura híbrida: conversación libre, datos solo desde Odoo (punto 8)
+- [ ] **Describir la arquitectura como híbrida** (3.3, 3.4 y la introducción del Capítulo 3): la IA
+      redacta libremente las respuestas que no involucran datos del negocio (saludos, agradecimientos,
+      capacidades, rechazos), pero todo dato del ERP pasa por una consulta estructurada y validada
+      sobre el ORM. Frase guía: *"la IA puede decir lo que quiera, excepto datos del negocio: esos solo
+      los puede obtener pidiéndolos al sistema"*.
+- [ ] **Tabla 13:** reemplazar `intencion_desconocida` por `conversacion` (saludos, agradecimientos,
+      preguntas sobre lo que puede hacer el asistente y charla general).
+- [ ] **3.3.3, esquema JSON:** añadir el campo `reply` (texto redactado por la IA, solo para
+      `conversacion` y `fuera_de_alcance`) y el estado `chat`. Incluir un ejemplo de saludo.
+- [ ] **3.3.4, validación:** añadir el control anti-invención (una respuesta conversacional con montos,
+      números de factura o códigos de producto se descarta) y el límite de longitud de `reply`.
+- [ ] **3.2.6 y Tablas 12 y 23:** las respuestas fuera de alcance las redacta la IA (explica por qué no
+      puede y qué sí puede hacer); el mensaje fijo queda solo como respaldo.
+- [ ] **Tabla 17:** fila "Consulta no relacionada" → la IA responde con sus palabras e indica el
+      alcance.
+- [ ] **3.5.2:** añadir la categoría de consultas de conversación al dataset.
+
+### Velocidad (punto 7)
+- [ ] **Capítulo 4:** documentar la configuración del modelo (sin "pensamiento" para Gemini 2.5,
+      formato JSON exigido con esquema, timeout y reintentos) y por qué.
+- [ ] **Capítulo 5:** comparar los tiempos antes y después de estas mejoras, con los datos del punto 12.
+
+### Métricas y monitoreo (punto 12, observación de la tutora)
+- [ ] **2.4.6, métricas:** añadir las métricas de operación: tasa por tipo de resultado,
+      disponibilidad del servicio (consultas sin fallo de la IA / total), latencia por etapa (IA,
+      consulta a Odoo, total) y satisfacción del usuario (👍 / 👎).
+- [ ] **Capítulo 4:** describir el log clasificado (resultado, código de error, tiempos por etapa,
+      proveedor, modelo, tokens) y el panel de análisis en Odoo (gráficos, tabla dinámica, filtros).
+- [ ] **Capítulo 5:** presentar dos fuentes de métricas: **evaluación controlada** con el dataset
+      (precisión de intención, de entidades y de ejecución) y **monitoreo en uso real** con el log
+      (resultados, latencias, disponibilidad, satisfacción).
+- [ ] Mencionar la retención limitada del log como medida de privacidad.
+
+### Proveedores de IA (aclaración pedida por la tutora)
+- [ ] **Capítulo 2 o 4:** distinguir tres roles: desarrollador del modelo (Google, Meta, OpenAI,
+      Anthropic, Mistral), proveedor de la API o de inferencia (Google AI Studio/Vertex AI, Groq,
+      OpenAI, Azure, AWS Bedrock) y agregadores (OpenRouter, Together AI, Hugging Face).
+- [ ] Indicar que el prototipo se conecta directamente a dos proveedores de inferencia: **Google AI
+      Studio** (modelos Gemini, desarrollados por Google) y **Groq** (modelos abiertos como Llama, de
+      Meta). La lista de modelos disponibles la entrega cada proveedor por su API de listado
+      (`models.list` de Gemini y *List models* de Groq), se consulta en tiempo real al pulsar "Listar
+      modelos" y no incluye precios: los límites gratuitos se consultan en las páginas de precios.
+- [ ] Justificar la elección: cuota gratuita suficiente para un prototipo académico, baja latencia
+      (familia Flash de Gemini, inferencia rápida de Groq) y salida JSON nativa.
+
+### Selección y validación del modelo (punto 9)
+- [ ] **Capítulo 4 (configuración):** el modelo se elige de un desplegable filtrado por proveedor,
+      alimentado por el catálogo que publica el proveedor, en lugar de escribirlo a mano. Explicar que
+      el catálogo se sincroniza (agrega, actualiza y marca como no disponibles los modelos retirados,
+      sin borrarlos).
+- [ ] **Validación de la configuración:** al guardar se prueba la conexión si cambió el proveedor, la
+      API key o el modelo; una configuración que no funciona no se guarda.
+- [ ] **Separar dos tipos de fallo:** los de configuración se detectan al guardar; los externos
+      (caída del proveedor, sin internet, cuota agotada) se manejan en el chat con reintentos,
+      mensajes claros y, si se implementa, un modelo de respaldo.
+
+### Respuestas de datos redactadas por la IA (punto 10, opcional)
+- [ ] Si se implementa: describirlo como opción configurable con verificación de que los números de la
+      respuesta coinciden con los datos de Odoo, sin contradecir "sin inventar valores" (3.2.1).
+- [ ] **Capítulo 5:** experimento plantilla vs. redacción por IA (exactitud, latencia, naturalidad).
+
+### Permisos de usuario (punto 11)
+- [ ] **3.1.1 y 3.4.3:** explicar con evidencia que el chatbot respeta los permisos de Odoo: cada
+      consulta corre con el usuario autenticado, así que los derechos de acceso y las reglas de
+      registro se aplican igual que en la interfaz. Ejemplo verificado: un vendedor que solo ve sus
+      documentos obtiene 0 unidades facturadas donde el administrador obtiene 137.
+- [ ] **Tabla 17:** añadir la fila "Usuario sin permiso" → mensaje en español sin detalles técnicos.
+- [ ] Mencionar que las respuestas se basan solo en los documentos a los que el usuario tiene acceso.
+- [ ] **Nueva tabla en el Capítulo 3: permisos por caso de uso**, con el grupo mínimo de cada
+      consulta: CU-01 Facturación; CU-02 Inventario / Usuario; CU-03 y CU-04 Ventas / Usuario (solo
+      documentos propios); CU-05 Inventario / Usuario y Facturación. Indicar que los administradores
+      de cada módulo pasan porque en Odoo el Administrador incluye al Usuario.
+- [ ] **Describir el control como una capa adicional** (3.4): tabla editable *Permisos por consulta*,
+      evaluada por usuario y en cada mensaje, después del validador y antes de consultar. Complementa
+      los permisos de Odoo, no los reemplaza ni los modifica; nunca da más acceso que Odoo.
+- [ ] **Diagrama de defensa en profundidad:** validador de la salida de la IA → control por rol del
+      asistente → permisos de Odoo (derechos de acceso y reglas de registro).
+- [ ] **Justificación (mínimo privilegio)** con estos argumentos:
+  - El chatbot es un nuevo canal de acceso: facilita llegar a los datos, así que el control debe
+    acompañar esa facilidad.
+  - Odoo permite lecturas cruzadas para integrar pantallas (por ejemplo, cualquier usuario interno lee
+    existencias para ver disponibilidad en una cotización; Inventario lee pedidos de venta), no para
+    dar acceso de negocio. El asistente responde preguntas de negocio y aplica roles funcionales.
+  - No modifica Odoo (compatible con actualizaciones), es configurable sin programar, es auditable
+    (intentos rechazados en el log) y está probado por perfil.
+  - Evidencia verificada en Odoo 18: regla `access_stock_quant_all` (lectura de `stock.quant` para
+    todo usuario interno) y el ejemplo de CU-05 (administrador 137 unidades facturadas, vendedor 0).
+- [ ] **Referencias para la justificación** (verificar cada una antes de citarla):
+  - OWASP Top 10 for LLM Applications 2025, LLM06 "Excessive Agency".
+  - ISO/IEC 27001:2022, Anexo A: 5.15 Control de acceso y 8.3 Restricción del acceso a la información.
+  - NIST SP 800-53 Rev. 5, AC-6 "Least Privilege".
+  - Ley Orgánica de Protección de Datos Personales del Ecuador (2021), por los datos de contacto del
+    vendedor en CU-04.
+  - Ya citadas: Pandey et al. (2024), Mishra et al. (2026), European Data Protection Board (2025).
+- [ ] **Preguntas probables y respuestas:** "¿por qué no bastan los permisos de Odoo?" (lecturas
+      cruzadas, ejemplo de existencias); "¿no es redundante?" (solo restringe, nunca amplía); "¿y si la
+      empresa quiere que ventas vea stock?" (se agrega el grupo en la tabla, sin código).
+
+### Ruta híbrida: consultas flexibles validadas (punto 13, propuesta de la tutora)
+- [ ] **Arquitectura (3.3 y 3.4):** describir las dos rutas: Ruta 1 (casos de uso con consulta
+      estructurada fija) y Ruta 2 (plan de consulta en JSON generado por la IA a partir de un
+      catálogo autorizado, validado contra lista blanca y ejecutado en el ORM).
+- [ ] **Tabla 6:** pasa a ser el catálogo real de la Ruta 2 (modelos, campos, descripción, tipo y
+      operadores permitidos), con lo que 3.4.3 ("listas blancas") queda respaldado por el código.
+- [ ] **Nuevo esquema JSON del plan** en 3.3.3 (modelo, filtros, operación, agrupación, orden) y su
+      validación en 3.3.4.
+- [ ] **Diagrama de flujo** de la clasificación: caso de uso → Ruta 1; otra consulta de datos →
+      Ruta 2; charla → conversación; prohibido → rechazo.
+- [ ] **Justificación con la literatura ya citada:** Morshed et al. (2026) (inyección del esquema en
+      el prompt), Jarin et al. (2024) (lenguaje natural a JSON), Elder et al. (2026) (lenguaje
+      natural a API) y Ma et al. (2025) (validación semántica). Posicionarla como punto medio entre
+      intenciones cerradas y Text-to-SQL, sin SQL libre.
+- [ ] **Capítulo 5:** comparar Ruta 1 y Ruta 2 en precisión, latencia y errores.
+
+### Limitaciones (punto 14)
+- [ ] **Nueva sección de limitaciones en el Capítulo 5**, con ejemplos por categoría:
+  - **Por diseño:** escritura, sin permiso, campos sensibles. Son decisiones de seguridad, no fallas.
+  - **Por alcance:** módulos no incluidos (nómina, compras, bancos, CRM); se amplían agregando
+    modelos al catálogo.
+  - **Por complejidad:** cálculos de varios pasos (márgenes, comparación de conjuntos o periodos).
+  - **Por naturaleza:** predicciones, análisis de causas, recomendaciones, texto libre y adjuntos.
+  - **Fuera del dominio:** temas no comerciales.
+- [ ] Indicar que el dataset incluye consultas de estas categorías y que el sistema las rechaza o pide
+      aclaración en lugar de inventar.
+- [ ] **Trabajo futuro** ligado a cada categoría: agente con *function calling* para varios pasos,
+      analítica y predicción, más módulos en el catálogo y escritura con confirmación del usuario.
+
+### Defensa ante el tribunal
+- [ ] Preparar la justificación del diseño de dominio cerrado e híbrido (exactitud, seguridad,
+      auditabilidad, evaluación y alcance del TIC), citando Bi et al. (2025), Béchard y Ayala (2024),
+      Mishra et al. (2026) y Pandey et al. (2024).
+- [ ] **Trabajo futuro:** agente con *function calling* que reutilice los handlers como herramientas
+      sin perder el validador ni los permisos; operaciones de escritura con confirmación del usuario.
+
+---
+
+## 1.2 Declaración del uso de inteligencia artificial
+
+- [ ] **Formato oficial de la UTPL:** descargar el formato de declaración de uso de herramientas de
+      inteligencia artificial desde la página de Trabajos de titulación de la Biblioteca UTPL
+      (https://biblioteca.utpl.edu.ec/trabajos-fin-titulacion), llenarlo y entregarlo con el TIC al
+      correo de revisión de la biblioteca (`bbc_revision@utpl.onmicrosoft.com`).
+- [ ] **Revisar la normativa vigente:** buscar en las normativas públicas de Procuraduría UTPL si
+      existe un reglamento o lineamiento específico de IA, y preguntar a la tutora cómo prefiere que
+      se declare.
+- [ ] **Metodología (1.3):** añadir un párrafo breve que declare el uso de Claude Code (Anthropic) como
+      asistente de programación (implementación de código, pruebas automáticas y revisión técnica) y
+      deje claro lo realizado por el autor: diseño de la solución, casos de uso, decisiones de
+      arquitectura y seguridad, validación de resultados y redacción. Ajustarlo a lo que de verdad
+      se hizo.
+- [ ] Mencionar el uso de **Gemini y Groq** como componentes del prototipo (no como apoyo a la
+      redacción), para no confundir ambos usos de la IA.
+- [ ] Coherencia con el historial de GitHub: los commits muestran al autor como "Ismael Calle" y a
+      Claude como coautor.
 
 ---
 
