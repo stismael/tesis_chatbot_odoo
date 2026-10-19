@@ -228,6 +228,27 @@ Aplicar cuando cada cambio esté implementado (ver `SEGUIMIENTO_CAMBIOS.md`, pun
 
 ---
 
+## 1.2 Declaración del uso de inteligencia artificial
+
+- [ ] **Formato oficial de la UTPL:** descargar el formato de declaración de uso de herramientas de
+      inteligencia artificial desde la página de Trabajos de titulación de la Biblioteca UTPL
+      (https://biblioteca.utpl.edu.ec/trabajos-fin-titulacion), llenarlo y entregarlo con el TIC al
+      correo de revisión de la biblioteca (`bbc_revision@utpl.onmicrosoft.com`).
+- [ ] **Revisar la normativa vigente:** buscar en las normativas públicas de Procuraduría UTPL si
+      existe un reglamento o lineamiento específico de IA, y preguntar a la tutora cómo prefiere que
+      se declare.
+- [ ] **Metodología (1.3):** añadir un párrafo breve que declare el uso de Claude Code (Anthropic) como
+      asistente de programación (implementación de código, pruebas automáticas y revisión técnica) y
+      deje claro lo realizado por el autor: diseño de la solución, casos de uso, decisiones de
+      arquitectura y seguridad, validación de resultados y redacción. Ajustarlo a lo que de verdad
+      se hizo.
+- [ ] Mencionar el uso de **Gemini y Groq** como componentes del prototipo (no como apoyo a la
+      redacción), para no confundir ambos usos de la IA.
+- [ ] Coherencia con el historial de GitHub: los commits muestran al autor como "Ismael Calle" y a
+      Claude como coautor.
+
+---
+
 ## 2. Contradicciones internas
 
 - [ ] **Datos demo:** la Introducción y la Fase 2 dicen "datos demo de Odoo y datos sintéticos";
