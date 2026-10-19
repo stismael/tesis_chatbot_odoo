@@ -32,6 +32,7 @@ ERROR_CODES = [
     ("unknown_intent", "Intención inventada"),
     ("inactive", "Asistente desactivado"),
     ("missing_key", "API key no configurada"),
+    ("intent_permission", "Sin el grupo exigido para la consulta"),
     ("access", "Permiso denegado por Odoo"),
     ("generic", "Otro"),
 ]

@@ -25,6 +25,8 @@ MISSING_LABELS = {
     "date_to": "la fecha hasta",
 }
 
+FORBIDDEN_AREA_MSG = "No tienes permiso para consultar %s. Pide acceso al administrador."
+
 FORBIDDEN_MSG = (
     "No tienes permiso para consultar esa información. "
     "Pide acceso al administrador."
@@ -117,7 +119,15 @@ class ChatbotOrchestrator(models.AbstractModel):
             intent = validated["intent"]
             status = validated["status"]
 
-            if intent == "fuera_de_alcance" or status == "rejected":
+            # Permisos por consulta: se revisan antes de ejecutar y antes de pedir datos faltantes.
+            missing_groups, permission = self.env["chatbot.intent.permission"]._missing_groups(intent)
+            if intent in HANDLER_MAP and status != "invalid_output" and missing_groups:
+                session.clear_pending()
+                reply = FORBIDDEN_AREA_MSG % permission.area_label
+                error = "Faltan grupos: %s" % ", ".join(missing_groups.mapped("full_name"))
+                success = False
+                outcome, error_code = "forbidden", "intent_permission"
+            elif intent == "fuera_de_alcance" or status == "rejected":
                 session.clear_pending()
                 reply = OUT_OF_SCOPE_MSG
                 success = True

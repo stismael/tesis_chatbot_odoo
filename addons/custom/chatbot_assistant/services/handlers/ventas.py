@@ -3,6 +3,8 @@
 
 import re
 
+from .access import scope_note
+
 STATE_LABELS = {
     "draft": "borrador",
     "sent": "enviado",
@@ -127,7 +129,7 @@ def _sales_by_customer(env, partner, entities, user_text=""):
     if not orders:
         return {
             "ok": False,
-            "message": f'No hay pedidos confirmados para el cliente "{partner.name}".',
+            "message": f'No hay pedidos confirmados que puedas consultar para el cliente "{partner.name}".',
             "data": {"partner": partner.name},
         }
 
@@ -151,6 +153,7 @@ def _sales_by_customer(env, partner, entities, user_text=""):
             f"Si quieres verlos, pídeme que los liste."
         )
 
+    message += scope_note(env, "sale.order")
     return {
         "ok": True,
         "message": message,
@@ -170,7 +173,7 @@ def _sales_by_product(env, product, entities, partner=None, user_text=""):
     if not lines_rec:
         return {
             "ok": False,
-            "message": f"No hay ventas confirmadas de {label}{scope}.",
+            "message": f"No hay ventas confirmadas de {label}{scope} entre los pedidos que puedes consultar.",
             "data": {
                 "product": label,
                 "product_code": product.default_code or "",
@@ -216,6 +219,7 @@ def _sales_by_product(env, product, entities, partner=None, user_text=""):
             f"Si quieres el detalle por pedido, pídemelo."
         )
 
+    message += scope_note(env, "sale.order")
     return {
         "ok": True,
         "message": message,

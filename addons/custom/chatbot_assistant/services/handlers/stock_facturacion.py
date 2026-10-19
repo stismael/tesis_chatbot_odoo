@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """CU-05: consultar stock actual y facturación de un producto en un periodo."""
 
+from .access import scope_note
 from .stock import format_stock, stock_levels
 from .ventas import _find_product, _product_label
 
@@ -89,6 +90,7 @@ def handle(env, entities, user_text=""):
         )
     else:
         message += f"No hay facturas de cliente publicadas con este producto {period}."
+    message += scope_note(env, "account.move")
 
     return {
         "ok": True,

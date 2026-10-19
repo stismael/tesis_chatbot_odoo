@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Grupos mínimos por consulta (nivel Usuario de cada módulo; en Odoo el Administrador incluye al Usuario).
+     noupdate: los cambios que haga el administrador desde la pantalla no se pierden al actualizar el módulo. -->
+<odoo noupdate="1">
+    <record id="permission_consultar_factura" model="chatbot.intent.permission">
+        <field name="sequence">10</field>
+        <field name="intent">consultar_factura</field>
+        <field name="area_label">facturas</field>
+        <field name="group_ids" eval="[(6, 0, [ref('account.group_account_invoice')])]"/>
+    </record>
+    <record id="permission_consultar_stock" model="chatbot.intent.permission">
+        <field name="sequence">20</field>
+        <field name="intent">consultar_stock</field>
+        <field name="area_label">inventario</field>
+        <field name="group_ids" eval="[(6, 0, [ref('stock.group_stock_user')])]"/>
+    </record>
+    <record id="permission_consultar_ventas_cliente" model="chatbot.intent.permission">
+        <field name="sequence">30</field>
+        <field name="intent">consultar_ventas_cliente</field>
+        <field name="area_label">ventas</field>
+        <field name="group_ids" eval="[(6, 0, [ref('sales_team.group_sale_salesman')])]"/>
+    </record>
+    <record id="permission_consultar_vendedor_cliente" model="chatbot.intent.permission">
+        <field name="sequence">40</field>
+        <field name="intent">consultar_vendedor_cliente</field>
+        <field name="area_label">el vendedor asignado a un cliente</field>
+        <field name="group_ids" eval="[(6, 0, [ref('sales_team.group_sale_salesman')])]"/>
+    </record>
+    <record id="permission_consultar_stock_facturacion_producto" model="chatbot.intent.permission">
+        <field name="sequence">50</field>
+        <field name="intent">consultar_stock_facturacion_producto</field>
+        <field name="area_label">inventario y facturación</field>
+        <field name="group_ids" eval="[(6, 0, [ref('stock.group_stock_user'), ref('account.group_account_invoice')])]"/>
+    </record>
+</odoo>

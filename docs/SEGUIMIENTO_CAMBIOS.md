@@ -11,8 +11,9 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `claude/repository-analysis-84h0jn` | Totales de ventas, privacidad, test corregido | Fusionada en `main` (PR #1) |
 | `feature/cu05-stock-facturacion-producto` | CU-05, stock unificado, lista de la tesis | Fusionada en `main` (PR #1) |
 | `fix/correcciones-handlers-y-pruebas-odoo` | Correcciones del punto 1 y pruebas en Odoo | Fusionada en `main` (PR #1) |
-| `docs/plan-mejoras-llm-y-permisos` | Planificación de los puntos 7 a 14 (solo documentación) | PR #2 |
+| `docs/plan-mejoras-llm-y-permisos` | Planificación de los puntos 7 a 14 (solo documentación) | Fusionada en `main` (PR #2) |
 | `feature/metricas-y-monitoreo` | Paso 1: métricas y monitoreo | PR #3 |
+| `feature/permisos-por-consulta` | Paso 2: permisos por consulta | PR #4 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -22,6 +23,20 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
+
+### PR #4 · Paso 2: permisos por consulta
+- **Rama:** `feature/permisos-por-consulta` · **Versión del módulo:** 18.0.1.6.0
+- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Pruebas:** 53 pruebas en Odoo 18 (13 nuevas, por perfil de usuario); verificada la
+  actualización desde 18.0.1.5.0.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Tabla editable de permisos por consulta con los grupos mínimos (Facturación, Inventario / Usuario, Ventas / Usuario) | `models/chatbot_intent_permission.py`, `data/chatbot_intent_permission_data.xml`, `views/chatbot_intent_permission_views.xml`, `views/menus.xml`, `security/ir.model.access.csv` | Aplicar el principio de mínimo privilegio: cada consulta exige el rol de su módulo, porque Odoo permite lecturas cruzadas (por ejemplo, todo usuario interno lee existencias) |
+| Control de permisos en el orquestador, antes de ejecutar y antes de pedir datos faltantes; registro como "Sin permiso" con código propio | `models/orchestrator.py`, `models/chatbot_query_log.py` | Que un usuario sin el rol no reciba datos ni preguntas de aclaración, y que el intento quede auditado |
+| Mensajes que no confirman registros no visibles ("…entre las facturas que puedes consultar") y aviso de totales parciales | `services/handlers/access.py`, `services/handlers/factura.py`, `services/handlers/ventas.py`, `services/handlers/stock_facturacion.py` | Que el usuario entienda que la respuesta se limita a lo que puede ver (por ejemplo, un vendedor que solo ve sus pedidos) |
+| `/help` muestra solo las consultas permitidas | `services/help_text.py`, `models/discuss_channel.py` | No ofrecer ejemplos de consultas que el usuario no puede hacer |
+| Pruebas por perfil: sin grupos, solo Inventario, administrador de Inventario, solo Facturación, vendedor, administrador; edición de la tabla y su seguridad | `tests/test_permissions.py`, `tests/test_metrics.py` | Demostrar la matriz de permisos para la tesis y evitar regresiones |
 
 ### PR #3 · Paso 1: métricas y monitoreo
 - **Rama:** `feature/metricas-y-monitoreo` · **Versión del módulo:** 18.0.1.5.0
@@ -42,7 +57,7 @@ Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada co
 
 ### PR #2 · Plan de mejoras y pendientes de la tesis (solo documentación)
 - **Rama:** `docs/plan-mejoras-llm-y-permisos`
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-10-19, con las pruebas de GitHub Actions en verde.
 
 | Qué se hizo | Dónde | Para qué |
 |---|---|---|
@@ -79,7 +94,7 @@ se corrige en esa misma rama.
 | Paso | Punto | Rama sugerida | Por qué en este orden |
 |---|---|---|---|
 | 1 (en revisión) | 12. Métricas y monitoreo | `feature/metricas-y-monitoreo` | Medir primero: da los números de "antes" para todo lo demás |
-| 2 | 11. Permisos por consulta | `feature/permisos-por-consulta` | Seguridad; la Ruta 2 (paso 7) depende de esta tabla |
+| 2 (en revisión) | 11. Permisos por consulta | `feature/permisos-por-consulta` | Seguridad; la Ruta 2 (paso 7) depende de esta tabla |
 | 3 | 7. Velocidad de la IA | `feature/velocidad-llm` | Con las métricas ya activas se mide el antes y el después |
 | 4 | 9. Selección y validación del modelo | `feature/seleccion-modelo` | Corrige el defecto del campo "Modelo" y valida la configuración |
 | 5 | 8. Conversación libre | `feature/conversacion-libre` | Requiere la IA rápida (paso 3), porque los saludos también la llaman |
@@ -274,14 +289,14 @@ que mejorar son los mensajes y una decisión de diseño.
       Administrator"). Debe responder en español y sin detalles técnicos, por ejemplo "No tienes
       permiso para consultar facturas. Pide acceso al administrador.", y registrar el detalle solo
       en el log. Causa: `AccessError` hereda de `UserError` y el orquestador muestra su texto.
-- [ ] **Registros que existen pero el usuario no puede ver.** Un vendedor que solo ve sus propios
+- [x] **Registros que existen pero el usuario no puede ver.** Un vendedor que solo ve sus propios
       documentos recibe "No encontré la factura INV/…" o "No hay pedidos confirmados", aunque existan.
       Cambiar a "No encontré… o no tienes acceso a ese registro" (sin confirmar que existe).
-- [ ] **Totales parciales sin aviso.** En CU-05 el administrador ve 137 unidades facturadas en 29
+- [x] **Totales parciales sin aviso.** En CU-05 el administrador ve 137 unidades facturadas en 29
       facturas y el vendedor ve 0 en 0, porque Odoo filtra las facturas que puede ver. Es correcto
       por seguridad, pero la respuesta debe aclarar "según los documentos a los que tienes acceso"
       cuando el usuario no tiene acceso total.
-- [ ] **Permiso del módulo de cada consulta (decidido).** Odoo reparte la lectura entre módulos de
+- [x] **Permiso del módulo de cada consulta (decidido).** Odoo reparte la lectura entre módulos de
       forma cruzada (verificado en los `ir.model.access.csv` de Odoo 18):
       - `stock.quant` y `res.partner`: los lee **cualquier usuario interno**.
       - `sale.order`: también Facturación, Inventario, Fabricación y Proyectos.
@@ -297,11 +312,10 @@ que mejorar son los mensajes y una decisión de diseño.
       | CU-04 Vendedor asignado | Ventas |
       | CU-05 Stock + facturación | Inventario **y** Facturación |
 
-  - [ ] **Implementación (opción A, decidida): tabla editable** en *Chatbot → Configuración →
-        Permisos por consulta*, una fila por intención con los grupos exigidos (todos deben
+  - [x] **Implementación (opción A, decidida): tabla editable** en *Chatbot → Permisos por consulta*, una fila por intención con los grupos exigidos (todos deben
         cumplirse). Se carga con valores por defecto al instalar (`noupdate`) y el administrador del
         chatbot puede cambiarla sin tocar código. Una fila sin grupos usa solo los permisos de Odoo.
-  - [ ] **Grupos mínimos por defecto** (nivel Usuario; el Administrador de cada módulo incluye al
+  - [x] **Grupos mínimos por defecto** (nivel Usuario; el Administrador de cada módulo incluye al
         Usuario en Odoo 18, así que pasa automáticamente con `has_group`):
 
         | Consulta | Grupo técnico mínimo | Nombre en Ajustes → Usuarios |
@@ -312,20 +326,31 @@ que mejorar son los mensajes y una decisión de diseño.
         | CU-04 Vendedor asignado | `sales_team.group_sale_salesman` | Ventas: Usuario, solo documentos propios |
         | CU-05 Stock + facturación | `stock.group_stock_user` y `account.group_account_invoice` | Inventario: Usuario y Facturación |
 
-  - [ ] Caso especial: el grupo oculto `account.group_account_readonly` (solo lectura contable) no
-        incluye a Facturación; queda fuera por defecto y el administrador puede agregarlo a la fila.
-  - [ ] **Dónde va el control:** en el orquestador, después del validador y antes de ejecutar el
+  - [x] Caso especial: el grupo oculto `account.group_account_readonly` (solo lectura contable) no
+        incluye a Facturación; queda fuera por defecto. Como la tabla exige *todos* los grupos de una
+        fila, para admitir a esos usuarios habría que quitar Facturación de la fila (pasa a depender
+        solo de los permisos de Odoo).
+  - [x] **Dónde va el control:** en el orquestador, después del validador y antes de ejecutar el
         handler. Es solo del chatbot: no modifica ningún permiso de Odoo ni afecta otras pantallas.
         Se evalúa por usuario y en cada mensaje, con los grupos que tenga en ese momento.
-  - [ ] Sin el grupo: no se consulta nada y se responde en español, por ejemplo "No tienes permiso
+  - [x] Sin el grupo: no se consulta nada y se responde en español, por ejemplo "No tienes permiso
         para consultar inventario. Pide acceso al administrador."
-  - [ ] Registrar el intento rechazado en el log con estado `forbidden` ("sin permiso") para
+  - [x] Registrar el intento rechazado en el log con estado `forbidden` ("sin permiso") para
         auditoría.
-  - [ ] Las reglas de registro de Odoo se siguen aplicando encima (un vendedor ve solo sus documentos).
-  - [ ] Seguridad de la tabla: el administrador del chatbot la edita; los usuarios solo la leen.
-  - [ ] (Opcional) `/help` muestra solo los ejemplos de las consultas que el usuario puede hacer.
-- [ ] Pruebas por perfil y por consulta: usuario interno sin grupos, solo Inventario, vendedor (solo
+  - [x] Las reglas de registro de Odoo se siguen aplicando encima (un vendedor ve solo sus documentos).
+  - [x] Seguridad de la tabla: el administrador del chatbot la edita; los usuarios solo la leen.
+  - [x] (Opcional) `/help` muestra solo los ejemplos de las consultas que el usuario puede hacer.
+- [x] Pruebas por perfil y por consulta: usuario interno sin grupos, solo Inventario, vendedor (solo
       sus documentos), usuario de Facturación y administrador; con la opción activada y desactivada.
+
+**Implementado en `feature/permisos-por-consulta` (versión 18.0.1.6.0)**
+- Tabla *Chatbot → Permisos por consulta* con los grupos mínimos cargados al instalar; el control
+  se aplica antes de ejecutar y antes de pedir datos faltantes.
+- Mensajes: "No encontré la factura X entre las facturas que puedes consultar", "No hay pedidos
+  confirmados que puedas consultar…" y el aviso "Solo se incluyen los documentos a los que tienes
+  acceso" cuando el usuario ve parte de los documentos.
+- `/help` muestra solo las consultas permitidas.
+- 13 pruebas nuevas por perfil (53 en total); verificada la actualización desde 18.0.1.5.0.
 
 ### Punto 12: métricas y monitoreo (observación de la tutora)
 Objetivo: saber cuándo el chatbot responde bien, cuándo no, cuándo la IA no está disponible y dónde
