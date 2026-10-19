@@ -28,7 +28,9 @@ class DiscussChannel(models.Model):
             if bot:
                 self.with_context(chatbot_assistant_reply=True).sudo().message_post(
                     author_id=bot.id,
-                    body=build_help_markup(),
+                    body=build_help_markup(
+                        self.env["chatbot.intent.permission"]._allowed_intents()
+                    ),
                     message_type="comment",
                     subtype_xmlid="mail.mt_comment",
                     silent=True,

@@ -115,6 +115,8 @@ class TestMetrics(ChatbotCase):
         self.assertEqual((log.outcome, log.error_code), ("llm_bad_output", "invalid_json"))
 
     def test_sin_permiso_mensaje_en_espanol(self):
+        # Sin grupos exigidos en la tabla, la consulta llega a Odoo, que niega el acceso.
+        self.env.ref("chatbot_assistant.permission_consultar_factura").group_ids = [(5, 0, 0)]
         plain_user = new_test_user(self.env, login="sin.grupos", groups="base.group_user")
         result, log = self._ask(
             "factura", fake_llm(llm_output("consultar_factura", customer_name="Cliente Prueba Uno")),

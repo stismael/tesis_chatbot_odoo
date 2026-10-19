@@ -3,6 +3,8 @@
 
 import re
 
+from .access import scope_note
+
 PAYMENT_LABELS = {
     "not_paid": "no pagada",
     "in_payment": "en proceso de pago",
@@ -83,12 +85,12 @@ def handle(env, entities, user_text=""):
         if invoice_number:
             return {
                 "ok": False,
-                "message": f"No encontré la factura {invoice_number}.",
+                "message": f"No encontré la factura {invoice_number} entre las facturas que puedes consultar.",
                 "data": {},
             }
         return {
             "ok": False,
-            "message": f'No hay facturas publicadas para el cliente "{customer_name}".',
+            "message": f'No hay facturas publicadas que puedas consultar para el cliente "{customer_name}".',
             "data": {},
         }
 
@@ -146,4 +148,5 @@ def handle(env, entities, user_text=""):
     else:
         message = "Facturas encontradas:\n" + "\n".join(lines)
 
+    message += scope_note(env, "account.move")
     return {"ok": True, "message": message, "data": {"invoices": data_rows, "focus": focus}}

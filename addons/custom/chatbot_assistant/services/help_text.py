@@ -8,6 +8,7 @@ HELP_TITLE = "Consultas que puedo responder (solo lectura):"
 HELP_SECTIONS = [
     (
         "Facturas",
+        "consultar_factura",
         [
             "¿Está pagada la factura INV/2026/00003?",
             "¿Cuántos productos tiene la factura INV/2026/00003?",
@@ -15,6 +16,7 @@ HELP_SECTIONS = [
     ),
     (
         "Inventario",
+        "consultar_stock",
         [
             "¿Cuántas unidades hay del CAS-001?",
             "¿Hay stock del casco negro?",
@@ -22,6 +24,7 @@ HELP_SECTIONS = [
     ),
     (
         "Ventas",
+        "consultar_ventas_cliente",
         [
             "¿Cuántas ventas hay del CAS-001?",
             "¿Qué ventas tiene Comercial Andina S.A.?",
@@ -32,12 +35,14 @@ HELP_SECTIONS = [
     ),
     (
         "Vendedor",
+        "consultar_vendedor_cliente",
         [
             "¿Quién es el vendedor de Moto Racing Cuenca?",
         ],
     ),
     (
         "Stock y facturación",
+        "consultar_stock_facturacion_producto",
         [
             "¿Cuánto stock queda del FIL-M01 y cuánto se facturó este mes?",
             "Stock y facturación de la bujía NGK durante julio",
@@ -51,12 +56,24 @@ HELP_FOOTER = (
 )
 
 
-def build_help_markup():
-    """HTML para /help y mensajes de bienvenida."""
+NO_ACCESS_TEXT = (
+    "Con tus permisos actuales no puedes hacer consultas al asistente. "
+    "Pide acceso al administrador."
+)
+
+
+def build_help_markup(allowed_intents=None):
+    """HTML para /help. Si se indica `allowed_intents`, solo muestra esas consultas."""
+    sections = [
+        section for section in HELP_SECTIONS
+        if allowed_intents is None or section[1] in allowed_intents
+    ]
     parts = [
         Markup("<p><b>%s</b></p>") % HELP_TITLE,
     ]
-    for title, examples in HELP_SECTIONS:
+    if not sections:
+        parts.append(Markup("<p>%s</p>") % NO_ACCESS_TEXT)
+    for title, _intent, examples in sections:
         parts.append(Markup("<p><b>%s</b></p><ul>") % title)
         for example in examples:
             parts.append(Markup("<li><i>%s</i></li>") % example)

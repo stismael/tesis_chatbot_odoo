@@ -27,6 +27,13 @@
               sequence="25"
               groups="chatbot_assistant.group_chatbot_manager"/>
 
+    <menuitem id="menu_chatbot_intent_permissions"
+              name="Permisos por consulta"
+              parent="menu_chatbot_root"
+              action="action_chatbot_intent_permission"
+              sequence="80"
+              groups="chatbot_assistant.group_chatbot_manager"/>
+
     <menuitem id="menu_chatbot_config"
               name="Ajustes"
               parent="menu_chatbot_root"

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_chatbot_intent_permission_list" model="ir.ui.view">
+        <field name="name">chatbot.intent.permission.list</field>
+        <field name="model">chatbot.intent.permission</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="intent"/>
+                <field name="group_ids" widget="many2many_tags"/>
+                <field name="area_label"/>
+                <field name="note" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_chatbot_intent_permission" model="ir.actions.act_window">
+        <field name="name">Permisos por consulta</field>
+        <field name="res_model">chatbot.intent.permission</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Define qué grupos de Odoo exige el asistente para cada consulta</p>
+            <p>Complementa los permisos de Odoo y solo afecta al chatbot: nunca da más acceso que Odoo.
+               Una fila sin grupos usa únicamente los permisos de Odoo.</p>
+        </field>
+    </record>
+</odoo>
