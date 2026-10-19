@@ -14,6 +14,7 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `docs/plan-mejoras-llm-y-permisos` | Planificación de los puntos 7 a 14 (solo documentación) | Fusionada en `main` (PR #2) |
 | `feature/metricas-y-monitoreo` | Paso 1: métricas y monitoreo | Fusionada en `main` (PR #3) |
 | `feature/permisos-por-consulta` | Paso 2: permisos por consulta | Fusionada en `main` (PR #4) |
+| `feature/velocidad-llm` | Paso 3: velocidad de la IA | PR #5 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -23,6 +24,20 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
+
+### PR #5 · Paso 3: velocidad de la llamada a la IA
+- **Rama:** `feature/velocidad-llm` · **Versión del módulo:** 18.0.1.7.0
+- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Pruebas:** 58 pruebas en Odoo 18 (5 nuevas) y 3 pruebas unitarias nuevas; verificada la
+  actualización desde 18.0.1.6.0 (timeout de 45 s a 20 s).
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Gemini 2.5 Flash y Flash-Lite sin "pensamiento" (`thinkingBudget: 0`); 2.5 Pro y otros modelos conservan la configuración del proveedor | `services/llm_client.py` (`_gemini_generation_config`) | Responder más rápido: clasificar y extraer datos no requiere razonar |
+| Esquema de respuesta (`responseSchema`) generado desde las intenciones, entidades y estados permitidos | `services/prompt_builder.py` (`RESPONSE_SCHEMA`, `ENTITY_KEYS`), `services/validator.py`, `models/orchestrator.py` | Evitar JSON inválido e intenciones inventadas; una sola lista de entidades |
+| Timeout por defecto de 20 s y un solo reintento; migración que cambia el valor antiguo de 45 s y respeta uno personalizado | `services/llm_client.py`, `models/res_config_settings.py`, `data/default_params.xml`, `hooks.py`, `migrations/18.0.1.7.0/post-migrate.py` | Bajar el peor caso de espera de más de 2 minutos a unos 41 s |
+| Ejemplo "Hola" en el prompt y pruebas de que el chat siempre responde, también con la IA caída | `services/prompt_builder.py`, `tests/test_speed.py` | Que un saludo nunca quede sin respuesta |
+| Pruebas de la configuración enviada a Gemini, del esquema y de los reintentos | `scripts/test_chatbot_unit.py`, `tests/test_speed.py` | Evitar regresiones en la llamada a la IA |
 
 ### PR #4 · Paso 2: permisos por consulta
 - **Rama:** `feature/permisos-por-consulta` · **Versión del módulo:** 18.0.1.6.0
@@ -95,7 +110,7 @@ se corrige en esa misma rama.
 |---|---|---|---|
 | 1 ✅ | 12. Métricas y monitoreo | `feature/metricas-y-monitoreo` | Medir primero: da los números de "antes" para todo lo demás |
 | 2 ✅ | 11. Permisos por consulta | `feature/permisos-por-consulta` | Seguridad; la Ruta 2 (paso 7) depende de esta tabla |
-| 3 | 7. Velocidad de la IA | `feature/velocidad-llm` | Con las métricas ya activas se mide el antes y el después |
+| 3 (en revisión) | 7. Velocidad de la IA | `feature/velocidad-llm` | Con las métricas ya activas se mide el antes y el después |
 | 4 | 9. Selección y validación del modelo | `feature/seleccion-modelo` | Corrige el defecto del campo "Modelo" y valida la configuración |
 | 5 | 8. Conversación libre | `feature/conversacion-libre` | Requiere la IA rápida (paso 3), porque los saludos también la llaman |
 | 6 | 3 y 4. Memoria y `order_state` | `fix/memoria-y-estado-pedido` | Ajustes acotados sobre el flujo actual |
@@ -191,12 +206,13 @@ se corrige en esa misma rama.
 ### Punto 7: velocidad de la llamada a la IA
 Va antes del punto 8, porque con el 8 los saludos también llaman a la IA. Conviene hacer primero el
 punto 12 (métricas) para medir los tiempos antes y después de estas mejoras.
-- [ ] Desactivar el "pensamiento" de Gemini 2.5 (`thinkingConfig: {thinkingBudget: 0}`); la tarea es
+- [x] Desactivar el "pensamiento" de Gemini 2.5 (`thinkingConfig: {thinkingBudget: 0}`); la tarea es
       clasificar y extraer datos, no razonar.
-- [ ] Exigir el formato con `responseSchema` (Gemini) y `json_object` (Groq) para evitar JSON inválido.
-- [ ] Timeout de ~20 s y un solo reintento (hoy 45 s × 3 intentos más pausas: más de 2 minutos).
+- [x] Exigir el formato con `responseSchema` (Gemini) y `json_object` (Groq) para evitar JSON inválido.
+- [x] Timeout de ~20 s y un solo reintento (hoy 45 s × 3 intentos más pausas: más de 2 minutos).
 - [ ] Revisar el caso "Hola" sin respuesta con el registro de Chatbot → Consultas (estado, error,
-      latencia).
+      latencia). Avance: el código siempre responde (probado con rechazo y con la IA caída) y "Hola"
+      está en los ejemplos del prompt. Falta confirmar la causa con Gemini real en la prueba manual.
 
 ### Punto 8: conversación libre con datos siempre desde Odoo (arquitectura híbrida)
 - [ ] Nueva intención `conversacion` y campo `reply` en el JSON: para saludos, agradecimientos,
