@@ -20,4 +20,8 @@
         <field name="key">chatbot_assistant.timeout</field>
         <field name="value">45</field>
     </record>
+    <record id="param_chatbot_log_retention_days" model="ir.config_parameter">
+        <field name="key">chatbot_assistant.log_retention_days</field>
+        <field name="value">0</field>
+    </record>
 </odoo>

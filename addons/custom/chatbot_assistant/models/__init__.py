@@ -8,4 +8,5 @@ from . import chatbot_discuss_service
 from . import chatbot_llm_result_wizard
 from . import discuss_channel
 from . import mail_bot
+from . import mail_message_reaction
 from . import orchestrator

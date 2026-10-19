@@ -4,14 +4,26 @@
         <field name="name">chatbot.query.log.tree</field>
         <field name="model">chatbot.query.log</field>
         <field name="arch" type="xml">
-            <list>
+            <list create="0"
+                  decoration-danger="outcome in ('llm_unavailable', 'internal_error')"
+                  decoration-warning="outcome in ('llm_bad_output', 'forbidden')"
+                  decoration-muted="outcome == 'rejected'">
                 <field name="create_date"/>
                 <field name="name"/>
                 <field name="user_id"/>
-                <field name="intent"/>
-                <field name="status"/>
-                <field name="success"/>
+                <field name="intent" optional="show"/>
+                <field name="outcome"/>
+                <field name="error_code" optional="show"/>
                 <field name="latency_ms"/>
+                <field name="llm_ms" optional="show"/>
+                <field name="orm_ms" optional="show"/>
+                <field name="retries" optional="hide"/>
+                <field name="llm_model" optional="hide"/>
+                <field name="tokens_prompt" optional="hide"/>
+                <field name="tokens_output" optional="hide"/>
+                <field name="user_feedback" optional="show"/>
+                <field name="status" optional="hide"/>
+                <field name="success" optional="hide"/>
             </list>
         </field>
     </record>
@@ -23,27 +35,42 @@
             <form string="Log de consulta" create="0" edit="0">
                 <sheet>
                     <group>
-                        <group>
+                        <group string="Consulta">
                             <field name="name"/>
                             <field name="user_id"/>
                             <field name="session_id"/>
                             <field name="intent"/>
                             <field name="status"/>
+                            <field name="outcome"/>
+                            <field name="error_code"/>
                             <field name="success"/>
+                            <field name="user_feedback"/>
+                        </group>
+                        <group string="Rendimiento">
                             <field name="latency_ms"/>
-                            <field name="error"/>
+                            <field name="llm_ms"/>
+                            <field name="orm_ms"/>
+                            <field name="retries"/>
+                            <field name="llm_provider"/>
+                            <field name="llm_model"/>
+                            <field name="tokens_prompt"/>
+                            <field name="tokens_output"/>
+                            <field name="tokens_thinking"/>
                         </group>
                     </group>
-                    <group string="Consulta">
+                    <group string="Pregunta">
                         <field name="query" nolabel="1" colspan="2"/>
                     </group>
                     <group string="Respuesta">
                         <field name="reply" nolabel="1" colspan="2"/>
                     </group>
-                    <group string="JSON LLM">
+                    <group string="Detalle del error" invisible="not error">
+                        <field name="error" nolabel="1" colspan="2"/>
+                    </group>
+                    <group string="JSON de la IA">
                         <field name="llm_json" nolabel="1" colspan="2"/>
                     </group>
-                    <group string="Datos handler">
+                    <group string="Datos de Odoo">
                         <field name="handler_data_json" nolabel="1" colspan="2"/>
                     </group>
                 </sheet>
@@ -51,9 +78,91 @@
         </field>
     </record>
 
+    <record id="view_chatbot_query_log_search" model="ir.ui.view">
+        <field name="name">chatbot.query.log.search</field>
+        <field name="model">chatbot.query.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="query"/>
+                <field name="user_id"/>
+                <field name="intent"/>
+                <field name="llm_model"/>
+                <filter name="filter_llm_unavailable" string="IA no disponible"
+                        domain="[('outcome', '=', 'llm_unavailable')]"/>
+                <filter name="filter_llm_bad" string="IA respondió mal"
+                        domain="[('outcome', '=', 'llm_bad_output')]"/>
+                <filter name="filter_forbidden" string="Sin permiso"
+                        domain="[('outcome', '=', 'forbidden')]"/>
+                <filter name="filter_internal" string="Error interno"
+                        domain="[('outcome', '=', 'internal_error')]"/>
+                <separator/>
+                <filter name="filter_slow" string="Lentas (&gt; 5 s)"
+                        domain="[('latency_ms', '&gt;', 5000)]"/>
+                <filter name="filter_thumbs_down" string="Con 👎"
+                        domain="[('user_feedback', '=', 'down')]"/>
+                <filter name="filter_thumbs_up" string="Con 👍"
+                        domain="[('user_feedback', '=', 'up')]"/>
+                <separator/>
+                <filter name="filter_today" string="Hoy"
+                        domain="[('create_date', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="filter_week" string="Últimos 7 días"
+                        domain="[('create_date', '&gt;=', (context_today() - relativedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <filter name="filter_create_date" string="Fecha" date="create_date"/>
+                <group expand="0" string="Agrupar por">
+                    <filter name="group_outcome" string="Resultado" context="{'group_by': 'outcome'}"/>
+                    <filter name="group_error_code" string="Código de error" context="{'group_by': 'error_code'}"/>
+                    <filter name="group_intent" string="Intención" context="{'group_by': 'intent'}"/>
+                    <filter name="group_model" string="Modelo" context="{'group_by': 'llm_model'}"/>
+                    <filter name="group_user" string="Usuario" context="{'group_by': 'user_id'}"/>
+                    <filter name="group_feedback" string="Valoración" context="{'group_by': 'user_feedback'}"/>
+                    <filter name="group_day" string="Día" context="{'group_by': 'create_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_chatbot_query_log_graph" model="ir.ui.view">
+        <field name="name">chatbot.query.log.graph</field>
+        <field name="model">chatbot.query.log</field>
+        <field name="arch" type="xml">
+            <graph string="Consultas por resultado" type="bar" stacked="1">
+                <field name="create_date" interval="day"/>
+                <field name="outcome"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_chatbot_query_log_pivot" model="ir.ui.view">
+        <field name="name">chatbot.query.log.pivot</field>
+        <field name="model">chatbot.query.log</field>
+        <field name="arch" type="xml">
+            <pivot string="Métricas del chatbot">
+                <field name="intent" type="row"/>
+                <field name="outcome" type="col"/>
+                <field name="latency_ms" type="measure"/>
+                <field name="llm_ms" type="measure"/>
+                <field name="orm_ms" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
     <record id="action_chatbot_query_log" model="ir.actions.act_window">
         <field name="name">Auditoría de consultas</field>
         <field name="res_model">chatbot.query.log</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">list,form,graph,pivot</field>
+        <field name="search_view_id" ref="view_chatbot_query_log_search"/>
+    </record>
+
+    <record id="action_chatbot_query_log_metrics" model="ir.actions.act_window">
+        <field name="name">Métricas</field>
+        <field name="res_model">chatbot.query.log</field>
+        <field name="view_mode">graph,pivot,list,form</field>
+        <field name="search_view_id" ref="view_chatbot_query_log_search"/>
+        <field name="context">{'search_default_filter_week': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Todavía no hay consultas registradas</p>
+            <p>Cada mensaje al Asistente ERP queda registrado aquí con su resultado, sus tiempos por
+               etapa y la valoración del usuario.</p>
+        </field>
     </record>
 </odoo>

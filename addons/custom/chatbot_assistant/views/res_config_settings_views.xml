@@ -40,6 +40,12 @@
                             <field name="chatbot_timeout"/>
                         </setting>
                     </block>
+                    <block title="Auditoría y métricas">
+                        <setting string="Conservar auditoría (días)"
+                                 help="Los registros de consultas más antiguos se borran automáticamente cada día. Use 0 para conservar todo (recomendado durante la evaluación de la tesis).">
+                            <field name="chatbot_log_retention_days"/>
+                        </setting>
+                    </block>
                 </app>
             </xpath>
         </field>

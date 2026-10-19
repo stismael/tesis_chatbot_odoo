@@ -45,6 +45,13 @@ class ResConfigSettings(models.TransientModel):
         default=45,
     )
 
+    chatbot_log_retention_days = fields.Integer(
+        string="Conservar auditoría (días)",
+        config_parameter="chatbot_assistant.log_retention_days",
+        default=0,
+        help="Los registros de auditoría más antiguos se borran cada día. 0 = conservar todo.",
+    )
+
     def _chatbot_runtime_config(self):
         """Config desde el formulario; si la key viene vacía, usa la guardada en ICP."""
         self.ensure_one()
