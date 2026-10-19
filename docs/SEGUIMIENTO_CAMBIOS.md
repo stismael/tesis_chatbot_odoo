@@ -16,6 +16,7 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `feature/permisos-por-consulta` | Paso 2: permisos por consulta | Fusionada en `main` (PR #4) |
 | `feature/velocidad-llm` | Paso 3: velocidad de la IA | Fusionada en `main` (PR #5) |
 | `feature/seleccion-modelo` | Paso 4: catálogo y validación del modelo | Fusionada en `main` (PR #6) |
+| `feature/conversacion-libre` | Paso 5: conversación libre | PR #7 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -25,6 +26,22 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
+
+### PR #7 · Paso 5: conversación libre redactada por la IA
+- **Rama:** `feature/conversacion-libre` · **Versión del módulo:** 18.0.1.9.0
+- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Pruebas:** 78 pruebas en Odoo 18 (9 nuevas) y 3 pruebas unitarias nuevas; verificada la
+  actualización desde 18.0.1.8.0.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Intención `conversacion` y campo `reply`: la IA responde saludos, agradecimientos y "¿qué puedes hacer?" en la misma llamada | `services/prompt_builder.py` (prompt, ejemplos y `RESPONSE_SCHEMA`), `models/orchestrator.py` | Que el asistente converse con sus palabras sin textos fijos en el código (pedido para la tesis: "que la IA piense por sí sola") |
+| Respuestas fuera de alcance redactadas por la IA, con el mensaje fijo como respaldo | `models/orchestrator.py` | Explicar por qué no puede hacerlo y qué sí puede hacer |
+| Reglas: una pregunta de datos va siempre por una consulta, nunca por `conversacion`; `reply` sin cifras | `services/prompt_builder.py` | Mantener el enfoque de la tesis: los datos solo salen de Odoo |
+| Control anti-invención: respuesta redactada con cifras, montos o porcentajes se descarta y se registra; límite de 400 caracteres | `services/validator.py` (`clean_reply`), `models/chatbot_query_log.py` | Garantizar que la IA nunca entregue datos inventados y medir cuántas veces lo intenta |
+| La conversación no consulta Odoo ni borra la consulta pendiente | `models/orchestrator.py` | Que un "gracias" en medio de una aclaración no pierda la consulta |
+| 6 consultas de conversación en el dataset y comportamientos `converse` / `not_conversation` en el evaluador | `data/eval/eval_dataset.jsonl`, `scripts/chatbot_eval_runner.py` | Evaluar la nueva ruta en el Capítulo 5 |
+| Pruebas de saludo, agradecimiento, capacidades, rechazo redactado, cifras descartadas y datos disfrazados de charla | `tests/test_conversation.py`, `scripts/test_chatbot_unit.py` | Evitar regresiones |
 
 ### PR #6 · Paso 4: catálogo y validación del modelo de IA
 - **Rama:** `feature/seleccion-modelo` · **Versión del módulo:** 18.0.1.8.0
@@ -130,7 +147,7 @@ se corrige en esa misma rama.
 | 2 ✅ | 11. Permisos por consulta | `feature/permisos-por-consulta` | Seguridad; la Ruta 2 (paso 7) depende de esta tabla |
 | 3 ✅ | 7. Velocidad de la IA | `feature/velocidad-llm` | Con las métricas ya activas se mide el antes y el después |
 | 4 ✅ | 9. Selección y validación del modelo | `feature/seleccion-modelo` | Corrige el defecto del campo "Modelo" y valida la configuración |
-| 5 | 8. Conversación libre | `feature/conversacion-libre` | Requiere la IA rápida (paso 3), porque los saludos también la llaman |
+| 5 (en revisión) | 8. Conversación libre | `feature/conversacion-libre` | Requiere la IA rápida (paso 3), porque los saludos también la llaman |
 | 6 | 3 y 4. Memoria y `order_state` | `fix/memoria-y-estado-pedido` | Ajustes acotados sobre el flujo actual |
 | 7 | 13. Ruta híbrida | `feature/ruta-hibrida` | Usa la tabla de permisos (paso 2), las métricas (paso 1) y la clasificación (paso 5) |
 | 8 | 6. Dataset de evaluación | `feature/dataset-evaluacion` | Con todas las rutas listas, se amplía y se ejecuta la evaluación final |
@@ -233,19 +250,19 @@ punto 12 (métricas) para medir los tiempos antes y después de estas mejoras.
       está en los ejemplos del prompt. Falta confirmar la causa con Gemini real en la prueba manual.
 
 ### Punto 8: conversación libre con datos siempre desde Odoo (arquitectura híbrida)
-- [ ] Nueva intención `conversacion` y campo `reply` en el JSON: para saludos, agradecimientos,
+- [x] Nueva intención `conversacion` y campo `reply` en el JSON: para saludos, agradecimientos,
       "¿qué puedes hacer?" y charla, la IA redacta la respuesta en la misma llamada (sin textos fijos
       en el código y sin llamada extra).
-- [ ] Respuestas fuera de alcance redactadas por la IA (por qué no puede y qué sí puede hacer), con el
+- [x] Respuestas fuera de alcance redactadas por la IA (por qué no puede y qué sí puede hacer), con el
       mensaje fijo actual solo como respaldo si `reply` viene vacío.
-- [ ] Regla en el prompt: si la pregunta es sobre datos de la empresa, se usa una intención de
+- [x] Regla en el prompt: si la pregunta es sobre datos de la empresa, se usa una intención de
       consulta, nunca `conversacion`.
-- [ ] Control anti-invención en el validador: si una respuesta conversacional contiene montos,
+- [x] Control anti-invención en el validador: si una respuesta conversacional contiene montos,
       números de factura o códigos de producto, se descarta y no se muestra.
-- [ ] Límite de longitud de `reply`.
-- [ ] Pruebas: saludo, agradecimiento, pregunta de capacidades, rechazo redactado y pregunta de datos
+- [x] Límite de longitud de `reply`.
+- [x] Pruebas: saludo, agradecimiento, pregunta de capacidades, rechazo redactado y pregunta de datos
       disfrazada de charla ("¿cuánto vendí ayer?").
-- [ ] Consultas de conversación en el dataset de evaluación.
+- [x] Consultas de conversación en el dataset de evaluación.
 
 ### Punto 9: selección y validación del modelo
 
