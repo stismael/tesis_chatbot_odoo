@@ -12,8 +12,8 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `feature/cu05-stock-facturacion-producto` | CU-05, stock unificado, lista de la tesis | Fusionada en `main` (PR #1) |
 | `fix/correcciones-handlers-y-pruebas-odoo` | Correcciones del punto 1 y pruebas en Odoo | Fusionada en `main` (PR #1) |
 | `docs/plan-mejoras-llm-y-permisos` | Planificación de los puntos 7 a 14 (solo documentación) | Fusionada en `main` (PR #2) |
-| `feature/metricas-y-monitoreo` | Paso 1: métricas y monitoreo | PR #3 |
-| `feature/permisos-por-consulta` | Paso 2: permisos por consulta | PR #4 |
+| `feature/metricas-y-monitoreo` | Paso 1: métricas y monitoreo | Fusionada en `main` (PR #3) |
+| `feature/permisos-por-consulta` | Paso 2: permisos por consulta | Fusionada en `main` (PR #4) |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -26,7 +26,7 @@ Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada co
 
 ### PR #4 · Paso 2: permisos por consulta
 - **Rama:** `feature/permisos-por-consulta` · **Versión del módulo:** 18.0.1.6.0
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-10-19, con las pruebas de GitHub Actions en verde.
 - **Pruebas:** 53 pruebas en Odoo 18 (13 nuevas, por perfil de usuario); verificada la
   actualización desde 18.0.1.5.0.
 
@@ -40,7 +40,7 @@ Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada co
 
 ### PR #3 · Paso 1: métricas y monitoreo
 - **Rama:** `feature/metricas-y-monitoreo` · **Versión del módulo:** 18.0.1.5.0
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-10-19, con las pruebas de GitHub Actions en verde.
 - **Pruebas:** 40 pruebas en Odoo 18 (14 nuevas) y pruebas unitarias; verificados el camino real de
   las reacciones de Discuss y la actualización desde 18.0.1.4.1.
 
@@ -93,8 +93,8 @@ se corrige en esa misma rama.
 
 | Paso | Punto | Rama sugerida | Por qué en este orden |
 |---|---|---|---|
-| 1 (en revisión) | 12. Métricas y monitoreo | `feature/metricas-y-monitoreo` | Medir primero: da los números de "antes" para todo lo demás |
-| 2 (en revisión) | 11. Permisos por consulta | `feature/permisos-por-consulta` | Seguridad; la Ruta 2 (paso 7) depende de esta tabla |
+| 1 ✅ | 12. Métricas y monitoreo | `feature/metricas-y-monitoreo` | Medir primero: da los números de "antes" para todo lo demás |
+| 2 ✅ | 11. Permisos por consulta | `feature/permisos-por-consulta` | Seguridad; la Ruta 2 (paso 7) depende de esta tabla |
 | 3 | 7. Velocidad de la IA | `feature/velocidad-llm` | Con las métricas ya activas se mide el antes y el después |
 | 4 | 9. Selección y validación del modelo | `feature/seleccion-modelo` | Corrige el defecto del campo "Modelo" y valida la configuración |
 | 5 | 8. Conversación libre | `feature/conversacion-libre` | Requiere la IA rápida (paso 3), porque los saludos también la llaman |
