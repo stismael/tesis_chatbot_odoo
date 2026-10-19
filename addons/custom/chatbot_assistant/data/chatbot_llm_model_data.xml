@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Modelos recomendados: el desplegable de Ajustes funciona antes de la primera actualización. -->
+    <record id="llm_model_gemini_25_flash" model="chatbot.llm.model">
+        <field name="provider">gemini</field>
+        <field name="model_id">gemini-2.5-flash</field>
+        <field name="display_name_api">Gemini 2.5 Flash</field>
+    </record>
+    <record id="llm_model_groq_llama_33_70b" model="chatbot.llm.model">
+        <field name="provider">groq</field>
+        <field name="model_id">llama-3.3-70b-versatile</field>
+        <field name="display_name_api">llama-3.3-70b-versatile</field>
+    </record>
+
+    <record id="ir_cron_chatbot_sync_models" model="ir.cron">
+        <field name="name">Chatbot: actualizar el catálogo de modelos de IA</field>
+        <field name="model_id" ref="model_chatbot_llm_model"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sync_models()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">weeks</field>
+        <field name="active" eval="True"/>
+    </record>
+</odoo>

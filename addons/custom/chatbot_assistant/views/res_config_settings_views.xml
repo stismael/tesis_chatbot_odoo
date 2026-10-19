@@ -20,18 +20,37 @@
                             <field name="chatbot_api_key" password="True"/>
                         </setting>
                         <setting string="Modelo"
-                                 help="ID técnico vigente (ej. gemini-2.5-flash). Pulse Listar modelos para ver opciones en una ventana.">
-                            <field name="chatbot_model"/>
+                                 help="Solo modelos de texto disponibles del proveedor elegido. Al guardar se prueba la conexión si cambió el proveedor, la API key o el modelo.">
+                            <field name="chatbot_llm_model_id" options="{'no_create': True, 'no_open': True}"
+                                   invisible="not chatbot_catalog_count"/>
+                            <field name="chatbot_model" invisible="chatbot_catalog_count"/>
+                            <div class="text-warning mt4" invisible="not chatbot_model_warning">
+                                <field name="chatbot_model_warning" class="text-warning"/>
+                            </div>
+                            <div class="text-muted small mt4">
+                                Catálogo actualizado: <field name="chatbot_models_synced" class="d-inline"/>.
+                                La API no informa si un modelo es gratuito:
+                                <field name="chatbot_pricing_url" widget="url" class="d-inline" text="ver precios del proveedor"/>
+                            </div>
                             <div class="mt8">
-                                <button name="action_chatbot_list_models"
+                                <button name="action_chatbot_sync_models"
                                         type="object"
-                                        string="Listar modelos"
+                                        string="Actualizar modelos"
                                         class="btn-secondary"/>
                                 <button name="action_chatbot_test_connection"
                                         type="object"
                                         string="Probar conexión"
                                         class="btn-primary ms-2"/>
+                                <button name="%(chatbot_assistant.action_chatbot_llm_model)d"
+                                        type="action"
+                                        string="Ver catálogo"
+                                        class="btn-link ms-2"/>
                             </div>
+                        </setting>
+                        <setting string="Estado del proveedor"
+                                 help="Última verificación de la conexión y última falla registrada en la auditoría.">
+                            <div><field name="chatbot_last_verified" class="d-inline"/></div>
+                            <div><field name="chatbot_llm_status" class="d-inline"/></div>
                         </setting>
                         <setting string="Temperature" help="Use valores bajos (0.0–0.2) para mayor consistencia en JSON.">
                             <field name="chatbot_temperature"/>

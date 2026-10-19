@@ -9,3 +9,5 @@ access_chatbot_llm_result_wizard_manager,chatbot.llm.result.wizard.manager,model
 access_chatbot_llm_result_wizard_system,chatbot.llm.result.wizard.system,model_chatbot_llm_result_wizard,base.group_system,1,1,1,1
 access_chatbot_intent_permission_user,chatbot.intent.permission.user,model_chatbot_intent_permission,group_chatbot_user,1,0,0,0
 access_chatbot_intent_permission_manager,chatbot.intent.permission.manager,model_chatbot_intent_permission,group_chatbot_manager,1,1,1,1
+access_chatbot_llm_model_manager,chatbot.llm.model.manager,model_chatbot_llm_model,group_chatbot_manager,1,1,1,1
+access_chatbot_llm_model_system,chatbot.llm.model.system,model_chatbot_llm_model,base.group_system,1,1,1,1

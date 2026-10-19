@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_chatbot_llm_model_list" model="ir.ui.view">
+        <field name="name">chatbot.llm.model.list</field>
+        <field name="model">chatbot.llm.model</field>
+        <field name="arch" type="xml">
+            <list create="false" decoration-muted="not available" decoration-bf="recommended">
+                <field name="provider"/>
+                <field name="model_id"/>
+                <field name="display_name_api"/>
+                <field name="description" optional="show"/>
+                <field name="input_token_limit" optional="show"/>
+                <field name="output_token_limit" optional="hide"/>
+                <field name="recommended" optional="show"/>
+                <field name="available"/>
+                <field name="last_seen" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_chatbot_llm_model_search" model="ir.ui.view">
+        <field name="name">chatbot.llm.model.search</field>
+        <field name="model">chatbot.llm.model</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="model_id"/>
+                <filter name="available" string="Disponibles" domain="[('available', '=', True)]"/>
+                <filter name="unavailable" string="No disponibles" domain="[('available', '=', False)]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter name="group_provider" string="Proveedor" context="{'group_by': 'provider'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_chatbot_llm_model" model="ir.actions.act_window">
+        <field name="name">Modelos de IA</field>
+        <field name="res_model">chatbot.llm.model</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'search_default_available': 1, 'search_default_group_provider': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Sin modelos en el catálogo</p>
+            <p>En Ajustes del chatbot, pulse "Actualizar modelos" para traer el listado del proveedor.
+               La API no informa si un modelo es gratuito: revise la página de precios del proveedor.</p>
+        </field>
+    </record>
+</odoo>

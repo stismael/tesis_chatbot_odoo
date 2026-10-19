@@ -14,7 +14,8 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `docs/plan-mejoras-llm-y-permisos` | Planificación de los puntos 7 a 14 (solo documentación) | Fusionada en `main` (PR #2) |
 | `feature/metricas-y-monitoreo` | Paso 1: métricas y monitoreo | Fusionada en `main` (PR #3) |
 | `feature/permisos-por-consulta` | Paso 2: permisos por consulta | Fusionada en `main` (PR #4) |
-| `feature/velocidad-llm` | Paso 3: velocidad de la IA | PR #5 |
+| `feature/velocidad-llm` | Paso 3: velocidad de la IA | Fusionada en `main` (PR #5) |
+| `feature/seleccion-modelo` | Paso 4: catálogo y validación del modelo | PR #6 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -25,9 +26,26 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
 
+### PR #6 · Paso 4: catálogo y validación del modelo de IA
+- **Rama:** `feature/seleccion-modelo` · **Versión del módulo:** 18.0.1.8.0
+- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Pruebas:** 69 pruebas en Odoo 18 (11 nuevas) y 2 pruebas unitarias nuevas; verificada la
+  actualización desde 18.0.1.7.0.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Al cambiar de proveedor, el modelo pasa siempre al recomendado | `models/res_config_settings.py` (`_onchange_chatbot_provider`) | Corregir el defecto verificado: con `openai/gpt-oss-120b` o `qwen/qwen3-32b` el campo se quedaba con un modelo de Groq aunque el proveedor fuera Gemini |
+| Catálogo de modelos por proveedor con "Actualizar modelos": sincroniza sin borrar (agrega, actualiza, marca "no disponible", reactiva); tarea semanal | `models/chatbot_llm_model.py`, `data/chatbot_llm_model_data.xml`, `views/chatbot_llm_model_views.xml`, `views/menus.xml`, `security/ir.model.access.csv` | Responder a la tutora de dónde sale la lista de modelos y mantenerla al día sin perder historial |
+| Listados solo con modelos de texto (Groq sin audio ni moderación) y todas las páginas de Gemini | `services/llm_client.py` (`list_gemini_models`, `list_groq_models`, `is_text_model`) | Que no se pueda elegir un modelo que no sirve para el chatbot |
+| Desplegable filtrado por proveedor, aviso de modelo no disponible, fecha de actualización y enlace a precios | `models/res_config_settings.py`, `views/res_config_settings_views.xml` | Evitar elegir un modelo de otro proveedor y dejar claro que la API no informa si es gratuito |
+| Prueba de conexión al guardar si cambió el proveedor, la API key o el modelo; no al desactivar ni al cambiar otros datos; rechazo de modelos de otro proveedor | `models/res_config_settings.py` (`set_values`, `_chatbot_check_before_save`) | Que no se guarde una configuración que no funciona y que una caída del proveedor no impida apagar el asistente |
+| Estado del proveedor en Ajustes: última verificación y última falla de la auditoría | `models/res_config_settings.py`, `views/res_config_settings_views.xml` | Ver de un vistazo si la IA está fallando después de guardar |
+| Corrección de "Activar asistente": se guarda siempre como "True" / "False" | `models/res_config_settings.py` | Defecto verificado en `main`: Odoo borra el parámetro de un booleano en False, el asistente seguía activo y el ajuste volvía a aparecer marcado |
+| Pruebas de cambio de proveedor, catálogo, desplegable, guardado y estado; paginación de Gemini y filtro de Groq | `tests/test_model_selection.py`, `scripts/test_chatbot_unit.py` | Evitar regresiones en la configuración del LLM |
+
 ### PR #5 · Paso 3: velocidad de la llamada a la IA
 - **Rama:** `feature/velocidad-llm` · **Versión del módulo:** 18.0.1.7.0
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-10-19, con las pruebas de GitHub Actions en verde.
 - **Pruebas:** 58 pruebas en Odoo 18 (5 nuevas) y 3 pruebas unitarias nuevas; verificada la
   actualización desde 18.0.1.6.0 (timeout de 45 s a 20 s).
 
@@ -110,8 +128,8 @@ se corrige en esa misma rama.
 |---|---|---|---|
 | 1 ✅ | 12. Métricas y monitoreo | `feature/metricas-y-monitoreo` | Medir primero: da los números de "antes" para todo lo demás |
 | 2 ✅ | 11. Permisos por consulta | `feature/permisos-por-consulta` | Seguridad; la Ruta 2 (paso 7) depende de esta tabla |
-| 3 (en revisión) | 7. Velocidad de la IA | `feature/velocidad-llm` | Con las métricas ya activas se mide el antes y el después |
-| 4 | 9. Selección y validación del modelo | `feature/seleccion-modelo` | Corrige el defecto del campo "Modelo" y valida la configuración |
+| 3 ✅ | 7. Velocidad de la IA | `feature/velocidad-llm` | Con las métricas ya activas se mide el antes y el después |
+| 4 (en revisión) | 9. Selección y validación del modelo | `feature/seleccion-modelo` | Corrige el defecto del campo "Modelo" y valida la configuración |
 | 5 | 8. Conversación libre | `feature/conversacion-libre` | Requiere la IA rápida (paso 3), porque los saludos también la llaman |
 | 6 | 3 y 4. Memoria y `order_state` | `fix/memoria-y-estado-pedido` | Ajustes acotados sobre el flujo actual |
 | 7 | 13. Ruta híbrida | `feature/ruta-hibrida` | Usa la tabla de permisos (paso 2), las métricas (paso 1) y la clasificación (paso 5) |
@@ -238,56 +256,61 @@ con el modelo de Groq aunque el proveedor sea Gemini, y el chat falla con "model
 Groq; los modelos Gemma que aparecen con Gemini son de Google.)
 
 **Arreglo inmediato**
-- [ ] Al cambiar de proveedor, reemplazar **siempre** el modelo por el recomendado del nuevo proveedor
+- [x] Al cambiar de proveedor, reemplazar **siempre** el modelo por el recomendado del nuevo proveedor
       (Gemini → `gemini-2.5-flash`; Groq → `llama-3.3-70b-versatile`), sin adivinar por el nombre.
 
 **Catálogo de modelos en Odoo**
-- [ ] Tabla de modelos por proveedor (proveedor, ID, nombre, descripción, límite de tokens,
+- [x] Tabla de modelos por proveedor (proveedor, ID, nombre, descripción, límite de tokens,
       disponible) y botón **"Actualizar modelos"**.
-- [ ] La actualización **sincroniza, no borra**, y solo toca el proveedor consultado:
+- [x] La actualización **sincroniza, no borra**, y solo toca el proveedor consultado:
   - modelo nuevo → se agrega;
   - modelo existente → se actualizan sus datos;
   - modelo que ya no aparece → se marca **"No disponible"** y sale del desplegable;
   - modelo que vuelve a aparecer → se marca disponible otra vez.
-- [ ] Guardar la fecha de la última actualización y mostrarla en Ajustes.
-- [ ] (Opcional) Tarea programada que actualice el catálogo una vez por semana.
-- [ ] El campo "Modelo" pasa a ser un **desplegable filtrado por el proveedor elegido**, solo con
+- [x] Guardar la fecha de la última actualización y mostrarla en Ajustes.
+- [x] (Opcional) Tarea programada que actualice el catálogo una vez por semana.
+- [x] El campo "Modelo" pasa a ser un **desplegable filtrado por el proveedor elegido**, solo con
       modelos de texto disponibles y el recomendado marcado; así no se puede elegir un modelo de otro
       proveedor.
-- [ ] Filtrar también la lista de Groq: hoy muestra todo su catálogo, incluidos modelos que no son
+- [x] Filtrar también la lista de Groq: hoy muestra todo su catálogo, incluidos modelos que no son
       de texto (por ejemplo, Whisper para audio).
-- [ ] Leer todas las páginas del listado de Gemini (hoy pide hasta 100 y no sigue `nextPageToken`).
-- [ ] Mostrar los datos que entrega la API (nombre, descripción, límite de tokens) y un enlace a la
+- [x] Leer todas las páginas del listado de Gemini (hoy pide hasta 100 y no sigue `nextPageToken`).
+- [x] Mostrar los datos que entrega la API (nombre, descripción, límite de tokens) y un enlace a la
       página de precios del proveedor, ya que la API no informa si un modelo es gratuito.
-- [ ] Aviso en Ajustes si el modelo configurado quedó **"No disponible"**: "El modelo configurado ya
+- [x] Aviso en Ajustes si el modelo configurado quedó **"No disponible"**: "El modelo configurado ya
       no está disponible en <proveedor>. Elige otro."
 
 **Validación al guardar la configuración**
-- [ ] Al pulsar **Guardar**, si cambió el proveedor, la API key o el modelo, probar la conexión
+- [x] Al pulsar **Guardar**, si cambió el proveedor, la API key o el modelo, probar la conexión
       automáticamente:
   - si funciona, guardar y mostrar "Conexión verificada el <fecha> con <modelo>";
   - si falla, no guardar y explicar el motivo (API key inválida, modelo inexistente en el proveedor,
     sin conexión, cuota agotada).
-- [ ] No probar cuando solo cambian otros datos (temperatura, timeout) ni al **desactivar** el
+- [x] No probar cuando solo cambian otros datos (temperatura, timeout) ni al **desactivar** el
       chatbot, para que una caída del proveedor no impida apagar el asistente.
-- [ ] Validar también que el modelo pertenezca al proveedor elegido ("El modelo 'qwen/qwen3-32b' no
+- [x] Validar también que el modelo pertenezca al proveedor elegido ("El modelo 'qwen/qwen3-32b' no
       pertenece a Google Gemini").
-- [ ] Mantener el botón **"Probar conexión"** para verificar en cualquier momento sin guardar.
+- [x] Mantener el botón **"Probar conexión"** para verificar en cualquier momento sin guardar.
 
 **Fallos después de guardar (fuera del control del sistema)**
-- [ ] Indicador en Ajustes con el último error del proveedor y su fecha.
+- [x] Indicador en Ajustes con el último error del proveedor y su fecha.
 - [ ] (Opcional) **Modelo de respaldo**: si el principal falla (caída, cuota agotada), intentar con
       otro configurado, incluso de otro proveedor, y registrar en el log qué modelo respondió.
 
 **Pruebas**
-- [ ] Cambio Groq → Gemini con `llama-3.3-70b-versatile`, `openai/gpt-oss-120b`, `qwen/qwen3-32b` y
+- [x] Cambio Groq → Gemini con `llama-3.3-70b-versatile`, `openai/gpt-oss-120b`, `qwen/qwen3-32b` y
       `deepseek-r1-distill-llama-70b`: el campo debe quedar en `gemini-2.5-flash`. Y el cambio
       inverso Gemini → Groq.
-- [ ] Sincronización del catálogo: agregar, actualizar, marcar "No disponible" y reactivar.
-- [ ] El desplegable solo muestra modelos disponibles del proveedor elegido.
-- [ ] Guardar con conexión fallida no guarda y muestra el motivo; desactivar el chatbot guarda sin
+- [x] Sincronización del catálogo: agregar, actualizar, marcar "No disponible" y reactivar.
+- [x] El desplegable solo muestra modelos disponibles del proveedor elegido.
+- [x] Guardar con conexión fallida no guarda y muestra el motivo; desactivar el chatbot guarda sin
       probar.
 - [ ] (Si se implementa) el modelo de respaldo responde cuando el principal falla.
+
+**Defecto encontrado y corregido en este paso:** el ajuste "Activar asistente" no se podía apagar.
+Odoo borra el parámetro de un booleano guardado en False; el asistente lo leía como activo y el
+ajuste volvía a aparecer marcado. Verificado en una base de `main`; ahora se guarda como "True" /
+"False" y la desactivación se mantiene al actualizar el módulo.
 
 ### Punto 10 (opcional): respuestas de datos redactadas por la IA
 - [ ] Interruptor en Ajustes "Respuestas redactadas por la IA", apagado por defecto.
