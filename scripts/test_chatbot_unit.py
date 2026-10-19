@@ -269,6 +269,30 @@ def test_groq_solo_modelos_de_texto_activos():
     assert models[0]["input_token_limit"] == 131072
 
 
+def test_conversacion_con_reply():
+    v = validate_llm_output({"intent": "conversacion", "entities": {}, "status": "ready",
+                             "reply": "  ¡Hola!   ¿En qué te ayudo?  "})
+    assert v["ok"] and v["status"] == "ready" and v["reply"] == "¡Hola! ¿En qué te ayudo?"
+    assert not v["reply_discarded"]
+
+
+def test_reply_con_cifras_se_descarta():
+    from services.validator import clean_reply
+    for text in ("Ayer vendiste 1.250 dólares", "Te costó $ cien", "Subió un 5 %", "La INV/2026/00001 está pagada"):
+        assert clean_reply(text) == (None, "invented_data"), text
+    assert clean_reply(None) == (None, None)
+    v = validate_llm_output({"intent": "fuera_de_alcance", "entities": {}, "status": "rejected",
+                             "reply": "No puedo borrar la FIL-M01"})
+    assert v["status"] == "rejected" and v["reply"] is None and v["reply_discarded"] == "invented_data"
+
+
+def test_esquema_incluye_conversacion():
+    from services.prompt_builder import RESPONSE_SCHEMA
+    assert "conversacion" in RESPONSE_SCHEMA["properties"]["intent"]["enum"]
+    assert RESPONSE_SCHEMA["properties"]["reply"] == {"type": "STRING", "nullable": True}
+    assert "reply" not in RESPONSE_SCHEMA["required"]
+
+
 if __name__ == "__main__":
     test_ready_factura()
     test_missing_stock()
@@ -287,4 +311,7 @@ if __name__ == "__main__":
     test_un_solo_reintento()
     test_gemini_lista_todas_las_paginas_y_solo_texto()
     test_groq_solo_modelos_de_texto_activos()
+    test_conversacion_con_reply()
+    test_reply_con_cifras_se_descarta()
+    test_esquema_incluye_conversacion()
     print("OK: validator + dataset + LLM error mapping checks passed")
