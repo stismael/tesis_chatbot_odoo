@@ -17,7 +17,7 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `feature/velocidad-llm` | Paso 3: velocidad de la IA | Fusionada en `main` (PR #5) |
 | `feature/seleccion-modelo` | Paso 4: catálogo y validación del modelo | Fusionada en `main` (PR #6) |
 | `feature/conversacion-libre` | Paso 5: conversación libre | Fusionada en `main` (PR #7) |
-| `fix/memoria-y-estado-pedido` | Paso 6: memoria de la sesión y `order_state` | PR #8 |
+| `fix/memoria-y-estado-pedido` | Paso 6: memoria de la sesión y `order_state` | Fusionada en `main` (PR #8) |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -30,7 +30,7 @@ Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada co
 
 ### PR #8 · Paso 6: memoria de la sesión y estado del pedido
 - **Rama:** `fix/memoria-y-estado-pedido` · **Versión del módulo:** 18.0.1.10.0
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-10-19, con las pruebas de GitHub Actions en verde.
 - **Pruebas:** 85 pruebas en Odoo 18 (7 nuevas) y 2 pruebas unitarias nuevas. Los tres defectos se
   reprodujeron con el orquestador antes de corregirlos.
 
@@ -164,7 +164,7 @@ se corrige en esa misma rama.
 | 3 ✅ | 7. Velocidad de la IA | `feature/velocidad-llm` | Con las métricas ya activas se mide el antes y el después |
 | 4 ✅ | 9. Selección y validación del modelo | `feature/seleccion-modelo` | Corrige el defecto del campo "Modelo" y valida la configuración |
 | 5 ✅ | 8. Conversación libre | `feature/conversacion-libre` | Requiere la IA rápida (paso 3), porque los saludos también la llaman |
-| 6 (en revisión) | 3 y 4. Memoria y `order_state` | `fix/memoria-y-estado-pedido` | Ajustes acotados sobre el flujo actual |
+| 6 ✅ | 3 y 4. Memoria y `order_state` | `fix/memoria-y-estado-pedido` | Ajustes acotados sobre el flujo actual |
 | 7 | 13. Ruta híbrida | `feature/ruta-hibrida` | Usa la tabla de permisos (paso 2), las métricas (paso 1) y la clasificación (paso 5) |
 | 8 | 6. Dataset de evaluación | `feature/dataset-evaluacion` | Con todas las rutas listas, se amplía y se ejecuta la evaluación final |
 | 9 | 5 y 10. Respuesta sin bloqueo y redacción por IA (opcionales) | `feature/respuesta-asincrona` | Mejoras finales si queda tiempo |
