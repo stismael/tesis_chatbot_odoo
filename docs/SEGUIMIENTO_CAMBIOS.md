@@ -11,8 +11,36 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `claude/repository-analysis-84h0jn` | Totales de ventas, privacidad, test corregido | Fusionada en `main` (PR #1) |
 | `feature/cu05-stock-facturacion-producto` | CU-05, stock unificado, lista de la tesis | Fusionada en `main` (PR #1) |
 | `fix/correcciones-handlers-y-pruebas-odoo` | Correcciones del punto 1 y pruebas en Odoo | Fusionada en `main` (PR #1) |
-| `feature/metricas-y-monitoreo` | Punto 12 (métricas y monitoreo); conviene hacerlo antes del 7 | Por crear |
-| `feature/mejoras-llm-modelo-y-latencia` | Puntos 7 a 10 (velocidad, conversación, modelos, redacción) | Por crear |
+| `docs/plan-mejoras-llm-y-permisos` | Planificación de los puntos 7 a 13 (solo documentación) | Subida, sin fusionar |
+
+Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
+
+---
+
+## Plan de avance (paso a paso)
+
+Cada paso va en **su propia rama**, con pruebas automáticas, un PR hacia `main` y una **prueba
+manual en tu Odoo con Gemini real** antes de pasar al siguiente. Si algo falla en la prueba manual,
+se corrige en esa misma rama.
+
+| Paso | Punto | Rama sugerida | Por qué en este orden |
+|---|---|---|---|
+| 1 | 12. Métricas y monitoreo | `feature/metricas-y-monitoreo` | Medir primero: da los números de "antes" para todo lo demás |
+| 2 | 11. Permisos por consulta | `feature/permisos-por-consulta` | Seguridad; la Ruta 2 (paso 7) depende de esta tabla |
+| 3 | 7. Velocidad de la IA | `feature/velocidad-llm` | Con las métricas ya activas se mide el antes y el después |
+| 4 | 9. Selección y validación del modelo | `feature/seleccion-modelo` | Corrige el defecto del campo "Modelo" y valida la configuración |
+| 5 | 8. Conversación libre | `feature/conversacion-libre` | Requiere la IA rápida (paso 3), porque los saludos también la llaman |
+| 6 | 3 y 4. Memoria y `order_state` | `fix/memoria-y-estado-pedido` | Ajustes acotados sobre el flujo actual |
+| 7 | 13. Ruta híbrida | `feature/ruta-hibrida` | Usa la tabla de permisos (paso 2), las métricas (paso 1) y la clasificación (paso 5) |
+| 8 | 6. Dataset de evaluación | `feature/dataset-evaluacion` | Con todas las rutas listas, se amplía y se ejecuta la evaluación final |
+| 9 | 5 y 10. Respuesta sin bloqueo y redacción por IA (opcionales) | `feature/respuesta-asincrona` | Mejoras finales si queda tiempo |
+
+**Ciclo de cada paso**
+- [ ] Crear la rama desde `main` actualizado.
+- [ ] Implementar con pruebas automáticas (unitarias y en Odoo).
+- [ ] GitHub Actions en verde.
+- [ ] Prueba manual en tu Odoo con Gemini real (lista de comprobación en el PR).
+- [ ] Fusionar el PR y marcar las casillas del punto en este archivo.
 
 ---
 
@@ -286,6 +314,62 @@ error como texto libre, lo que no basta para analizar.
 - [ ] Los tiempos por etapa suman el total y se registran también cuando hay error.
 - [ ] Una reacción 👍 / 👎 en el chat queda asociada a su registro del log.
 - [ ] La limpieza por antigüedad borra solo los registros vencidos.
+
+### Punto 13: ruta híbrida, consultas flexibles validadas (propuesta de la tutora)
+Las preguntas que coinciden con un caso de uso siguen por la **Ruta 1** (consulta estructurada fija,
+como hoy). Las demás preguntas de datos van por una **Ruta 2**: la IA arma un plan de consulta en
+JSON a partir de un catálogo autorizado, el sistema lo valida contra una lista blanca y lo ejecuta en
+el ORM. Ejemplo: "¿Cuántos productos cuestan menos de 100 dólares?" → `product.product`,
+`list_price < 100`, contar. Cubre la pregunta de precios, por lo que no hace falta un CU-06 aparte.
+
+**Catálogo autorizado** (implementa la Tabla 6 de la tesis, que hoy no se aplica en el código)
+- [ ] Modelos permitidos: `product.product`, `res.partner`, `sale.order`, `account.move`,
+      `stock.quant`.
+- [ ] Por cada campo: nombre técnico, descripción en español para la IA, tipo y operadores
+      permitidos (por ejemplo, `list_price` = "precio de venta"; distinguirlo del costo).
+- [ ] Campos sensibles fuera de la lista (RUC/cédula, costo de compra, etc.).
+- [ ] Editable por el administrador del chatbot.
+
+**Plan de consulta y validador** (pieza clave de seguridad)
+- [ ] Nueva intención `consulta_flexible` con plan JSON: modelo, filtros (campo, operador, valor),
+      operación (contar, sumar, promedio, mínimo, máximo, listar), agrupación opcional (una) y orden.
+- [ ] Validar: modelo y campos en el catálogo, operador compatible con el tipo, valores del tipo
+      correcto, máximo de filtros, límite de 15 resultados al listar. Si algo no cuadra, no se ejecuta.
+- [ ] Filtros por nombre de cliente o producto (relación de un nivel); sin cruces complejos.
+
+**Ejecución y respuesta**
+- [ ] Convertir el plan en dominio de Odoo y usar `search_count`, `read_group` o `search_read`, con
+      los permisos del usuario y la tabla de permisos por consulta (punto 11).
+- [ ] Respuesta con plantilla; los números siempre vienen de Odoo, nunca de la IA.
+- [ ] Mostrar siempre la interpretación: "Interpreté: productos con precio de venta menor a $100.
+      Resultado: 42 productos."
+- [ ] Registrar en el log el plan, la ruta usada (1 o 2) y el resultado (punto 12).
+
+**Pruebas**
+- [ ] Planes válidos de cada operación (contar, sumar, listar, agrupar).
+- [ ] Planes rechazados: modelo no permitido, campo sensible, operador inválido para el tipo, valor de
+      tipo incorrecto, demasiados filtros.
+- [ ] Respeto de permisos y reglas de registro en la Ruta 2.
+- [ ] Consultas de la Ruta 2 en el dataset, con resultado esperado.
+
+### Punto 14: límites conocidos del asistente (para el dataset y la tesis)
+Preguntas que el asistente **no** responde, incluso con la ruta híbrida. Deben rechazarse o aclararse
+sin inventar una respuesta.
+- [ ] **Por diseño (seguridad):** acciones o escritura ("Crea una factura", "Confirma el pedido
+      S00045", "Envía la factura por correo"); consultas sin permiso; campos sensibles ("¿Cuál es el
+      RUC del cliente X?", "¿Cuál es el costo de compra del casco?").
+- [ ] **Por alcance (otros módulos):** nómina ("¿Cuánto gana el vendedor Juan?"), compras ("¿Qué le
+      compramos al proveedor X?"), saldos bancarios, CRM.
+- [ ] **Por complejidad (varios pasos):** márgenes por producto, comparar conjuntos ("clientes que
+      compraron cascos pero nunca filtros"), comparar periodos por vendedor. Listados largos se
+      limitan a 15 resultados más el total.
+- [ ] **Por naturaleza (no son datos):** predicciones ("¿Cuánto venderemos el próximo mes?"),
+      causas ("¿Por qué bajaron las ventas?"), recomendaciones, notas internas o adjuntos.
+- [ ] **Fuera del dominio:** clima, poemas, etc. La conversación libre (punto 8) responde con
+      amabilidad e indica el alcance.
+- [ ] **Decidir:** si la IA puede responder conocimiento general del negocio ("¿Qué es el IVA?") o si
+      se limita al alcance del asistente.
+- [ ] Incluir ejemplos de cada categoría en el dataset como "rechazar" o "aclarar" (paso 8 del plan).
 
 ### Otros
 - [ ] Probar el chat completo en la interfaz web con Gemini real (CU-01 a CU-05).

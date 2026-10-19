@@ -190,6 +190,35 @@ Aplicar cuando cada cambio esté implementado (ver `SEGUIMIENTO_CAMBIOS.md`, pun
       cruzadas, ejemplo de existencias); "¿no es redundante?" (solo restringe, nunca amplía); "¿y si la
       empresa quiere que ventas vea stock?" (se agrega el grupo en la tabla, sin código).
 
+### Ruta híbrida: consultas flexibles validadas (punto 13, propuesta de la tutora)
+- [ ] **Arquitectura (3.3 y 3.4):** describir las dos rutas: Ruta 1 (casos de uso con consulta
+      estructurada fija) y Ruta 2 (plan de consulta en JSON generado por la IA a partir de un
+      catálogo autorizado, validado contra lista blanca y ejecutado en el ORM).
+- [ ] **Tabla 6:** pasa a ser el catálogo real de la Ruta 2 (modelos, campos, descripción, tipo y
+      operadores permitidos), con lo que 3.4.3 ("listas blancas") queda respaldado por el código.
+- [ ] **Nuevo esquema JSON del plan** en 3.3.3 (modelo, filtros, operación, agrupación, orden) y su
+      validación en 3.3.4.
+- [ ] **Diagrama de flujo** de la clasificación: caso de uso → Ruta 1; otra consulta de datos →
+      Ruta 2; charla → conversación; prohibido → rechazo.
+- [ ] **Justificación con la literatura ya citada:** Morshed et al. (2026) (inyección del esquema en
+      el prompt), Jarin et al. (2024) (lenguaje natural a JSON), Elder et al. (2026) (lenguaje
+      natural a API) y Ma et al. (2025) (validación semántica). Posicionarla como punto medio entre
+      intenciones cerradas y Text-to-SQL, sin SQL libre.
+- [ ] **Capítulo 5:** comparar Ruta 1 y Ruta 2 en precisión, latencia y errores.
+
+### Limitaciones (punto 14)
+- [ ] **Nueva sección de limitaciones en el Capítulo 5**, con ejemplos por categoría:
+  - **Por diseño:** escritura, sin permiso, campos sensibles. Son decisiones de seguridad, no fallas.
+  - **Por alcance:** módulos no incluidos (nómina, compras, bancos, CRM); se amplían agregando
+    modelos al catálogo.
+  - **Por complejidad:** cálculos de varios pasos (márgenes, comparación de conjuntos o periodos).
+  - **Por naturaleza:** predicciones, análisis de causas, recomendaciones, texto libre y adjuntos.
+  - **Fuera del dominio:** temas no comerciales.
+- [ ] Indicar que el dataset incluye consultas de estas categorías y que el sistema las rechaza o pide
+      aclaración en lugar de inventar.
+- [ ] **Trabajo futuro** ligado a cada categoría: agente con *function calling* para varios pasos,
+      analítica y predicción, más módulos en el catálogo y escritura con confirmación del usuario.
+
 ### Defensa ante el tribunal
 - [ ] Preparar la justificación del diseño de dominio cerrado e híbrido (exactitud, seguridad,
       auditabilidad, evaluación y alcance del TIC), citando Bi et al. (2025), Béchard y Ayala (2024),
