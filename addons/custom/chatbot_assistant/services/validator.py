@@ -3,19 +3,9 @@
 
 import datetime
 
-from .prompt_builder import ALLOWED_INTENTS
+from .prompt_builder import ALLOWED_INTENTS, ENTITY_KEYS
 
 DATE_KEYS = ("date_from", "date_to")
-
-ENTITY_KEYS = (
-    "invoice_number",
-    "customer_name",
-    "product_name",
-    "product_code",
-    "location_name",
-    "date_from",
-    "date_to",
-)
 
 # Cada intención tiene grupos OR: basta con satisfacer UN grupo.
 # Dentro de un grupo, basta con UNA entidad (OR interno).

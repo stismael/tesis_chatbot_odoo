@@ -13,8 +13,8 @@ _logger = logging.getLogger(__name__)
 PARAM_PREFIX = "chatbot_assistant"
 DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
 DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
-DEFAULT_TIMEOUT = 45
-MAX_RETRIES = 2  # reintentos adicionales ante timeout / cuota / 5xx
+DEFAULT_TIMEOUT = 20
+MAX_RETRIES = 1  # un reintento ante timeout / cuota / 5xx (peor caso: 2 × timeout + pausa)
 RETRY_BASE_DELAY_SEC = 1.5
 
 # Mensajes para el chat (tono humano, sin jerga técnica).
@@ -151,10 +151,11 @@ def get_chatbot_config(env):
     }
 
 
-def complete_json(env, system_prompt, user_message, meta=None):
+def complete_json(env, system_prompt, user_message, meta=None, response_schema=None):
     """
     Llama al LLM configurado y espera una respuesta JSON (con reintentos).
     Si se pasa `meta` (dict), se completa con provider, model, retries y tokens.
+    `response_schema` (formato de Gemini) obliga al modelo a respetar la estructura del JSON.
     """
     meta = meta if meta is not None else {}
     config = get_chatbot_config(env)
@@ -174,7 +175,9 @@ def complete_json(env, system_prompt, user_message, meta=None):
             if provider == "groq":
                 raw = _call_groq(config, system_prompt, user_message, usage=usage)
             else:
-                raw = _call_gemini(config, system_prompt, user_message, usage=usage)
+                raw = _call_gemini(
+                    config, system_prompt, user_message, usage=usage, response_schema=response_schema,
+                )
             meta.update(usage)
             return _parse_json_response(raw)
         except LLMClientError as exc:
@@ -445,7 +448,25 @@ def _groq_usage(data):
     }
 
 
-def _call_gemini(config, system_prompt, user_message, usage=None):
+def _gemini_can_disable_thinking(model):
+    """Gemini 2.5 Flash y Flash-Lite permiten apagar el razonamiento; 2.5 Pro y otros no."""
+    return model.lower().startswith("gemini-2.5-flash")
+
+
+def _gemini_generation_config(model, temperature, response_schema=None):
+    generation = {
+        "temperature": temperature,
+        "responseMimeType": "application/json",
+    }
+    if response_schema:
+        generation["responseSchema"] = response_schema
+    if _gemini_can_disable_thinking(model):
+        # Clasificar y extraer datos no requiere razonar: sin "pensamiento" responde más rápido.
+        generation["thinkingConfig"] = {"thinkingBudget": 0}
+    return generation
+
+
+def _call_gemini(config, system_prompt, user_message, usage=None, response_schema=None):
     model = (config.get("model") or DEFAULT_GEMINI_MODEL).replace("models/", "")
     api_key = config["api_key"]
     url = (
@@ -455,10 +476,7 @@ def _call_gemini(config, system_prompt, user_message, usage=None):
     payload = {
         "systemInstruction": {"parts": [{"text": system_prompt}]},
         "contents": [{"role": "user", "parts": [{"text": user_message}]}],
-        "generationConfig": {
-            "temperature": config["temperature"],
-            "responseMimeType": "application/json",
-        },
+        "generationConfig": _gemini_generation_config(model, config["temperature"], response_schema),
     }
     headers = {"Content-Type": "application/json", "x-goog-api-key": api_key}
     data = _http_json(url, payload, headers, config["timeout"])

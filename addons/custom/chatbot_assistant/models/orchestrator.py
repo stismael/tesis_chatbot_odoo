@@ -8,7 +8,7 @@ from odoo.exceptions import AccessError, UserError
 
 from ..services import llm_client
 from ..services.handlers import HANDLER_MAP
-from ..services.prompt_builder import SYSTEM_PROMPT, build_user_payload
+from ..services.prompt_builder import RESPONSE_SCHEMA, SYSTEM_PROMPT, build_user_payload
 from ..services.validator import merge_pending_entities, validate_llm_output, enrich_entities_from_session
 
 from ..services.llm_client import USER_MESSAGES, ChatbotLLMError
@@ -70,7 +70,9 @@ class ChatbotOrchestrator(models.AbstractModel):
             user_payload = build_user_payload(user_text, context, today=today)
             llm_started = time.perf_counter()
             try:
-                raw = llm_client.complete_json(self.env, SYSTEM_PROMPT, user_payload, meta=llm_meta)
+                raw = llm_client.complete_json(
+                    self.env, SYSTEM_PROMPT, user_payload, meta=llm_meta, response_schema=RESPONSE_SCHEMA,
+                )
             finally:
                 llm_ms = int((time.perf_counter() - llm_started) * 1000)
             llm_json = json.dumps(raw, ensure_ascii=False)

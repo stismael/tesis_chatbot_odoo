@@ -3,7 +3,7 @@ from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 from ..services import llm_client
-from ..services.llm_client import DEFAULT_GEMINI_MODEL, DEFAULT_GROQ_MODEL, LLMClientError
+from ..services.llm_client import DEFAULT_GEMINI_MODEL, DEFAULT_GROQ_MODEL, DEFAULT_TIMEOUT, LLMClientError
 
 
 class ResConfigSettings(models.TransientModel):
@@ -42,7 +42,8 @@ class ResConfigSettings(models.TransientModel):
     chatbot_timeout = fields.Integer(
         string="Timeout (segundos)",
         config_parameter="chatbot_assistant.timeout",
-        default=45,
+        default=DEFAULT_TIMEOUT,
+        help="Tiempo máximo de espera por intento. Si se agota, se reintenta una vez.",
     )
 
     chatbot_log_retention_days = fields.Integer(
@@ -67,7 +68,7 @@ class ResConfigSettings(models.TransientModel):
             "api_key": api_key,
             "model": (self.chatbot_model or default_model).strip(),
             "temperature": self.chatbot_temperature if self.chatbot_temperature is not None else 0.1,
-            "timeout": self.chatbot_timeout or 45,
+            "timeout": self.chatbot_timeout or DEFAULT_TIMEOUT,
         }
 
     def action_chatbot_list_models(self):

@@ -142,6 +142,82 @@ def test_llm_error_keeps_code():
     assert isinstance(err, ChatbotLLMError) and err.code == "timeout" and err.args[0] == "mensaje"
 
 
+def _capture_gemini_payload(model):
+    from services import llm_client
+    from services.prompt_builder import RESPONSE_SCHEMA
+    payloads = []
+
+    def fake_http(url, payload, headers, timeout):
+        payloads.append(payload)
+        return {"candidates": [{"content": {"parts": [{"text": "{}"}]}}]}
+
+    original = llm_client._http_json
+    llm_client._http_json = fake_http
+    try:
+        llm_client._call_gemini(
+            {"api_key": "k", "model": model, "temperature": 0.1, "timeout": 5},
+            "sistema", "usuario", response_schema=RESPONSE_SCHEMA,
+        )
+    finally:
+        llm_client._http_json = original
+    return payloads[0]["generationConfig"]
+
+
+def test_gemini_flash_sin_pensamiento_y_con_esquema():
+    from services.prompt_builder import RESPONSE_SCHEMA
+    config = _capture_gemini_payload("gemini-2.5-flash")
+    assert config["thinkingConfig"] == {"thinkingBudget": 0}
+    assert config["responseSchema"] is RESPONSE_SCHEMA
+    assert config["responseMimeType"] == "application/json"
+    assert _capture_gemini_payload("gemini-2.5-flash-lite")["thinkingConfig"] == {"thinkingBudget": 0}
+    # 2.5 Pro no permite apagar el razonamiento: se deja la configuración del proveedor.
+    assert "thinkingConfig" not in _capture_gemini_payload("gemini-2.5-pro")
+
+
+def test_esquema_coincide_con_el_validador():
+    from services.prompt_builder import ALLOWED_INTENTS, ENTITY_KEYS, RESPONSE_SCHEMA
+    from services.validator import ALLOWED_STATUS
+    props = RESPONSE_SCHEMA["properties"]
+    assert props["intent"]["enum"] == list(ALLOWED_INTENTS)
+    assert set(props["entities"]["properties"]) == set(ENTITY_KEYS)
+    assert set(props["status"]["enum"]) <= ALLOWED_STATUS
+
+
+class _FakeICP:
+    def __init__(self, params):
+        self.params = params
+
+    def sudo(self):
+        return self
+
+    def get_param(self, key, default=None):
+        return self.params.get(key, default)
+
+
+def test_un_solo_reintento():
+    from services import llm_client
+    env = {"ir.config_parameter": _FakeICP({"chatbot_assistant.api_key": "k"})}
+    calls = []
+
+    def fake_http(url, payload, headers, timeout):
+        calls.append(timeout)
+        raise llm_client.LLMClientError("timeout")
+
+    original_http, original_sleep = llm_client._http_json, llm_client.time.sleep
+    llm_client._http_json = fake_http
+    llm_client.time.sleep = lambda _s: None
+    meta = {}
+    try:
+        llm_client.complete_json(env, "sistema", "usuario", meta=meta)
+        raise AssertionError("debía fallar")
+    except llm_client.ChatbotLLMError as exc:
+        assert exc.code == "timeout"
+    finally:
+        llm_client._http_json, llm_client.time.sleep = original_http, original_sleep
+    assert calls == [20, 20], calls
+    assert meta["retries"] == 1
+
+
 if __name__ == "__main__":
     test_ready_factura()
     test_missing_stock()
@@ -155,4 +231,7 @@ if __name__ == "__main__":
     test_gemini_key_not_in_url()
     test_token_usage_parsing()
     test_llm_error_keeps_code()
+    test_gemini_flash_sin_pensamiento_y_con_esquema()
+    test_esquema_coincide_con_el_validador()
+    test_un_solo_reintento()
     print("OK: validator + dataset + LLM error mapping checks passed")
