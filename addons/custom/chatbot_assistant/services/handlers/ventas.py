@@ -13,6 +13,27 @@ STATE_LABELS = {
     "cancel": "cancelado",
 }
 
+# Estado del pedido pedido en la consulta (entidad order_state); sin estado = pedidos confirmados.
+ORDER_STATE_FILTERS = {
+    "pedido": {
+        "states": ["sale", "done"], "plural": "pedidos confirmados", "count": "pedido(s) confirmado(s)",
+        "verb": "vendidas",
+    },
+    "cotizacion": {
+        "states": ["draft", "sent"], "plural": "cotizaciones", "count": "cotización(es)",
+        "verb": "cotizadas",
+    },
+    "cancelado": {
+        "states": ["cancel"], "plural": "pedidos cancelados", "count": "pedido(s) cancelado(s)",
+        "verb": "en pedidos cancelados",
+    },
+}
+
+
+def _state_filter(entities):
+    return ORDER_STATE_FILTERS.get(entities.get("order_state") or "pedido", ORDER_STATE_FILTERS["pedido"])
+
+
 _LIST_RE = re.compile(
     r"list|lista|mu[eé]str|detall|pedidos|cotiz|ordenes|órdenes|enumera",
     re.IGNORECASE,
@@ -57,7 +78,7 @@ def _find_product(env, product_code=None, product_name=None):
 
 
 def _order_domain(entities, partner=None):
-    domain = [("state", "in", ["sale", "done"])]
+    domain = [("state", "in", _state_filter(entities)["states"])]
     if partner:
         domain.append(("partner_id", "=", partner.id))
     if entities.get("date_from"):
@@ -87,7 +108,7 @@ def _query_mode(user_text):
 def _get_product_lines(env, product, entities, partner=None):
     line_domain = [
         ("product_id", "=", product.id),
-        ("order_id.state", "in", ["sale", "done"]),
+        ("order_id.state", "in", _state_filter(entities)["states"]),
     ]
     if partner:
         line_domain.append(("order_id.partner_id", "=", partner.id))
@@ -112,9 +133,9 @@ def _line_rows(lines_rec, currency):
     return rows
 
 
-def _format_list(rows, product_label):
+def _format_list(rows, product_label, state):
     if not rows:
-        return f"No hay pedidos confirmados con {product_label}."
+        return f"No hay {state['plural']} con {product_label}."
     lines = [
         f"- {r['order']}: {r['quantity']:g} uds, {r['currency']} {r['price_subtotal']:.2f} — {r['partner']}"
         for r in rows
@@ -123,13 +144,14 @@ def _format_list(rows, product_label):
 
 
 def _sales_by_customer(env, partner, entities, user_text=""):
+    state = _state_filter(entities)
     domain = _order_domain(entities, partner=partner)
     all_orders = env["sale.order"].search(domain, order="date_order desc")
     orders = all_orders[:15]
     if not orders:
         return {
             "ok": False,
-            "message": f'No hay pedidos confirmados que puedas consultar para el cliente "{partner.name}".',
+            "message": f'No hay {state["plural"]} que puedas consultar para el cliente "{partner.name}".',
             "data": {"partner": partner.name},
         }
 
@@ -145,10 +167,10 @@ def _sales_by_customer(env, partner, entities, user_text=""):
         count = f"{len(all_orders)}"
         if len(all_orders) > len(orders):
             count += f"; se muestran los {len(orders)} más recientes"
-        message = f'Pedidos de "{partner.name}" ({count}):\n' + "\n".join(detail)
+        message = f'{state["plural"].capitalize()} de "{partner.name}" ({count}):\n' + "\n".join(detail)
     else:
         message = (
-            f'"{partner.name}" tiene {len(all_orders)} pedido(s) confirmado(s) '
+            f'"{partner.name}" tiene {len(all_orders)} {state["count"]} '
             f"por un total de {currency} {total:.2f}. "
             f"Si quieres verlos, pídeme que los liste."
         )
@@ -166,6 +188,7 @@ def _sales_by_customer(env, partner, entities, user_text=""):
 
 
 def _sales_by_product(env, product, entities, partner=None, user_text=""):
+    state = _state_filter(entities)
     lines_rec = _get_product_lines(env, product, entities, partner=partner)
     label = _product_label(product)
     scope = f' para "{partner.name}"' if partner else ""
@@ -173,7 +196,7 @@ def _sales_by_product(env, product, entities, partner=None, user_text=""):
     if not lines_rec:
         return {
             "ok": False,
-            "message": f"No hay ventas confirmadas de {label}{scope} entre los pedidos que puedes consultar.",
+            "message": f"No hay {state['plural']} de {label}{scope} entre los que puedes consultar.",
             "data": {
                 "product": label,
                 "product_code": product.default_code or "",
@@ -211,10 +234,10 @@ def _sales_by_product(env, product, entities, partner=None, user_text=""):
             f"({currency} {top['amount']:.2f})."
         )
     elif mode == "list":
-        message = _format_list(rows, label)
+        message = _format_list(rows, label, state)
     else:
         message = (
-            f"{label}: {qty:g} unidades vendidas en {len(orders)} pedido(s) "
+            f"{label}: {qty:g} unidades {state['verb']} en {len(orders)} {state['count']} "
             f"({currency} {amount:.2f}). "
             f"Si quieres el detalle por pedido, pídemelo."
         )

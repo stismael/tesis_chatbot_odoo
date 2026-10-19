@@ -28,6 +28,7 @@ HELP_SECTIONS = [
         [
             "¿Cuántas ventas hay del CAS-001?",
             "¿Qué ventas tiene Comercial Andina S.A.?",
+            "¿Qué cotizaciones tiene Comercial Andina S.A.?",
             "¿Cuál fue la venta con mayor cantidad de este producto?",
             "¿Qué cliente ha comprado más este producto?",
             "Lista los pedidos del CAS-001",

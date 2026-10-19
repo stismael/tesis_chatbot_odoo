@@ -16,7 +16,8 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `feature/permisos-por-consulta` | Paso 2: permisos por consulta | Fusionada en `main` (PR #4) |
 | `feature/velocidad-llm` | Paso 3: velocidad de la IA | Fusionada en `main` (PR #5) |
 | `feature/seleccion-modelo` | Paso 4: catálogo y validación del modelo | Fusionada en `main` (PR #6) |
-| `feature/conversacion-libre` | Paso 5: conversación libre | PR #7 |
+| `feature/conversacion-libre` | Paso 5: conversación libre | Fusionada en `main` (PR #7) |
+| `fix/memoria-y-estado-pedido` | Paso 6: memoria de la sesión y `order_state` | PR #8 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -27,9 +28,24 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
 
+### PR #8 · Paso 6: memoria de la sesión y estado del pedido
+- **Rama:** `fix/memoria-y-estado-pedido` · **Versión del módulo:** 18.0.1.10.0
+- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Pruebas:** 85 pruebas en Odoo 18 (7 nuevas) y 2 pruebas unitarias nuevas. Los tres defectos se
+  reprodujeron con el orquestador antes de corregirlos.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Un seguimiento solo hereda el sujeto que le falta (cliente, producto o factura); fechas, ubicación y estado no se arrastran | `services/validator.py` (`enrich_entities_from_session`) | Defecto verificado: tras "stock y facturación del TST-001 en julio", "¿y las ventas de este producto?" filtraba por julio y respondía que no había ventas |
+| Al cambiar de tema con una aclaración pendiente, la pregunta nueva empieza limpia; la aclaración conserva lo ya dicho | `models/orchestrator.py` (`_apply_session_memory`) | Defecto verificado: las fechas de la pregunta abandonada pasaban al siguiente seguimiento |
+| Una consulta sin resultados ya no queda pendiente | `models/orchestrator.py` | Defecto verificado: la siguiente pregunta se mezclaba con ella |
+| Lógica de memoria unificada: una lectura de la sesión y una sola revalidación | `models/orchestrator.py` | Código más simple de explicar y mantener |
+| Entidad `order_state` (cotización, pedido, cancelado) con sinónimos; sin estado, pedidos confirmados | `services/prompt_builder.py`, `services/validator.py`, `services/handlers/ventas.py`, `services/help_text.py` | Cumplir las Tablas 14 y 15 de la tesis |
+| Pruebas de memoria y de consultas por estado | `tests/test_memory_and_state.py`, `tests/common.py`, `scripts/test_chatbot_unit.py` | Evitar regresiones |
+
 ### PR #7 · Paso 5: conversación libre redactada por la IA
 - **Rama:** `feature/conversacion-libre` · **Versión del módulo:** 18.0.1.9.0
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-10-19, con las pruebas de GitHub Actions en verde.
 - **Pruebas:** 78 pruebas en Odoo 18 (9 nuevas) y 3 pruebas unitarias nuevas; verificada la
   actualización desde 18.0.1.8.0.
 
@@ -147,8 +163,8 @@ se corrige en esa misma rama.
 | 2 ✅ | 11. Permisos por consulta | `feature/permisos-por-consulta` | Seguridad; la Ruta 2 (paso 7) depende de esta tabla |
 | 3 ✅ | 7. Velocidad de la IA | `feature/velocidad-llm` | Con las métricas ya activas se mide el antes y el después |
 | 4 ✅ | 9. Selección y validación del modelo | `feature/seleccion-modelo` | Corrige el defecto del campo "Modelo" y valida la configuración |
-| 5 (en revisión) | 8. Conversación libre | `feature/conversacion-libre` | Requiere la IA rápida (paso 3), porque los saludos también la llaman |
-| 6 | 3 y 4. Memoria y `order_state` | `fix/memoria-y-estado-pedido` | Ajustes acotados sobre el flujo actual |
+| 5 ✅ | 8. Conversación libre | `feature/conversacion-libre` | Requiere la IA rápida (paso 3), porque los saludos también la llaman |
+| 6 (en revisión) | 3 y 4. Memoria y `order_state` | `fix/memoria-y-estado-pedido` | Ajustes acotados sobre el flujo actual |
 | 7 | 13. Ruta híbrida | `feature/ruta-hibrida` | Usa la tabla de permisos (paso 2), las métricas (paso 1) y la clasificación (paso 5) |
 | 8 | 6. Dataset de evaluación | `feature/dataset-evaluacion` | Con todas las rutas listas, se amplía y se ejecuta la evaluación final |
 | 9 | 5 y 10. Respuesta sin bloqueo y redacción por IA (opcionales) | `feature/respuesta-asincrona` | Mejoras finales si queda tiempo |
@@ -217,14 +233,18 @@ se corrige en esa misma rama.
 ## Pendiente
 
 ### Punto 3: memoria de conversación
-- [ ] Evitar que entidades de una pregunta anterior se mezclen cuando el usuario cambia de tema.
-- [ ] Simplificar la lógica de fusión del orquestador (hoy valida dos veces y lee la sesión dos veces).
-- [ ] Pruebas de cambio de tema.
+- [x] Evitar que entidades de una pregunta anterior se mezclen cuando el usuario cambia de tema.
+      Verificado: un seguimiento arrastraba las fechas de la pregunta anterior, y una aclaración
+      abandonada o una consulta sin resultados contaminaban la siguiente pregunta.
+- [x] Simplificar la lógica de fusión del orquestador (hoy valida dos veces y lee la sesión dos veces).
+- [x] Pruebas de cambio de tema.
 
 ### Punto 4: intenciones y entidades del documento
-- [ ] `intencion_desconocida`: se reemplaza por la intención `conversacion` (punto 8).
-- [ ] Decidir sobre `order_state` (cotización, pedido, cancelado): implementar (recomendado) o quitar.
-- [ ] Volumen de pedidos del generador: 350 en el código vs. ~1.000 en la tesis.
+- [x] `intencion_desconocida`: se reemplaza por la intención `conversacion` (punto 8).
+- [x] Decidir sobre `order_state` (cotización, pedido, cancelado): implementado.
+- [ ] Volumen de pedidos del generador: 350 en el código vs. ~1.000 en la tesis. Pendiente de
+      decisión: subir el generador cambia los datos de prueba y las cifras esperadas del dataset;
+      la alternativa es corregir la cifra en la tesis.
 
 ### Punto 5: la llamada al LLM no debe bloquear el chat
 - [ ] Procesar la respuesta fuera de la transacción del mensaje (cola, cron o `postcommit`), con

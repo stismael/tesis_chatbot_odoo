@@ -3,10 +3,7 @@
 from odoo import Command
 from odoo.tests.common import TransactionCase, new_test_user
 
-ENTITY_KEYS = (
-    "invoice_number", "customer_name", "product_name", "product_code",
-    "location_name", "date_from", "date_to",
-)
+from ..services.prompt_builder import ENTITY_KEYS
 
 
 def entities(**values):
