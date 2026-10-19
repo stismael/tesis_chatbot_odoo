@@ -19,7 +19,10 @@ ENTITY_KEYS = (
     "location_name",
     "date_from",
     "date_to",
+    "order_state",
 )
+
+ORDER_STATES = ("cotizacion", "pedido", "cancelado")
 
 LLM_STATUSES = ("ready", "missing_information", "ambiguous", "rejected")
 
@@ -32,7 +35,13 @@ RESPONSE_SCHEMA = {
         "intent": {"type": "STRING", "enum": list(ALLOWED_INTENTS)},
         "entities": {
             "type": "OBJECT",
-            "properties": {key: {"type": "STRING", "nullable": True} for key in ENTITY_KEYS},
+            "properties": {
+                key: (
+                    {"type": "STRING", "nullable": True, "enum": list(ORDER_STATES)}
+                    if key == "order_state" else {"type": "STRING", "nullable": True}
+                )
+                for key in ENTITY_KEYS
+            },
             "required": list(ENTITY_KEYS),
             "propertyOrdering": list(ENTITY_KEYS),
         },
@@ -66,6 +75,8 @@ Entidades posibles (usa null si no aplica o no está en el mensaje):
 - location_name
 - date_from (formato AAAA-MM-DD)
 - date_to (formato AAAA-MM-DD)
+- order_state (solo ventas): cotizacion, pedido o cancelado. Usa null si no se menciona
+  (se consultan los pedidos confirmados).
 
 Estados (status):
 - ready: hay intención válida y entidades suficientes para ejecutar
@@ -83,7 +94,8 @@ Esquema de salida OBLIGATORIO:
     "product_code": null,
     "location_name": null,
     "date_from": null,
-    "date_to": null
+    "date_to": null,
+    "order_state": null
   },
   "status": "ready|missing_information|ambiguous|rejected",
   "missing_entities": [],
@@ -137,6 +149,9 @@ Salida: {"intent":"consultar_ventas_cliente","entities":{"invoice_number":null,"
 
 Usuario: ¿Cuántas ventas hay del CAS-001?
 Salida: {"intent":"consultar_ventas_cliente","entities":{"invoice_number":null,"customer_name":null,"product_name":null,"product_code":"CAS-001","location_name":null,"date_from":null,"date_to":null},"status":"ready","missing_entities":[]}
+
+Usuario: ¿Qué cotizaciones tiene Comercial Andina S.A.?
+Salida: {"intent":"consultar_ventas_cliente","entities":{"invoice_number":null,"customer_name":"Comercial Andina S.A.","product_name":null,"product_code":null,"location_name":null,"date_from":null,"date_to":null,"order_state":"cotizacion"},"status":"ready","missing_entities":[]}
 
 Usuario: Cuantas ventas hay del casco negro
 Salida: {"intent":"consultar_ventas_cliente","entities":{"invoice_number":null,"customer_name":null,"product_name":"casco negro","product_code":null,"location_name":null,"date_from":null,"date_to":null},"status":"ready","missing_entities":[]}

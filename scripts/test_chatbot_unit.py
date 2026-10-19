@@ -293,6 +293,26 @@ def test_esquema_incluye_conversacion():
     assert "reply" not in RESPONSE_SCHEMA["required"]
 
 
+def test_order_state_normalizado():
+    base = {"intent": "consultar_ventas_cliente", "status": "ready"}
+    for raw, expected in (("cotización", "cotizacion"), ("Presupuestos", "cotizacion"), ("pedido", "pedido"),
+                          ("anulados", "cancelado"), ("enviado", None), (None, None)):
+        v = validate_llm_output(dict(base, entities={"customer_name": "X", "order_state": raw}))
+        assert v["entities"]["order_state"] == expected, (raw, v["entities"]["order_state"])
+
+
+def test_seguimiento_solo_hereda_el_sujeto():
+    from services.validator import enrich_entities_from_session
+    last = {"product_code": "FIL-M01", "date_from": "2026-07-01", "date_to": "2026-07-31",
+            "location_name": "Bodega", "order_state": "cotizacion"}
+    merged = enrich_entities_from_session({}, "consultar_ventas_cliente", last)
+    assert merged["product_code"] == "FIL-M01"
+    assert not merged["date_from"] and not merged["location_name"] and not merged["order_state"]
+    # Si la consulta ya tiene su sujeto, no hereda nada.
+    merged = enrich_entities_from_session({"customer_name": "Andina"}, "consultar_ventas_cliente", last)
+    assert merged["customer_name"] == "Andina" and not merged["product_code"]
+
+
 if __name__ == "__main__":
     test_ready_factura()
     test_missing_stock()
@@ -314,4 +334,6 @@ if __name__ == "__main__":
     test_conversacion_con_reply()
     test_reply_con_cifras_se_descarta()
     test_esquema_incluye_conversacion()
+    test_order_state_normalizado()
+    test_seguimiento_solo_hereda_el_sujeto()
     print("OK: validator + dataset + LLM error mapping checks passed")

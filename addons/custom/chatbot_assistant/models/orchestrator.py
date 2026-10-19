@@ -87,45 +87,7 @@ class ChatbotOrchestrator(models.AbstractModel):
             llm_json = json.dumps(raw, ensure_ascii=False)
             validated = validate_llm_output(raw)
 
-            # Completar entidades desde la sesión (preguntas de seguimiento: "este producto", etc.)
-            last_entities = session.get_pending_entities()
-            enriched = enrich_entities_from_session(
-                validated["entities"], validated["intent"], last_entities,
-            )
-            if enriched != validated["entities"]:
-                validated["entities"] = enriched
-                revalidated = validate_llm_output({
-                    "intent": validated["intent"],
-                    "entities": enriched,
-                    "status": "ready",
-                    "missing_entities": [],
-                })
-                validated = revalidated
-
-            # Fusionar con la memoria corta si hay una consulta pendiente
-            pending_entities = session.get_pending_entities()
-            if session.pending_intent and validated["intent"] in (
-                session.pending_intent,
-                "consultar_factura",
-                "consultar_stock",
-                "consultar_ventas_cliente",
-                "consultar_vendedor_cliente",
-                "consultar_stock_facturacion_producto",
-            ):
-                # Si el usuario solo aclara una entidad, conservar la intención pendiente
-                if validated["status"] in ("ready", "missing_information", "ambiguous"):
-                    if not validated.get("entities") or self._mostly_empty(validated["entities"]):
-                        validated["intent"] = session.pending_intent
-                    merged = merge_pending_entities(pending_entities, validated["entities"])
-                    validated["entities"] = merged
-                    # Revalidar las entidades requeridas
-                    revalidated = validate_llm_output({
-                        "intent": validated["intent"] if validated["intent"] != "fuera_de_alcance" else session.pending_intent,
-                        "entities": merged,
-                        "status": "ready",
-                        "missing_entities": [],
-                    })
-                    validated = revalidated
+            validated = self._apply_session_memory(session, validated)
 
             intent = validated["intent"]
             status = validated["status"]
@@ -213,6 +175,8 @@ class ChatbotOrchestrator(models.AbstractModel):
                             status = "missing_information"
                             outcome = "clarification"
                         else:
+                            # Consulta terminada sin datos: se recuerda como una respuesta más.
+                            session.set_pending(False, validated["entities"])
                             outcome = "no_results"
                         reply = result.get("message") or _("No se encontraron datos.")
                         success = bool(result.get("ok"))
@@ -295,6 +259,35 @@ class ChatbotOrchestrator(models.AbstractModel):
     @api.model
     def _mostly_empty(self, entities):
         return not any(entities.get(k) for k in (entities or {}))
+
+    def _apply_session_memory(self, session, validated):
+        """
+        Completa la consulta con la memoria corta de la sesión (una sola lectura y una sola
+        revalidación):
+        - Si responde a una consulta pendiente (misma intención o solo aporta datos), se conserva
+          todo lo ya dicho, incluidas fechas y ubicación.
+        - Si es una consulta nueva, solo hereda el sujeto que le falte (cliente, producto o
+          factura) para seguimientos como "este producto"; fechas, ubicación y estado del pedido
+          de la pregunta anterior no se arrastran.
+        """
+        intent = validated["intent"]
+        if intent not in HANDLER_MAP or validated["status"] not in ("ready", "missing_information", "ambiguous"):
+            return validated
+        memory = session.get_pending_entities()
+        if not memory:
+            return validated
+        pending_intent = session.pending_intent
+        entities = validated["entities"]
+        if pending_intent and (intent == pending_intent or self._mostly_empty(entities)):
+            intent = pending_intent
+            entities = merge_pending_entities(memory, entities)
+        else:
+            entities = enrich_entities_from_session(entities, intent, memory)
+        if intent == validated["intent"] and entities == validated["entities"]:
+            return validated
+        return validate_llm_output({
+            "intent": intent, "entities": entities, "status": "ready", "missing_entities": [],
+        })
 
     @api.model
     def evaluate_query(self, query_text, session=None):

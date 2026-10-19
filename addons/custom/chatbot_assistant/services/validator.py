@@ -4,9 +4,17 @@
 import datetime
 import re
 
-from .prompt_builder import ALLOWED_INTENTS, ENTITY_KEYS
+from .prompt_builder import ALLOWED_INTENTS, ENTITY_KEYS, ORDER_STATES
 
 DATE_KEYS = ("date_from", "date_to")
+
+ORDER_STATE_ALIASES = {
+    "cotizacion": "cotizacion", "cotizaciones": "cotizacion", "cotización": "cotizacion",
+    "presupuesto": "cotizacion", "presupuestos": "cotizacion", "borrador": "cotizacion",
+    "pedido": "pedido", "pedidos": "pedido", "venta": "pedido", "ventas": "pedido",
+    "confirmado": "pedido", "confirmados": "pedido",
+    "cancelado": "cancelado", "cancelados": "cancelado", "anulado": "cancelado", "anulados": "cancelado",
+}
 
 # Intenciones en las que la IA redacta la respuesta (campo "reply").
 REPLY_INTENTS = ("conversacion", "fuera_de_alcance")
@@ -44,6 +52,9 @@ def _clean_entities(raw_entities):
             entities[key] = None
         elif key in DATE_KEYS:
             entities[key] = _normalize_date(value)
+        elif key == "order_state":
+            state = ORDER_STATE_ALIASES.get(str(value).strip().lower())
+            entities[key] = state if state in ORDER_STATES else None
         else:
             entities[key] = str(value).strip()
     return entities
@@ -183,17 +194,19 @@ def merge_pending_entities(pending, new_entities):
 
 
 def enrich_entities_from_session(entities, intent, last_entities):
-    """Completa entidades faltantes desde la sesión (follow-ups como 'este producto')."""
-    if not last_entities or intent not in REQUIRED_BY_INTENT:
-        return _clean_entities(entities)
-
+    """
+    Seguimientos ("este producto", "ese cliente"): si a la consulta le falta su sujeto, lo toma
+    de la consulta anterior. Solo se heredan las entidades requeridas por la intención; fechas,
+    ubicación y estado del pedido no se arrastran a una consulta nueva.
+    """
     merged = _clean_entities(entities)
+    if not last_entities or intent not in REQUIRED_BY_INTENT:
+        return merged
     ok_req, _missing = _has_required(merged, intent)
     if ok_req:
         return merged
-
-    for key in ENTITY_KEYS:
-        if not merged.get(key) and last_entities.get(key):
-            merged[key] = last_entities[key]
-
+    for group in REQUIRED_BY_INTENT[intent]:
+        for key in group:
+            if last_entities.get(key):
+                merged[key] = last_entities[key]
     return _clean_entities(merged)
