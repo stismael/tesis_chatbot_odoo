@@ -14,7 +14,7 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `docs/plan-mejoras-llm-y-permisos` | Planificación de los puntos 7 a 14 (solo documentación) | Fusionada en `main` (PR #2) |
 | `feature/metricas-y-monitoreo` | Paso 1: métricas y monitoreo | Fusionada en `main` (PR #3) |
 | `feature/permisos-por-consulta` | Paso 2: permisos por consulta | Fusionada en `main` (PR #4) |
-| `feature/velocidad-llm` | Paso 3: velocidad de la IA | PR #5 |
+| `feature/velocidad-llm` | Paso 3: velocidad de la IA | Fusionada en `main` (PR #5) |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -27,7 +27,7 @@ Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada co
 
 ### PR #5 · Paso 3: velocidad de la llamada a la IA
 - **Rama:** `feature/velocidad-llm` · **Versión del módulo:** 18.0.1.7.0
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-10-19, con las pruebas de GitHub Actions en verde.
 - **Pruebas:** 58 pruebas en Odoo 18 (5 nuevas) y 3 pruebas unitarias nuevas; verificada la
   actualización desde 18.0.1.6.0 (timeout de 45 s a 20 s).
 
@@ -110,7 +110,7 @@ se corrige en esa misma rama.
 |---|---|---|---|
 | 1 ✅ | 12. Métricas y monitoreo | `feature/metricas-y-monitoreo` | Medir primero: da los números de "antes" para todo lo demás |
 | 2 ✅ | 11. Permisos por consulta | `feature/permisos-por-consulta` | Seguridad; la Ruta 2 (paso 7) depende de esta tabla |
-| 3 (en revisión) | 7. Velocidad de la IA | `feature/velocidad-llm` | Con las métricas ya activas se mide el antes y el después |
+| 3 ✅ | 7. Velocidad de la IA | `feature/velocidad-llm` | Con las métricas ya activas se mide el antes y el después |
 | 4 | 9. Selección y validación del modelo | `feature/seleccion-modelo` | Corrige el defecto del campo "Modelo" y valida la configuración |
 | 5 | 8. Conversación libre | `feature/conversacion-libre` | Requiere la IA rápida (paso 3), porque los saludos también la llaman |
 | 6 | 3 y 4. Memoria y `order_state` | `fix/memoria-y-estado-pedido` | Ajustes acotados sobre el flujo actual |
