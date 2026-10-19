@@ -10,6 +10,37 @@ ALLOWED_INTENTS = (
     "fuera_de_alcance",
 )
 
+ENTITY_KEYS = (
+    "invoice_number",
+    "customer_name",
+    "product_name",
+    "product_code",
+    "location_name",
+    "date_from",
+    "date_to",
+)
+
+LLM_STATUSES = ("ready", "missing_information", "ambiguous", "rejected")
+
+# Esquema que Gemini aplica al generar (responseSchema): solo intenciones y estados permitidos,
+# y todas las entidades presentes. El validador sigue revisando la salida.
+RESPONSE_SCHEMA = {
+    "type": "OBJECT",
+    "properties": {
+        "intent": {"type": "STRING", "enum": list(ALLOWED_INTENTS)},
+        "entities": {
+            "type": "OBJECT",
+            "properties": {key: {"type": "STRING", "nullable": True} for key in ENTITY_KEYS},
+            "required": list(ENTITY_KEYS),
+            "propertyOrdering": list(ENTITY_KEYS),
+        },
+        "status": {"type": "STRING", "enum": list(LLM_STATUSES)},
+        "missing_entities": {"type": "ARRAY", "items": {"type": "STRING"}},
+    },
+    "required": ["intent", "entities", "status", "missing_entities"],
+    "propertyOrdering": ["intent", "entities", "status", "missing_entities"],
+}
+
 SYSTEM_PROMPT = """Eres el módulo de comprensión de un asistente conversacional integrado a Odoo 18.
 Tu ÚNICA tarea es interpretar consultas en español sobre datos comerciales/financieros
 y devolver UN objeto JSON válido (sin markdown, sin texto extra).
@@ -121,6 +152,9 @@ Salida: {"intent":"consultar_stock_facturacion_producto","entities":{"invoice_nu
 
 Usuario: ¿Quién es el vendedor de Moto Racing Cuenca?
 Salida: {"intent":"consultar_vendedor_cliente","entities":{"invoice_number":null,"customer_name":"Moto Racing Cuenca","product_name":null,"product_code":null,"location_name":null,"date_from":null,"date_to":null},"status":"ready","missing_entities":[]}
+
+Usuario: Hola
+Salida: {"intent":"fuera_de_alcance","entities":{"invoice_number":null,"customer_name":null,"product_name":null,"product_code":null,"location_name":null,"date_from":null,"date_to":null},"status":"rejected","missing_entities":[]}
 
 Usuario: Crea una factura para Juan
 Salida: {"intent":"fuera_de_alcance","entities":{"invoice_number":null,"customer_name":null,"product_name":null,"product_code":null,"location_name":null,"date_from":null,"date_to":null},"status":"rejected","missing_entities":[]}

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Hooks de instalación/actualización del módulo chatbot_assistant."""
+from .services.llm_client import DEFAULT_TIMEOUT
 
 
 def _migrate_deprecated_model(env):
@@ -11,15 +12,15 @@ def _migrate_deprecated_model(env):
 
 
 def _ensure_timeout_default(env):
-    """Sube timeouts antiguos muy bajos (p. ej. 30s) al nuevo default 45s."""
+    """Asigna el timeout por defecto si falta o no es un número positivo."""
     icp = env["ir.config_parameter"].sudo()
     raw = (icp.get_param("chatbot_assistant.timeout") or "").strip()
     try:
         value = int(raw) if raw else 0
     except ValueError:
         value = 0
-    if value < 45:
-        icp.set_param("chatbot_assistant.timeout", "45")
+    if value <= 0:
+        icp.set_param("chatbot_assistant.timeout", str(DEFAULT_TIMEOUT))
 
 
 def post_init_hook(env):

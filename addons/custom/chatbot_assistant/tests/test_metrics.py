@@ -16,7 +16,7 @@ from .test_orchestrator_security import COMPLETE_JSON, llm_output
 
 def fake_llm(output, **meta_values):
     """Simula la IA: devuelve `output` y completa los metadatos como lo haría llm_client."""
-    def _fake(env, system_prompt, user_message, meta=None):
+    def _fake(env, system_prompt, user_message, meta=None, response_schema=None):
         if meta is not None:
             meta.update({
                 "provider": "gemini", "model": "gemini-2.5-flash", "retries": 0,
