@@ -218,6 +218,57 @@ def test_un_solo_reintento():
     assert meta["retries"] == 1
 
 
+def _with_fake_get(pages, func, *args):
+    from services import llm_client
+    urls = []
+
+    def fake_get(url, timeout, headers=None):
+        urls.append(url)
+        return pages[len(urls) - 1]
+
+    original = llm_client._http_json_get
+    llm_client._http_json_get = fake_get
+    try:
+        return func(*args), urls
+    finally:
+        llm_client._http_json_get = original
+
+
+def test_gemini_lista_todas_las_paginas_y_solo_texto():
+    from services.llm_client import list_gemini_models
+    gen = ["generateContent"]
+    pages = [
+        {"models": [
+            {"name": "models/gemini-2.5-flash", "supportedGenerationMethods": gen, "inputTokenLimit": 1048576},
+            {"name": "models/gemini-2.5-flash-image", "supportedGenerationMethods": gen},
+            {"name": "models/text-embedding-004", "supportedGenerationMethods": ["embedContent"]},
+        ], "nextPageToken": "PAG2"},
+        {"models": [
+            {"name": "models/gemini-2.5-pro", "supportedGenerationMethods": gen},
+            {"name": "models/gemini-2.5-flash-preview-tts", "supportedGenerationMethods": gen},
+        ]},
+    ]
+    models, urls = _with_fake_get(pages, list_gemini_models, "k")
+    assert [m["id"] for m in models] == ["gemini-2.5-flash", "gemini-2.5-pro"], models
+    assert models[0]["input_token_limit"] == 1048576
+    assert len(urls) == 2 and "pageToken=PAG2" in urls[1]
+
+
+def test_groq_solo_modelos_de_texto_activos():
+    from services.llm_client import list_groq_models
+    pages = [{"data": [
+        {"id": "llama-3.3-70b-versatile", "active": True, "context_window": 131072, "owned_by": "Meta"},
+        {"id": "whisper-large-v3", "active": True},
+        {"id": "meta-llama/llama-guard-4-12b", "active": True},
+        {"id": "playai-tts", "active": True},
+        {"id": "modelo-retirado", "active": False},
+        {"id": "qwen/qwen3-32b", "active": True},
+    ]}]
+    models, _urls = _with_fake_get(pages, list_groq_models, "k")
+    assert [m["id"] for m in models] == ["llama-3.3-70b-versatile", "qwen/qwen3-32b"], models
+    assert models[0]["input_token_limit"] == 131072
+
+
 if __name__ == "__main__":
     test_ready_factura()
     test_missing_stock()
@@ -234,4 +285,6 @@ if __name__ == "__main__":
     test_gemini_flash_sin_pensamiento_y_con_esquema()
     test_esquema_coincide_con_el_validador()
     test_un_solo_reintento()
+    test_gemini_lista_todas_las_paginas_y_solo_texto()
+    test_groq_solo_modelos_de_texto_activos()
     print("OK: validator + dataset + LLM error mapping checks passed")

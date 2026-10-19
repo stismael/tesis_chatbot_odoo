@@ -34,6 +34,13 @@
               sequence="80"
               groups="chatbot_assistant.group_chatbot_manager"/>
 
+    <menuitem id="menu_chatbot_llm_models"
+              name="Modelos de IA"
+              parent="menu_chatbot_root"
+              action="action_chatbot_llm_model"
+              sequence="85"
+              groups="chatbot_assistant.group_chatbot_manager"/>
+
     <menuitem id="menu_chatbot_config"
               name="Ajustes"
               parent="menu_chatbot_root"

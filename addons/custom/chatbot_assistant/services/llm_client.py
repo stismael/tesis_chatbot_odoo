@@ -282,28 +282,52 @@ def list_models(config):
     return list_gemini_models(api_key, timeout)
 
 
+# Fragmentos de ID de modelos que no generan texto (audio, imágenes, embeddings, moderación).
+NON_TEXT_MARKERS = ("tts", "image", "audio", "live", "embedding", "whisper", "guard", "orpheus", "playai")
+
+PRICING_URLS = {
+    "gemini": "https://ai.google.dev/gemini-api/docs/pricing",
+    "groq": "https://groq.com/pricing",
+}
+
+
+def is_text_model(model_id):
+    mid = (model_id or "").lower()
+    return not any(marker in mid for marker in NON_TEXT_MARKERS)
+
+
 def list_gemini_models(api_key, timeout=None):
+    """Modelos de texto de Google Gemini; recorre todas las páginas del listado."""
     timeout = DEFAULT_TIMEOUT if timeout is None else timeout
-    url = "https://generativelanguage.googleapis.com/v1beta/models?pageSize=100"
-    data = _http_json_get(url, timeout, headers={"x-goog-api-key": api_key})
+    base_url = "https://generativelanguage.googleapis.com/v1beta/models?pageSize=100"
     result = []
-    for item in data.get("models") or []:
-        methods = item.get("supportedGenerationMethods") or []
-        if "generateContent" not in methods:
-            continue
-        name = (item.get("name") or "").replace("models/", "")
-        if not name:
-            continue
-        result.append({
-            "id": name,
-            "display_name": item.get("displayName") or name,
-            "description": (item.get("description") or "")[:200],
-        })
+    page_token = None
+    for _page in range(20):  # límite de seguridad
+        url = base_url + ("&pageToken=%s" % urllib.parse.quote(page_token) if page_token else "")
+        data = _http_json_get(url, timeout, headers={"x-goog-api-key": api_key})
+        for item in data.get("models") or []:
+            methods = item.get("supportedGenerationMethods") or []
+            if "generateContent" not in methods:
+                continue
+            name = (item.get("name") or "").replace("models/", "")
+            if not name or not is_text_model(name):
+                continue
+            result.append({
+                "id": name,
+                "display_name": item.get("displayName") or name,
+                "description": (item.get("description") or "")[:200],
+                "input_token_limit": int(item.get("inputTokenLimit") or 0),
+                "output_token_limit": int(item.get("outputTokenLimit") or 0),
+            })
+        page_token = data.get("nextPageToken")
+        if not page_token:
+            break
     result.sort(key=lambda m: (0 if "flash" in m["id"].lower() else 1, m["id"]))
     return result
 
 
 def list_groq_models(api_key, timeout=None):
+    """Modelos de texto activos de Groq (sin audio ni moderación)."""
     timeout = DEFAULT_TIMEOUT if timeout is None else timeout
     url = "https://api.groq.com/openai/v1/models"
     headers = {"Authorization": "Bearer %s" % api_key}
@@ -311,12 +335,14 @@ def list_groq_models(api_key, timeout=None):
     result = []
     for item in data.get("data") or []:
         mid = item.get("id") or ""
-        if not mid:
+        if not mid or item.get("active") is False or not is_text_model(mid):
             continue
         result.append({
             "id": mid,
             "display_name": mid,
-            "description": "",
+            "description": item.get("owned_by") or "",
+            "input_token_limit": int(item.get("context_window") or 0),
+            "output_token_limit": int(item.get("max_completion_tokens") or 0),
         })
     result.sort(key=lambda m: m["id"])
     return result
