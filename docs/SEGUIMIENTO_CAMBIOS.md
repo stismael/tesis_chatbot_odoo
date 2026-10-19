@@ -11,9 +11,62 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `claude/repository-analysis-84h0jn` | Totales de ventas, privacidad, test corregido | Fusionada en `main` (PR #1) |
 | `feature/cu05-stock-facturacion-producto` | CU-05, stock unificado, lista de la tesis | Fusionada en `main` (PR #1) |
 | `fix/correcciones-handlers-y-pruebas-odoo` | Correcciones del punto 1 y pruebas en Odoo | Fusionada en `main` (PR #1) |
-| `docs/plan-mejoras-llm-y-permisos` | Planificación de los puntos 7 a 13 (solo documentación) | Subida, sin fusionar |
+| `docs/plan-mejoras-llm-y-permisos` | Planificación de los puntos 7 a 14 (solo documentación) | PR #2 |
+| `feature/metricas-y-monitoreo` | Paso 1: métricas y monitoreo | PR #3 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
+
+---
+
+## Registro de cambios aprobados
+
+Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
+**dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
+
+### PR #3 · Paso 1: métricas y monitoreo
+- **Rama:** `feature/metricas-y-monitoreo` · **Versión del módulo:** 18.0.1.5.0
+- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Pruebas:** 40 pruebas en Odoo 18 (14 nuevas) y pruebas unitarias; verificados el camino real de
+  las reacciones de Discuss y la actualización desde 18.0.1.4.1.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Resultado clasificado de cada mensaje (respondida, sin resultados, aclaración, rechazada, sin permiso, IA no disponible, IA respondió mal, error interno) y código de error de la IA | `models/chatbot_query_log.py`, `models/orchestrator.py` | Saber cuándo el chatbot responde bien, cuándo no y cuándo la IA no está disponible (observación de la tutora) |
+| Tiempos por etapa (IA, Odoo, total) y número de reintentos | `models/orchestrator.py`, `services/llm_client.py` | Saber dónde se demora la respuesta; medición de "antes" para el paso 3 |
+| Proveedor, modelo y tokens de entrada, salida y razonamiento | `services/llm_client.py` (`complete_json(meta=…)`, `_gemini_usage`, `_groq_usage`) | Comparar modelos y medir el costo del "pensamiento" de Gemini |
+| Valoración 👍 / 👎 con reacciones de Discuss | `models/mail_message_reaction.py`, `models/chatbot_discuss_service.py` | Medir si la respuesta le sirvió al usuario en uso real |
+| Menú *Chatbot → Métricas* (gráfico, tabla dinámica, filtros, agrupaciones) y Auditoría ampliada | `views/chatbot_query_log_views.xml`, `views/menus.xml` | Analizar resultados y latencias sin herramientas externas; exportar datos para el Capítulo 5 |
+| Ajuste "Conservar auditoría (días)" y tarea diaria de limpieza | `models/res_config_settings.py`, `views/res_config_settings_views.xml`, `data/ir_cron.xml`, `data/default_params.xml` | Limitar cuánto tiempo se guardan las preguntas de los usuarios (privacidad) |
+| Error de permisos de Odoo mostrado en español; detalle técnico solo en el log | `models/orchestrator.py` (`FORBIDDEN_MSG`) | Que el usuario no vea mensajes técnicos en inglés |
+| Pruebas de métricas | `tests/test_metrics.py`, `scripts/test_chatbot_unit.py` | Comprobar cada clasificación, tiempos, metadatos, reacciones y limpieza |
+
+### PR #2 · Plan de mejoras y pendientes de la tesis (solo documentación)
+- **Rama:** `docs/plan-mejoras-llm-y-permisos`
+- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Plan de avance en 9 pasos y puntos 7 a 14 (velocidad, conversación, modelo, redacción, permisos, métricas, ruta híbrida, límites) | `docs/SEGUIMIENTO_CAMBIOS.md` | Ordenar el trabajo en pasos pequeños, cada uno probado antes del siguiente |
+| Cambios del documento derivados de cada punto, declaración del uso de IA (formato UTPL) y defensa ante el tribunal | `docs/PENDIENTES_TESIS.md` | Mantener la tesis alineada con el código y preparar la defensa |
+
+### PR #1 · Correcciones, CU-05 y pruebas automáticas (fusionado el 2026-10-13)
+- **Ramas:** `claude/repository-analysis-84h0jn`, `feature/cu05-stock-facturacion-producto` y
+  `fix/correcciones-handlers-y-pruebas-odoo` · **Versión del módulo:** 18.0.1.4.1
+- **Pruebas:** 26 pruebas en Odoo 18, en verde en GitHub Actions.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| El resumen de ventas por cliente cuenta y suma todos los pedidos, no solo los 15 más recientes | `services/handlers/ventas.py` | Que los totales de ventas sean correctos |
+| Reglas de registro: cada usuario ve solo sus sesiones, mensajes y consultas; el administrador ve todo | `security/chatbot_security.xml` | Privacidad entre usuarios |
+| CU-05: stock y facturación por producto en un periodo | `services/handlers/stock_facturacion.py`, `services/prompt_builder.py`, `services/validator.py`, `models/orchestrator.py` | Responder en una sola consulta existencias y lo facturado (caso de uso de la tesis) |
+| Fecha actual enviada a la IA y fechas normalizadas a AAAA-MM-DD | `services/prompt_builder.py`, `services/validator.py` | Resolver "este mes" o "julio" y evitar errores por fechas inválidas |
+| Stock unificado: existencia, reservado y disponible, con el mismo cálculo con o sin ubicación | `services/handlers/stock.py` | Que CU-02 y CU-05 den cifras coherentes con Odoo |
+| CU-01 aplica el periodo de fechas | `services/handlers/factura.py` | Cumplir lo que dice la Tabla 15 de la tesis |
+| El chat no muestra textos de errores internos | `models/chatbot_discuss_service.py` | No exponer detalles técnicos al usuario |
+| API key de Gemini en el encabezado y timeout de 45 s en Ajustes | `services/llm_client.py`, `models/res_config_settings.py` | Seguridad de la clave y configuración coherente |
+| 26 pruebas en Odoo, script local y GitHub Actions | `tests/`, `scripts/run-odoo-tests.ps1`, `.github/workflows/pruebas.yml` | Detectar errores automáticamente en cada cambio |
+| Test de errores HTTP corregido y 5 consultas de CU-05 en el dataset | `scripts/test_chatbot_unit.py`, `data/eval/eval_dataset.jsonl` | Pruebas en verde y evaluación del nuevo caso de uso |
+| Listas de seguimiento del código y de la tesis | `docs/SEGUIMIENTO_CAMBIOS.md`, `docs/PENDIENTES_TESIS.md` | Llevar el control de lo hecho y lo pendiente |
 
 ---
 
@@ -36,11 +89,14 @@ se corrige en esa misma rama.
 | 9 | 5 y 10. Respuesta sin bloqueo y redacción por IA (opcionales) | `feature/respuesta-asincrona` | Mejoras finales si queda tiempo |
 
 **Ciclo de cada paso**
-- [ ] Crear la rama desde `main` actualizado.
-- [ ] Implementar con pruebas automáticas (unitarias y en Odoo).
-- [ ] GitHub Actions en verde.
-- [ ] Prueba manual en tu Odoo con Gemini real (lista de comprobación en el PR).
-- [ ] Fusionar el PR y marcar las casillas del punto en este archivo.
+1. Crear la rama desde `main` actualizado.
+2. Implementar con pruebas automáticas (unitarias y en Odoo).
+3. Abrir el PR, con la lista de comprobación para la prueba manual en tu Odoo con Gemini real.
+4. Cuando GitHub Actions pase, fusionar el PR en `main`.
+5. Agregar la entrada en **Registro de cambios aprobados** (qué, dónde, para qué) y marcar las
+   casillas del punto.
+6. Empezar el paso siguiente. Si la prueba manual encuentra algo, se corrige en el paso siguiente
+   o en una rama `fix/…`.
 
 ---
 
