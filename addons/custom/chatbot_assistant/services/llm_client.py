@@ -106,12 +106,22 @@ class LLMClientError(Exception):
         super().__init__(self.message)
 
 
-def _user_error(message):
-    try:
-        from odoo.exceptions import UserError
-        return UserError(message)
-    except ImportError:
-        return RuntimeError(message)
+try:
+    from odoo.exceptions import UserError as _UserErrorBase
+except ImportError:  # pruebas unitarias sin Odoo
+    _UserErrorBase = RuntimeError
+
+
+class ChatbotLLMError(_UserErrorBase):
+    """Error mostrado al usuario que conserva el código técnico para las métricas."""
+
+    def __init__(self, message, code="generic"):
+        super().__init__(message)
+        self.code = code
+
+
+def _user_error(message, code="generic"):
+    return ChatbotLLMError(message, code)
 
 
 def _is_retryable(exc):
@@ -141,23 +151,31 @@ def get_chatbot_config(env):
     }
 
 
-def complete_json(env, system_prompt, user_message):
-    """Llama al LLM configurado y espera una respuesta JSON (con reintentos)."""
+def complete_json(env, system_prompt, user_message, meta=None):
+    """
+    Llama al LLM configurado y espera una respuesta JSON (con reintentos).
+    Si se pasa `meta` (dict), se completa con provider, model, retries y tokens.
+    """
+    meta = meta if meta is not None else {}
     config = get_chatbot_config(env)
-    if not config["active"]:
-        raise _user_error(USER_MESSAGES["inactive"])
-    if not config["api_key"]:
-        raise _user_error(USER_MESSAGES["missing_key"])
-
     provider = (config["provider"] or "gemini").lower()
+    meta.update({"provider": provider, "model": config["model"], "retries": 0})
+    if not config["active"]:
+        raise _user_error(USER_MESSAGES["inactive"], "inactive")
+    if not config["api_key"]:
+        raise _user_error(USER_MESSAGES["missing_key"], "missing_key")
+
     last_exc = None
     attempts = 1 + MAX_RETRIES
     for attempt in range(attempts):
+        meta["retries"] = attempt
         try:
+            usage = {}
             if provider == "groq":
-                raw = _call_groq(config, system_prompt, user_message)
+                raw = _call_groq(config, system_prompt, user_message, usage=usage)
             else:
-                raw = _call_gemini(config, system_prompt, user_message)
+                raw = _call_gemini(config, system_prompt, user_message, usage=usage)
+            meta.update(usage)
             return _parse_json_response(raw)
         except LLMClientError as exc:
             last_exc = exc
@@ -166,7 +184,8 @@ def complete_json(env, system_prompt, user_message):
                     "LLM falló (code=%s attempt=%s/%s): %s",
                     exc.code, attempt + 1, attempts, exc.admin_message,
                 )
-                raise _user_error(exc.message) from exc
+                code = exc.code if isinstance(exc.code, str) else "generic"
+                raise _user_error(exc.message, code) from exc
             delay = RETRY_BASE_DELAY_SEC * (2 ** attempt)
             _logger.warning(
                 "LLM reintento %s/%s en %.1fs (code=%s): %s",
@@ -174,7 +193,10 @@ def complete_json(env, system_prompt, user_message):
             )
             time.sleep(delay)
 
-    raise _user_error(last_exc.message if last_exc else USER_MESSAGES["generic"])
+    raise _user_error(
+        last_exc.message if last_exc else USER_MESSAGES["generic"],
+        getattr(last_exc, "code", "generic") if last_exc else "generic",
+    )
 
 
 def test_connection(config):
@@ -405,7 +427,25 @@ def _http_json(url, payload, headers, timeout):
         raise LLMClientError("network") from exc
 
 
-def _call_gemini(config, system_prompt, user_message):
+def _gemini_usage(data):
+    meta = (data or {}).get("usageMetadata") or {}
+    return {
+        "tokens_prompt": int(meta.get("promptTokenCount") or 0),
+        "tokens_output": int(meta.get("candidatesTokenCount") or 0),
+        "tokens_thinking": int(meta.get("thoughtsTokenCount") or 0),
+    }
+
+
+def _groq_usage(data):
+    meta = (data or {}).get("usage") or {}
+    return {
+        "tokens_prompt": int(meta.get("prompt_tokens") or 0),
+        "tokens_output": int(meta.get("completion_tokens") or 0),
+        "tokens_thinking": 0,
+    }
+
+
+def _call_gemini(config, system_prompt, user_message, usage=None):
     model = (config.get("model") or DEFAULT_GEMINI_MODEL).replace("models/", "")
     api_key = config["api_key"]
     url = (
@@ -422,6 +462,8 @@ def _call_gemini(config, system_prompt, user_message):
     }
     headers = {"Content-Type": "application/json", "x-goog-api-key": api_key}
     data = _http_json(url, payload, headers, config["timeout"])
+    if usage is not None:
+        usage.update(_gemini_usage(data))
     try:
         return data["candidates"][0]["content"]["parts"][0]["text"]
     except (KeyError, IndexError, TypeError) as exc:
@@ -431,7 +473,7 @@ def _call_gemini(config, system_prompt, user_message):
         raise LLMClientError("bad_response") from exc
 
 
-def _call_groq(config, system_prompt, user_message):
+def _call_groq(config, system_prompt, user_message, usage=None):
     model = config.get("model") or DEFAULT_GROQ_MODEL
     url = "https://api.groq.com/openai/v1/chat/completions"
     payload = {
@@ -448,6 +490,8 @@ def _call_groq(config, system_prompt, user_message):
         "Authorization": "Bearer %s" % config["api_key"],
     }
     data = _http_json(url, payload, headers, config["timeout"])
+    if usage is not None:
+        usage.update(_groq_usage(data))
     try:
         return data["choices"][0]["message"]["content"]
     except (KeyError, IndexError, TypeError) as exc:

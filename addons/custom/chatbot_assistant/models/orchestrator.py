@@ -4,14 +4,14 @@ import logging
 import time
 
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 from ..services import llm_client
 from ..services.handlers import HANDLER_MAP
 from ..services.prompt_builder import SYSTEM_PROMPT, build_user_payload
 from ..services.validator import merge_pending_entities, validate_llm_output, enrich_entities_from_session
 
-from ..services.llm_client import USER_MESSAGES
+from ..services.llm_client import USER_MESSAGES, ChatbotLLMError
 
 _logger = logging.getLogger(__name__)
 
@@ -24,6 +24,14 @@ MISSING_LABELS = {
     "date_from": "la fecha desde",
     "date_to": "la fecha hasta",
 }
+
+FORBIDDEN_MSG = (
+    "No tienes permiso para consultar esa información. "
+    "Pide acceso al administrador."
+)
+
+# Códigos de error de la IA que indican una respuesta defectuosa (no una caída del servicio).
+LLM_BAD_OUTPUT_CODES = ("invalid_json", "bad_response", "blocked")
 
 OUT_OF_SCOPE_MSG = (
     "Esa solicitud está fuera del alcance del asistente. "
@@ -48,12 +56,21 @@ class ChatbotOrchestrator(models.AbstractModel):
         success = False
         error = None
         handler_data = {}
+        outcome = None
+        error_code = None
+        llm_ms = 0
+        orm_ms = 0
+        llm_meta = {}
 
         try:
             context = session.get_short_context()
             today = fields.Date.context_today(self).isoformat()
             user_payload = build_user_payload(user_text, context, today=today)
-            raw = llm_client.complete_json(self.env, SYSTEM_PROMPT, user_payload)
+            llm_started = time.perf_counter()
+            try:
+                raw = llm_client.complete_json(self.env, SYSTEM_PROMPT, user_payload, meta=llm_meta)
+            finally:
+                llm_ms = int((time.perf_counter() - llm_started) * 1000)
             llm_json = json.dumps(raw, ensure_ascii=False)
             validated = validate_llm_output(raw)
 
@@ -104,15 +121,21 @@ class ChatbotOrchestrator(models.AbstractModel):
                 session.clear_pending()
                 reply = OUT_OF_SCOPE_MSG
                 success = True
+                if validated.get("error") == "unknown_intent":
+                    outcome, error_code = "llm_bad_output", "unknown_intent"
+                else:
+                    outcome = "rejected"
             elif status == "invalid_output":
                 session.clear_pending()
                 reply = _("No pude interpretar la consulta. Reformule la pregunta, por favor.")
                 success = False
                 error = validated.get("error") or "invalid_output"
+                outcome, error_code = "llm_bad_output", "invalid_output"
             elif status == "ambiguous":
                 session.set_pending(intent, validated["entities"])
                 reply = _("La consulta es ambigua. Precise el cliente, producto o factura.")
                 success = True
+                outcome = "clarification"
             elif status == "missing_information":
                 session.set_pending(intent, validated["entities"])
                 missing = validated.get("missing_entities") or []
@@ -122,6 +145,7 @@ class ChatbotOrchestrator(models.AbstractModel):
                 else:
                     reply = _("Falta información para ejecutar la consulta. Precise los datos.")
                 success = True
+                outcome = "clarification"
             elif status == "ready":
                 handler = HANDLER_MAP.get(intent)
                 if not handler:
@@ -130,14 +154,20 @@ class ChatbotOrchestrator(models.AbstractModel):
                     intent = "fuera_de_alcance"
                     status = "rejected"
                     success = True
+                    outcome = "rejected"
                 else:
-                    result = handler(self.env, validated["entities"], user_text=user_text)
+                    orm_started = time.perf_counter()
+                    try:
+                        result = handler(self.env, validated["entities"], user_text=user_text)
+                    finally:
+                        orm_ms = int((time.perf_counter() - orm_started) * 1000)
                     handler_data = result.get("data") or {}
                     if result.get("status") == "ambiguous":
                         session.set_pending(intent, validated["entities"])
                         status = "ambiguous"
                         reply = result.get("message")
                         success = True
+                        outcome = "clarification"
                     elif result.get("ok"):
                         session.clear_pending()
                         # Guardar las últimas entidades para preguntas de seguimiento
@@ -145,32 +175,53 @@ class ChatbotOrchestrator(models.AbstractModel):
                         session.pending_intent = False
                         reply = result.get("message")
                         success = True
+                        outcome = "answered"
                     else:
                         # No encontrado / datos insuficientes del handler
                         if "Indique" in (result.get("message") or ""):
                             session.set_pending(intent, validated["entities"])
                             status = "missing_information"
+                            outcome = "clarification"
+                        else:
+                            outcome = "no_results"
                         reply = result.get("message") or _("No se encontraron datos.")
                         success = bool(result.get("ok"))
             else:
                 reply = _("No pude procesar la consulta.")
                 success = False
+                outcome = "internal_error"
 
+        except AccessError as exc:
+            # Odoo negó el acceso a un modelo o registro: mensaje en español, detalle solo en el log.
+            reply = FORBIDDEN_MSG
+            error = str(exc)[:500]
+            success = False
+            status = status or "error"
+            outcome, error_code = "forbidden", "access"
+        except ChatbotLLMError as exc:
+            reply = exc.args[0] if exc.args else str(exc)
+            error = reply
+            success = False
+            status = status or "error"
+            error_code = exc.code if exc.code in dict(self._error_codes()) else "generic"
+            outcome = "llm_bad_output" if error_code in LLM_BAD_OUTPUT_CODES else "llm_unavailable"
         except UserError as exc:
             # Mensaje ya pensado para el usuario final (sin jerga HTTP/timeout).
             reply = exc.args[0] if exc.args else str(exc)
             error = reply
             success = False
             status = status or "error"
+            outcome, error_code = "internal_error", "generic"
         except Exception as exc:
             _logger.exception("Error en orquestador chatbot")
             error = str(exc)
             reply = USER_MESSAGES["generic"]
             success = False
             status = status or "error"
+            outcome, error_code = "internal_error", "generic"
 
         latency_ms = int((time.perf_counter() - started) * 1000)
-        self.env["chatbot.query.log"].sudo().create({
+        log = self.env["chatbot.query.log"].sudo().create({
             "name": (user_text or "")[:80],
             "user_id": self.env.user.id,
             "session_id": session.id,
@@ -183,6 +234,16 @@ class ChatbotOrchestrator(models.AbstractModel):
             "latency_ms": latency_ms,
             "error": error,
             "handler_data_json": json.dumps(handler_data, ensure_ascii=False, default=str),
+            "outcome": outcome,
+            "error_code": error_code,
+            "llm_ms": llm_ms,
+            "orm_ms": orm_ms,
+            "retries": llm_meta.get("retries", 0),
+            "llm_provider": llm_meta.get("provider"),
+            "llm_model": llm_meta.get("model"),
+            "tokens_prompt": llm_meta.get("tokens_prompt", 0),
+            "tokens_output": llm_meta.get("tokens_output", 0),
+            "tokens_thinking": llm_meta.get("tokens_thinking", 0),
         })
 
         return {
@@ -193,7 +254,13 @@ class ChatbotOrchestrator(models.AbstractModel):
             "latency_ms": latency_ms,
             "data": handler_data,
             "llm_json": llm_json,
+            "outcome": outcome,
+            "log_id": log.id,
         }
+
+    @api.model
+    def _error_codes(self):
+        return self.env["chatbot.query.log"]._fields["error_code"].selection
 
     @api.model
     def _mostly_empty(self, entities):

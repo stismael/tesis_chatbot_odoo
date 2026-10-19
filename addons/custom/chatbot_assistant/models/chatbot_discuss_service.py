@@ -85,6 +85,7 @@ class ChatbotDiscussService(models.AbstractModel):
             return
 
         session = self._get_or_create_session(channel)
+        log_id = False
         try:
             self.env["chatbot.message"].create({
                 "session_id": session.id,
@@ -92,6 +93,7 @@ class ChatbotDiscussService(models.AbstractModel):
                 "body": body,
             })
             result = self.env["chatbot.orchestrator"].process_message(session, body)
+            log_id = result.get("log_id")
             reply = result.get("reply") or _("Sin respuesta")
             self.env["chatbot.message"].create({
                 "session_id": session.id,
@@ -112,13 +114,16 @@ class ChatbotDiscussService(models.AbstractModel):
             _logger.exception("Error en Asistente ERP (Discuss)")
             reply = USER_MESSAGES["generic"]
 
-        channel.with_context(chatbot_assistant_reply=True).sudo().message_post(
+        reply_message = channel.with_context(chatbot_assistant_reply=True).sudo().message_post(
             author_id=bot.id,
             body=self._format_reply_html(reply),
             message_type="comment",
             subtype_xmlid="mail.mt_comment",
             silent=True,
         )
+        if log_id:
+            # Liga la respuesta al log para registrar la valoración 👍/👎 del usuario.
+            self.env["chatbot.query.log"].sudo().browse(log_id).reply_message_id = reply_message.id
 
     @api.model
     def _get_or_create_session(self, channel):

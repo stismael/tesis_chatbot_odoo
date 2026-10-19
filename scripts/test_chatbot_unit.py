@@ -127,6 +127,21 @@ def test_gemini_key_not_in_url():
     assert headers["x-goog-api-key"] == "CLAVE-SECRETA"
 
 
+def test_token_usage_parsing():
+    from services.llm_client import _gemini_usage, _groq_usage
+    gemini = {"usageMetadata": {"promptTokenCount": 1500, "candidatesTokenCount": 90, "thoughtsTokenCount": 400}}
+    assert _gemini_usage(gemini) == {"tokens_prompt": 1500, "tokens_output": 90, "tokens_thinking": 400}
+    groq = {"usage": {"prompt_tokens": 1400, "completion_tokens": 70}}
+    assert _groq_usage(groq) == {"tokens_prompt": 1400, "tokens_output": 70, "tokens_thinking": 0}
+    assert _gemini_usage({}) == {"tokens_prompt": 0, "tokens_output": 0, "tokens_thinking": 0}
+
+
+def test_llm_error_keeps_code():
+    from services.llm_client import ChatbotLLMError, _user_error
+    err = _user_error("mensaje", "timeout")
+    assert isinstance(err, ChatbotLLMError) and err.code == "timeout" and err.args[0] == "mensaje"
+
+
 if __name__ == "__main__":
     test_ready_factura()
     test_missing_stock()
@@ -138,4 +153,6 @@ if __name__ == "__main__":
     test_dataset_loads()
     test_http_error_mapping()
     test_gemini_key_not_in_url()
+    test_token_usage_parsing()
+    test_llm_error_keeps_code()
     print("OK: validator + dataset + LLM error mapping checks passed")
