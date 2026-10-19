@@ -15,7 +15,7 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `feature/metricas-y-monitoreo` | Paso 1: métricas y monitoreo | Fusionada en `main` (PR #3) |
 | `feature/permisos-por-consulta` | Paso 2: permisos por consulta | Fusionada en `main` (PR #4) |
 | `feature/velocidad-llm` | Paso 3: velocidad de la IA | Fusionada en `main` (PR #5) |
-| `feature/seleccion-modelo` | Paso 4: catálogo y validación del modelo | PR #6 |
+| `feature/seleccion-modelo` | Paso 4: catálogo y validación del modelo | Fusionada en `main` (PR #6) |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -28,7 +28,7 @@ Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada co
 
 ### PR #6 · Paso 4: catálogo y validación del modelo de IA
 - **Rama:** `feature/seleccion-modelo` · **Versión del módulo:** 18.0.1.8.0
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-10-19, con las pruebas de GitHub Actions en verde.
 - **Pruebas:** 69 pruebas en Odoo 18 (11 nuevas) y 2 pruebas unitarias nuevas; verificada la
   actualización desde 18.0.1.7.0.
 
@@ -129,7 +129,7 @@ se corrige en esa misma rama.
 | 1 ✅ | 12. Métricas y monitoreo | `feature/metricas-y-monitoreo` | Medir primero: da los números de "antes" para todo lo demás |
 | 2 ✅ | 11. Permisos por consulta | `feature/permisos-por-consulta` | Seguridad; la Ruta 2 (paso 7) depende de esta tabla |
 | 3 ✅ | 7. Velocidad de la IA | `feature/velocidad-llm` | Con las métricas ya activas se mide el antes y el después |
-| 4 (en revisión) | 9. Selección y validación del modelo | `feature/seleccion-modelo` | Corrige el defecto del campo "Modelo" y valida la configuración |
+| 4 ✅ | 9. Selección y validación del modelo | `feature/seleccion-modelo` | Corrige el defecto del campo "Modelo" y valida la configuración |
 | 5 | 8. Conversación libre | `feature/conversacion-libre` | Requiere la IA rápida (paso 3), porque los saludos también la llaman |
 | 6 | 3 y 4. Memoria y `order_state` | `fix/memoria-y-estado-pedido` | Ajustes acotados sobre el flujo actual |
 | 7 | 13. Ruta híbrida | `feature/ruta-hibrida` | Usa la tabla de permisos (paso 2), las métricas (paso 1) y la clasificación (paso 5) |
