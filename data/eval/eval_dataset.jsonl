@@ -54,3 +54,9 @@
 {"id": "Q054", "query": "Stock y facturación del CAS-001 en lo que va del año", "category": "correcta", "expected_intent": "consultar_stock_facturacion_producto", "expected_entities": {"product_code": "CAS-001"}, "expected_behavior": "execute", "expected_result_contains": ["CAS-001", "disponibles", "factur"]}
 {"id": "Q055", "query": "¿Qué se facturó del producto FIL-M01 y cuánto queda en bodega?", "category": "correcta", "expected_intent": "consultar_stock_facturacion_producto", "expected_entities": {"product_code": "FIL-M01"}, "expected_behavior": "execute", "expected_result_contains": ["FIL-M01", "disponibles", "factur"]}
 {"id": "Q056", "query": "¿Cuánto se facturó y cuánto stock hay?", "category": "incompleta", "expected_intent": "consultar_stock_facturacion_producto", "expected_entities": {}, "expected_behavior": "clarify", "expected_status": "missing_information"}
+{"id": "Q057", "query": "Hola", "category": "conversacion", "expected_intent": "conversacion", "expected_entities": {}, "expected_behavior": "converse"}
+{"id": "Q058", "query": "Buenos días, ¿cómo estás?", "category": "conversacion", "expected_intent": "conversacion", "expected_entities": {}, "expected_behavior": "converse"}
+{"id": "Q059", "query": "Gracias por la ayuda", "category": "conversacion", "expected_intent": "conversacion", "expected_entities": {}, "expected_behavior": "converse"}
+{"id": "Q060", "query": "¿Qué puedes hacer?", "category": "conversacion", "expected_intent": "conversacion", "expected_entities": {}, "expected_behavior": "converse"}
+{"id": "Q061", "query": "¿Cuánto vendí ayer?", "category": "conversacion", "expected_intent": "consultar_ventas_cliente", "expected_entities": {}, "expected_behavior": "not_conversation"}
+{"id": "Q062", "query": "Oye, ¿y cuántos cascos negros nos quedan?", "category": "conversacion", "expected_intent": "consultar_stock", "expected_entities": {}, "expected_behavior": "not_conversation"}

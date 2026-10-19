@@ -35,6 +35,15 @@ FORBIDDEN_MSG = (
 # Códigos de error de la IA que indican una respuesta defectuosa (no una caída del servicio).
 LLM_BAD_OUTPUT_CODES = ("invalid_json", "bad_response", "blocked")
 
+# Respaldo si la IA no redacta la respuesta de conversación o se descarta por contener cifras.
+CONVERSATION_FALLBACK = (
+    "Hola, soy el Asistente ERP. Puedo consultar facturas, inventario, ventas por cliente o "
+    "producto, el vendedor asignado y el stock con lo facturado de un producto. "
+    "Escribe /help para ver ejemplos."
+)
+
+REPLY_DISCARDED_MSG = "Respuesta de la IA descartada: contenía cifras que no salen de Odoo"
+
 OUT_OF_SCOPE_MSG = (
     "Esa solicitud está fuera del alcance del asistente. "
     "Solo puedo consultar facturas, inventario, ventas por cliente o producto, "
@@ -129,14 +138,23 @@ class ChatbotOrchestrator(models.AbstractModel):
                 error = "Faltan grupos: %s" % ", ".join(missing_groups.mapped("full_name"))
                 success = False
                 outcome, error_code = "forbidden", "intent_permission"
+            elif intent == "conversacion":
+                # La IA redacta la respuesta; no se consulta Odoo ni se toca la consulta pendiente.
+                reply = validated.get("reply") or CONVERSATION_FALLBACK
+                success = True
+                outcome = "conversation"
+                if validated.get("reply_discarded"):
+                    error, error_code = REPLY_DISCARDED_MSG, "reply_discarded"
             elif intent == "fuera_de_alcance" or status == "rejected":
                 session.clear_pending()
-                reply = OUT_OF_SCOPE_MSG
+                reply = validated.get("reply") or OUT_OF_SCOPE_MSG
                 success = True
                 if validated.get("error") == "unknown_intent":
                     outcome, error_code = "llm_bad_output", "unknown_intent"
                 else:
                     outcome = "rejected"
+                    if validated.get("reply_discarded"):
+                        error, error_code = REPLY_DISCARDED_MSG, "reply_discarded"
             elif status == "invalid_output":
                 session.clear_pending()
                 reply = _("No pude interpretar la consulta. Reformule la pregunta, por favor.")

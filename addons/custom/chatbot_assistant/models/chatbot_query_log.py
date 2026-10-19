@@ -30,6 +30,7 @@ ERROR_CODES = [
     ("bad_response", "Respuesta inesperada"),
     ("invalid_output", "Salida no válida"),
     ("unknown_intent", "Intención inventada"),
+    ("reply_discarded", "Respuesta redactada descartada (cifras)"),
     ("inactive", "Asistente desactivado"),
     ("missing_key", "API key no configurada"),
     ("intent_permission", "Sin el grupo exigido para la consulta"),

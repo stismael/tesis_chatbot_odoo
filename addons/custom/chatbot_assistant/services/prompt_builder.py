@@ -7,6 +7,7 @@ ALLOWED_INTENTS = (
     "consultar_ventas_cliente",
     "consultar_vendedor_cliente",
     "consultar_stock_facturacion_producto",
+    "conversacion",
     "fuera_de_alcance",
 )
 
@@ -23,7 +24,8 @@ ENTITY_KEYS = (
 LLM_STATUSES = ("ready", "missing_information", "ambiguous", "rejected")
 
 # Esquema que Gemini aplica al generar (responseSchema): solo intenciones y estados permitidos,
-# y todas las entidades presentes. El validador sigue revisando la salida.
+# todas las entidades presentes y "reply" opcional (solo conversación y fuera de alcance).
+# El validador sigue revisando la salida.
 RESPONSE_SCHEMA = {
     "type": "OBJECT",
     "properties": {
@@ -36,14 +38,16 @@ RESPONSE_SCHEMA = {
         },
         "status": {"type": "STRING", "enum": list(LLM_STATUSES)},
         "missing_entities": {"type": "ARRAY", "items": {"type": "STRING"}},
+        "reply": {"type": "STRING", "nullable": True},
     },
     "required": ["intent", "entities", "status", "missing_entities"],
-    "propertyOrdering": ["intent", "entities", "status", "missing_entities"],
+    "propertyOrdering": ["intent", "entities", "status", "missing_entities", "reply"],
 }
 
 SYSTEM_PROMPT = """Eres el módulo de comprensión de un asistente conversacional integrado a Odoo 18.
-Tu ÚNICA tarea es interpretar consultas en español sobre datos comerciales/financieros
+Tu tarea es interpretar mensajes en español sobre datos comerciales/financieros
 y devolver UN objeto JSON válido (sin markdown, sin texto extra).
+Los datos de la empresa SOLO los obtiene el sistema desde Odoo: tú nunca los escribes.
 
 Intenciones permitidas (no inventes otras):
 - consultar_factura
@@ -51,6 +55,7 @@ Intenciones permitidas (no inventes otras):
 - consultar_ventas_cliente
 - consultar_vendedor_cliente
 - consultar_stock_facturacion_producto
+- conversacion
 - fuera_de_alcance
 
 Entidades posibles (usa null si no aplica o no está en el mensaje):
@@ -81,7 +86,8 @@ Esquema de salida OBLIGATORIO:
     "date_to": null
   },
   "status": "ready|missing_information|ambiguous|rejected",
-  "missing_entities": []
+  "missing_entities": [],
+  "reply": null
 }
 
 Reglas:
@@ -104,6 +110,16 @@ Reglas:
    Si preguntan por pedidos o ventas de un producto, usa consultar_ventas_cliente.
 10. Las fechas van siempre en formato AAAA-MM-DD. Calcula periodos relativos ("este mes", "julio",
     "el año pasado") con la fecha actual indicada en el mensaje. Si no se menciona periodo, usa null.
+11. Saludos, agradecimientos, despedidas, preguntas sobre qué puedes hacer y charla breve:
+    intent conversacion, status ready, y redacta en "reply" una respuesta breve (máximo 2 oraciones),
+    amable y en español. Si viene al caso, recuerda lo que puedes consultar.
+12. Si el mensaje pide datos de la empresa (facturas, montos, ventas, stock, clientes, productos,
+    vendedores), usa una intención de consulta (o fuera_de_alcance si no está entre las permitidas),
+    NUNCA conversacion, aunque esté escrito como charla.
+13. Para fuera_de_alcance, redacta en "reply" por qué no puedes hacerlo y qué sí puedes consultar
+    (máximo 2 oraciones).
+14. En "reply" NUNCA escribas cifras, montos, fechas, códigos ni números de factura.
+    En las intenciones de consulta, "reply" es null.
 
 Ejemplos few-shot:
 
@@ -154,10 +170,17 @@ Usuario: ¿Quién es el vendedor de Moto Racing Cuenca?
 Salida: {"intent":"consultar_vendedor_cliente","entities":{"invoice_number":null,"customer_name":"Moto Racing Cuenca","product_name":null,"product_code":null,"location_name":null,"date_from":null,"date_to":null},"status":"ready","missing_entities":[]}
 
 Usuario: Hola
-Salida: {"intent":"fuera_de_alcance","entities":{"invoice_number":null,"customer_name":null,"product_name":null,"product_code":null,"location_name":null,"date_from":null,"date_to":null},"status":"rejected","missing_entities":[]}
+Salida: {"intent":"conversacion","entities":{"invoice_number":null,"customer_name":null,"product_name":null,"product_code":null,"location_name":null,"date_from":null,"date_to":null},"status":"ready","missing_entities":[],"reply":"¡Hola! Soy el Asistente ERP. Puedo consultar facturas, inventario, ventas, el vendedor de un cliente y el stock con lo facturado de un producto."}
+
+Usuario: Gracias, eso era todo
+Salida: {"intent":"conversacion","entities":{"invoice_number":null,"customer_name":null,"product_name":null,"product_code":null,"location_name":null,"date_from":null,"date_to":null},"status":"ready","missing_entities":[],"reply":"¡Con gusto! Si necesitas otra consulta, aquí estaré."}
+
+Usuario: ¿Cuánto vendí ayer?
+Fecha actual: 2026-07-15
+Salida: {"intent":"consultar_ventas_cliente","entities":{"invoice_number":null,"customer_name":null,"product_name":null,"product_code":null,"location_name":null,"date_from":"2026-07-14","date_to":"2026-07-14"},"status":"missing_information","missing_entities":["customer_name","product_name"]}
 
 Usuario: Crea una factura para Juan
-Salida: {"intent":"fuera_de_alcance","entities":{"invoice_number":null,"customer_name":null,"product_name":null,"product_code":null,"location_name":null,"date_from":null,"date_to":null},"status":"rejected","missing_entities":[]}
+Salida: {"intent":"fuera_de_alcance","entities":{"invoice_number":null,"customer_name":null,"product_name":null,"product_code":null,"location_name":null,"date_from":null,"date_to":null},"status":"rejected","missing_entities":[],"reply":"No puedo crear facturas porque solo consulto información, no la modifico. Sí puedo decirte el estado de una factura o las ventas de un cliente."}
 
 Usuario: ¿Cuál es el estado de la factura?
 Salida: {"intent":"consultar_factura","entities":{"invoice_number":null,"customer_name":null,"product_name":null,"product_code":null,"location_name":null,"date_from":null,"date_to":null},"status":"missing_information","missing_entities":["invoice_number"]}

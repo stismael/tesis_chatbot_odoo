@@ -61,6 +61,16 @@ def _behavior_ok(item, result, llm_entities):
             ok = True
         return ok, intent == "fuera_de_alcance" or ok, True, ok
 
+    if behavior == "converse":
+        # La IA responde con sus palabras y sin cifras (el validador descarta las que las traen).
+        ok = intent == "conversacion" and bool(reply) and not any(ch.isdigit() for ch in reply)
+        return ok, intent == "conversacion", True, ok
+
+    if behavior == "not_conversation":
+        # Pregunta de datos escrita como charla: debe ir por una intención de consulta.
+        ok = intent not in ("conversacion", "fuera_de_alcance")
+        return ok, ok, True, ok
+
     if behavior in ("clarify_or_not_found", "clarify_or_execute", "reject_or_clarify"):
         return True, intent_ok or intent == "fuera_de_alcance", True, True
 

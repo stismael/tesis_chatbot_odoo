@@ -2,10 +2,17 @@
 """Validación sintáctica y semántica de la salida JSON del LLM."""
 
 import datetime
+import re
 
 from .prompt_builder import ALLOWED_INTENTS, ENTITY_KEYS
 
 DATE_KEYS = ("date_from", "date_to")
+
+# Intenciones en las que la IA redacta la respuesta (campo "reply").
+REPLY_INTENTS = ("conversacion", "fuera_de_alcance")
+REPLY_MAX_CHARS = 400
+# Los datos solo salen de Odoo: una respuesta redactada con cifras, montos o porcentajes se descarta.
+INVENTED_DATA_RE = re.compile(r"[0-9$€%]")
 
 # Cada intención tiene grupos OR: basta con satisfacer UN grupo.
 # Dentro de un grupo, basta con UNA entidad (OR interno).
@@ -15,6 +22,7 @@ REQUIRED_BY_INTENT = {
     "consultar_ventas_cliente": (("customer_name",), ("product_name", "product_code")),
     "consultar_vendedor_cliente": (("customer_name",),),
     "consultar_stock_facturacion_producto": (("product_name", "product_code"),),
+    "conversacion": (),
     "fuera_de_alcance": (),
 }
 
@@ -39,6 +47,23 @@ def _clean_entities(raw_entities):
         else:
             entities[key] = str(value).strip()
     return entities
+
+
+def clean_reply(value):
+    """
+    Limpia la respuesta redactada por la IA. Retorna (reply, motivo_descartada).
+    Se descarta si contiene cifras (posibles datos inventados); se acorta si es muy larga.
+    """
+    if not isinstance(value, str):
+        return None, None
+    text = re.sub(r"\s+", " ", value).strip()
+    if not text:
+        return None, None
+    if INVENTED_DATA_RE.search(text):
+        return None, "invented_data"
+    if len(text) > REPLY_MAX_CHARS:
+        text = text[:REPLY_MAX_CHARS].rsplit(" ", 1)[0].rstrip(",;:") + "…"
+    return text, None
 
 
 def _normalize_date(value):
@@ -101,14 +126,17 @@ def validate_llm_output(data):
         missing = []
     missing = [str(x) for x in missing]
 
-    if intent == "fuera_de_alcance":
+    if intent in REPLY_INTENTS:
+        reply, discarded = clean_reply(data.get("reply"))
         return {
             "ok": True,
             "intent": intent,
             "entities": entities,
-            "status": "rejected",
+            "status": "rejected" if intent == "fuera_de_alcance" else "ready",
             "missing_entities": [],
             "error": None,
+            "reply": reply,
+            "reply_discarded": discarded,
         }
 
     ok_req, computed_missing = _has_required(entities, intent)
