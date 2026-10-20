@@ -17,7 +17,8 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `feature/velocidad-llm` | Paso 3: velocidad de la IA | Fusionada en `main` (PR #5) |
 | `feature/seleccion-modelo` | Paso 4: catálogo y validación del modelo | Fusionada en `main` (PR #6) |
 | `feature/conversacion-libre` | Paso 5: conversación libre | Fusionada en `main` (PR #7) |
-| `fix/memoria-y-estado-pedido` | Paso 6: memoria de la sesión y `order_state` | PR #8 |
+| `fix/memoria-y-estado-pedido` | Paso 6: memoria de la sesión y `order_state` | Fusionada en `main` (PR #8) |
+| `fix/datos-prueba-factura-ancla` | Facturas ancla del generador y verificación del dataset | PR #9 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -28,9 +29,21 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
 
+### PR #9 · Facturas ancla del generador y verificación del dataset
+- **Rama:** `fix/datos-prueba-factura-ancla` · **Versión de `chatbot_test_data`:** 18.0.1.0.1
+- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Pruebas:** base de prueba generada desde cero antes y después del cambio; las 31 consultas
+  "execute" del dataset cumplen con los datos reales (antes fallaba Q002).
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Verificación del volumen de pedidos: 1.083 pedidos (900 confirmados, 144 cotizaciones, 39 cancelados) y 656 facturas | Base generada con `chatbot_test_data` | Confirmar que la cifra de la Tabla 5 (~1.000) es correcta; no se cambia el generador |
+| Las facturas ancla INV/2026/00001 ($1.250) e INV/2026/00002 ($840) se crean sin impuestos | `chatbot_test_data/models/generator.py` | Defecto verificado: la INV/2026/00001 quedaba en $1.437,50 y "parcialmente pagada", y fallaba Q002 del dataset |
+| Script que contrasta el dataset con los datos reales sin llamar a la IA | `scripts/verificar_dataset.py` | Asegurar que las respuestas esperadas del dataset son correctas antes de evaluar a la IA (Capítulo 5) |
+
 ### PR #8 · Paso 6: memoria de la sesión y estado del pedido
 - **Rama:** `fix/memoria-y-estado-pedido` · **Versión del módulo:** 18.0.1.10.0
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-10-19, con las pruebas de GitHub Actions en verde.
 - **Pruebas:** 85 pruebas en Odoo 18 (7 nuevas) y 2 pruebas unitarias nuevas. Los tres defectos se
   reprodujeron con el orquestador antes de corregirlos.
 
@@ -164,7 +177,7 @@ se corrige en esa misma rama.
 | 3 ✅ | 7. Velocidad de la IA | `feature/velocidad-llm` | Con las métricas ya activas se mide el antes y el después |
 | 4 ✅ | 9. Selección y validación del modelo | `feature/seleccion-modelo` | Corrige el defecto del campo "Modelo" y valida la configuración |
 | 5 ✅ | 8. Conversación libre | `feature/conversacion-libre` | Requiere la IA rápida (paso 3), porque los saludos también la llaman |
-| 6 (en revisión) | 3 y 4. Memoria y `order_state` | `fix/memoria-y-estado-pedido` | Ajustes acotados sobre el flujo actual |
+| 6 ✅ | 3 y 4. Memoria y `order_state` | `fix/memoria-y-estado-pedido` | Ajustes acotados sobre el flujo actual |
 | 7 | 13. Ruta híbrida | `feature/ruta-hibrida` | Usa la tabla de permisos (paso 2), las métricas (paso 1) y la clasificación (paso 5) |
 | 8 | 6. Dataset de evaluación | `feature/dataset-evaluacion` | Con todas las rutas listas, se amplía y se ejecuta la evaluación final |
 | 9 | 5 y 10. Respuesta sin bloqueo y redacción por IA (opcionales) | `feature/respuesta-asincrona` | Mejoras finales si queda tiempo |
@@ -242,9 +255,12 @@ se corrige en esa misma rama.
 ### Punto 4: intenciones y entidades del documento
 - [x] `intencion_desconocida`: se reemplaza por la intención `conversacion` (punto 8).
 - [x] Decidir sobre `order_state` (cotización, pedido, cancelado): implementado.
-- [ ] Volumen de pedidos del generador: 350 en el código vs. ~1.000 en la tesis. Pendiente de
-      decisión: subir el generador cambia los datos de prueba y las cifras esperadas del dataset;
-      la alternativa es corregir la cifra en la tesis.
+- [x] Volumen de pedidos del generador: 350 en el código vs. ~1.000 en la tesis. Verificado
+      generando la base: `TARGET_SALE_ORDERS = 350` son solo los pedidos sueltos; las 600 facturas
+      adicionales crean también sus pedidos. Total: 1.083 pedidos (900 confirmados, 144
+      cotizaciones, 39 cancelados) y 656 facturas. La cifra de la tesis es correcta; no se cambia.
+- [x] Facturas ancla del generador con impuesto: INV/2026/00001 quedaba en $1.437,50 y
+      "parcialmente pagada" en lugar de $1.250 pagada (fallaba Q002 del dataset). Corregido.
 
 ### Punto 5: la llamada al LLM no debe bloquear el chat
 - [ ] Procesar la respuesta fuera de la transacción del mensaje (cola, cron o `postcommit`), con
