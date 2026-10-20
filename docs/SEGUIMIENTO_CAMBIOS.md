@@ -18,6 +18,7 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `feature/seleccion-modelo` | Paso 4: catálogo y validación del modelo | Fusionada en `main` (PR #6) |
 | `feature/conversacion-libre` | Paso 5: conversación libre | Fusionada en `main` (PR #7) |
 | `fix/memoria-y-estado-pedido` | Paso 6: memoria de la sesión y `order_state` | Fusionada en `main` (PR #8) |
+| `fix/datos-prueba-factura-ancla` | Facturas ancla del generador y verificación del dataset | PR #9 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -27,6 +28,18 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
+
+### PR #9 · Facturas ancla del generador y verificación del dataset
+- **Rama:** `fix/datos-prueba-factura-ancla` · **Versión de `chatbot_test_data`:** 18.0.1.0.1
+- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Pruebas:** base de prueba generada desde cero antes y después del cambio; las 31 consultas
+  "execute" del dataset cumplen con los datos reales (antes fallaba Q002).
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Verificación del volumen de pedidos: 1.083 pedidos (900 confirmados, 144 cotizaciones, 39 cancelados) y 656 facturas | Base generada con `chatbot_test_data` | Confirmar que la cifra de la Tabla 5 (~1.000) es correcta; no se cambia el generador |
+| Las facturas ancla INV/2026/00001 ($1.250) e INV/2026/00002 ($840) se crean sin impuestos | `chatbot_test_data/models/generator.py` | Defecto verificado: la INV/2026/00001 quedaba en $1.437,50 y "parcialmente pagada", y fallaba Q002 del dataset |
+| Script que contrasta el dataset con los datos reales sin llamar a la IA | `scripts/verificar_dataset.py` | Asegurar que las respuestas esperadas del dataset son correctas antes de evaluar a la IA (Capítulo 5) |
 
 ### PR #8 · Paso 6: memoria de la sesión y estado del pedido
 - **Rama:** `fix/memoria-y-estado-pedido` · **Versión del módulo:** 18.0.1.10.0
