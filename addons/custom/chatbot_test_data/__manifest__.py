@@ -1,6 +1,6 @@
 {
     "name": "Chatbot Test Data",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.0.1",
     "category": "Tools",
     "summary": "Datos sintéticos deterministas para pruebas de asistente conversacional",
     "description": """

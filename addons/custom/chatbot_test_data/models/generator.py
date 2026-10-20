@@ -746,7 +746,8 @@ class ChatbotTestDataGenerator(models.AbstractModel):
             invoice.invoice_line_ids[1:].unlink()
         line = invoice.invoice_line_ids[:1]
         if line:
-            line.write({'quantity': 1, 'price_unit': total})
+            # Sin impuestos: el total de la factura ancla debe ser exactamente el indicado.
+            line.write({'quantity': 1, 'price_unit': total, 'tax_ids': [(5, 0, 0)]})
         invoice.action_post()
         self._assign_invoice_name(invoice, invoice_name)
 
@@ -796,7 +797,8 @@ class ChatbotTestDataGenerator(models.AbstractModel):
             invoice.invoice_line_ids[1:].unlink()
         line = invoice.invoice_line_ids[:1]
         if line:
-            line.write({'quantity': 1, 'price_unit': total})
+            # Sin impuestos: el total de la factura ancla debe ser exactamente el indicado.
+            line.write({'quantity': 1, 'price_unit': total, 'tax_ids': [(5, 0, 0)]})
         invoice.action_post()
         self._assign_invoice_name(invoice, invoice_name)
 
