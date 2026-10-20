@@ -75,8 +75,9 @@ Rama de referencia del código: `feature/cu05-stock-facturacion-producto`.
       usen esos valores.
 - [ ] **Memoria de la sesión (sección de memoria corta):** describir la regla: un seguimiento solo
       hereda el sujeto que falta (cliente, producto o factura); una aclaración conserva lo ya dicho.
-- [ ] **Tabla 5, pedidos de venta (~1.000):** el generador define `TARGET_SALE_ORDERS = 350`. Cambiar
-      la cifra, o subir el valor en el generador.
+- [ ] **Tabla 5, pedidos de venta (~1.000):** la cifra es correcta. Verificado: la base generada
+      tiene 1.083 pedidos (900 confirmados, 144 cotizaciones, 39 cancelados) y 656 facturas. Opcional:
+      poner las cifras exactas y el desglose por estado.
 
 ### Dataset de evaluación (3.5)
 

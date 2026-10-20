@@ -242,9 +242,12 @@ se corrige en esa misma rama.
 ### Punto 4: intenciones y entidades del documento
 - [x] `intencion_desconocida`: se reemplaza por la intención `conversacion` (punto 8).
 - [x] Decidir sobre `order_state` (cotización, pedido, cancelado): implementado.
-- [ ] Volumen de pedidos del generador: 350 en el código vs. ~1.000 en la tesis. Pendiente de
-      decisión: subir el generador cambia los datos de prueba y las cifras esperadas del dataset;
-      la alternativa es corregir la cifra en la tesis.
+- [x] Volumen de pedidos del generador: 350 en el código vs. ~1.000 en la tesis. Verificado
+      generando la base: `TARGET_SALE_ORDERS = 350` son solo los pedidos sueltos; las 600 facturas
+      adicionales crean también sus pedidos. Total: 1.083 pedidos (900 confirmados, 144
+      cotizaciones, 39 cancelados) y 656 facturas. La cifra de la tesis es correcta; no se cambia.
+- [x] Facturas ancla del generador con impuesto: INV/2026/00001 quedaba en $1.437,50 y
+      "parcialmente pagada" en lugar de $1.250 pagada (fallaba Q002 del dataset). Corregido.
 
 ### Punto 5: la llamada al LLM no debe bloquear el chat
 - [ ] Procesar la respuesta fuera de la transacción del mensaje (cola, cron o `postcommit`), con
