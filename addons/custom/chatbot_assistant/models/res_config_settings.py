@@ -139,7 +139,7 @@ class ResConfigSettings(models.TransientModel):
         if self.chatbot_llm_model_id:
             self.chatbot_model = self.chatbot_llm_model_id.model_id
 
-    def _chatbot_runtime_config(self):
+    def _chatbot_runtime_config(self, check_format=True):
         """Config desde el formulario; si la key viene vacía, usa la guardada solo si el proveedor coincide."""
         self.ensure_one()
         provider = self.chatbot_provider or "gemini"
@@ -151,7 +151,8 @@ class ResConfigSettings(models.TransientModel):
             saved_provider = (icp.get_param("chatbot_assistant.provider") or "gemini").strip()
             if saved_provider == provider:
                 api_key = (icp.get_param("chatbot_assistant.api_key") or "").strip()
-        self._chatbot_check_api_key_format(provider, api_key)
+        if check_format:
+            self._chatbot_check_api_key_format(provider, api_key)
         default_model = DEFAULT_GEMINI_MODEL if provider == "gemini" else DEFAULT_GROQ_MODEL
         return {
             "provider": provider,
@@ -291,7 +292,13 @@ class ResConfigSettings(models.TransientModel):
 
     def set_values(self):
         """Si cambió el proveedor, la API key o el modelo, prueba la conexión antes de guardar."""
+        icp = self.env["ir.config_parameter"].sudo()
+        saved_provider = (icp.get_param("chatbot_assistant.provider") or "gemini").strip()
         for record in self:
+            if not (record.chatbot_api_key or "").strip() and (record.chatbot_provider or "gemini") == saved_provider:
+                # El campo llega vacío si se cambió de proveedor y se volvió al original sin pegar la
+                # clave: se conserva la guardada en lugar de borrarla.
+                record.chatbot_api_key = icp.get_param("chatbot_assistant.api_key") or False
             if record.chatbot_llm_model_id:
                 record.chatbot_model = record.chatbot_llm_model_id.model_id
             record._chatbot_check_before_save()
@@ -303,10 +310,12 @@ class ResConfigSettings(models.TransientModel):
     def _chatbot_check_before_save(self):
         self.ensure_one()
         saved = llm_client.get_chatbot_config(self.env)
-        config = self._chatbot_runtime_config()
+        config = self._chatbot_runtime_config(check_format=False)
         if not self.chatbot_active or all(saved[key] == config[key] for key in CONNECTION_KEYS):
-            # Desactivar o cambiar solo otros datos no requiere conexión con el proveedor.
+            # Desactivar o cambiar solo otros datos no requiere conexión con el proveedor
+            # (ni revisar el formato de la API key).
             return
+        self._chatbot_check_api_key_format(config["provider"], config["api_key"])
         provider_label = PROVIDER_LABELS[config["provider"]]
         Model = self.env["chatbot.llm.model"]
         if not Model._find(config["provider"], config["model"]) and Model.search_count([
