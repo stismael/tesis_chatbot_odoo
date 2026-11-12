@@ -126,11 +126,13 @@ class TestModelSelection(ChatbotCase):
         def fail(config):
             raise LLMClientError("auth")
         with self.assertRaisesRegex(UserError, "(?s)No se guardó la configuración.*API Key inválida"):
-            self._save({"chatbot_provider": "groq", "chatbot_llm_model_id": self.groq_llama.id}, fail)
+            self._save({"chatbot_provider": "groq", "chatbot_api_key": "gsk_prueba",
+                        "chatbot_llm_model_id": self.groq_llama.id}, fail)
         self.assertEqual(self.ICP.get_param("chatbot_assistant.provider"), "gemini")
 
     def test_guardar_con_conexion_correcta_guarda_y_registra_la_verificacion(self):
-        mocked = self._save({"chatbot_provider": "groq", "chatbot_llm_model_id": self.groq_llama.id})
+        mocked = self._save({"chatbot_provider": "groq", "chatbot_api_key": "gsk_prueba",
+                             "chatbot_llm_model_id": self.groq_llama.id})
         self.assertEqual(mocked.call_count, 1)
         self.assertEqual(self.ICP.get_param("chatbot_assistant.provider"), "groq")
         self.assertEqual(self.ICP.get_param("chatbot_assistant.model"), "llama-3.3-70b-versatile")
@@ -152,6 +154,24 @@ class TestModelSelection(ChatbotCase):
         self.assertEqual(error.exception.code, "inactive")
         self._save({"chatbot_active": True})
         self.assertEqual(self.ICP.get_param("chatbot_assistant.active"), "True")
+
+    def test_volver_al_proveedor_original_no_borra_la_api_key(self):
+        # En el formulario: Gemini -> Groq (el onchange vacía la key) -> Gemini, sin pegar la clave.
+        settings = self.env["res.config.settings"].new({"chatbot_provider": "gemini", "chatbot_api_key": "clave-de-prueba"})
+        settings.chatbot_provider = "groq"
+        settings._onchange_chatbot_provider()
+        settings.chatbot_provider = "gemini"
+        settings._onchange_chatbot_provider()
+        self.assertFalse(settings.chatbot_api_key)
+        mocked = self._save({"chatbot_provider": "gemini", "chatbot_api_key": False, "chatbot_temperature": 0.2})
+        self.assertFalse(mocked.called)
+        self.assertEqual(self.ICP.get_param("chatbot_assistant.api_key"), "clave-de-prueba")
+
+    def test_clave_de_otro_proveedor_se_rechaza_al_guardar(self):
+        with self.assertRaisesRegex(UserError, "parece de Google Gemini"):
+            self._save({"chatbot_provider": "groq", "chatbot_api_key": "AIzaClaveDeGemini",
+                        "chatbot_llm_model_id": self.groq_llama.id})
+        self.assertEqual(self.ICP.get_param("chatbot_assistant.provider"), "gemini")
 
     def test_cambiar_solo_otros_datos_no_prueba_la_conexion(self):
         mocked = self._save({"chatbot_temperature": 0.3, "chatbot_timeout": 25})
