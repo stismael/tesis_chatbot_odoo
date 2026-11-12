@@ -19,6 +19,7 @@
                 <field name="orm_ms" optional="show"/>
                 <field name="retries" optional="hide"/>
                 <field name="llm_model" optional="hide"/>
+                <field name="fallback_used" optional="show"/>
                 <field name="tokens_prompt" optional="hide"/>
                 <field name="tokens_output" optional="hide"/>
                 <field name="user_feedback" optional="show"/>
@@ -53,6 +54,8 @@
                             <field name="retries"/>
                             <field name="llm_provider"/>
                             <field name="llm_model"/>
+                            <field name="fallback_used"/>
+                            <field name="primary_error_code" invisible="not fallback_used"/>
                             <field name="tokens_prompt"/>
                             <field name="tokens_output"/>
                             <field name="tokens_thinking"/>
@@ -95,6 +98,8 @@
                         domain="[('outcome', '=', 'forbidden')]"/>
                 <filter name="filter_internal" string="Error interno"
                         domain="[('outcome', '=', 'internal_error')]"/>
+                <filter name="filter_fallback" string="Respondió el respaldo"
+                        domain="[('fallback_used', '=', True)]"/>
                 <separator/>
                 <filter name="filter_slow" string="Lentas (&gt; 5 s)"
                         domain="[('latency_ms', '&gt;', 5000)]"/>
@@ -113,6 +118,7 @@
                     <filter name="group_error_code" string="Código de error" context="{'group_by': 'error_code'}"/>
                     <filter name="group_intent" string="Intención" context="{'group_by': 'intent'}"/>
                     <filter name="group_model" string="Modelo" context="{'group_by': 'llm_model'}"/>
+                    <filter name="group_fallback" string="Respaldo" context="{'group_by': 'fallback_used'}"/>
                     <filter name="group_user" string="Usuario" context="{'group_by': 'user_id'}"/>
                     <filter name="group_feedback" string="Valoración" context="{'group_by': 'user_feedback'}"/>
                     <filter name="group_day" string="Día" context="{'group_by': 'create_date:day'}"/>

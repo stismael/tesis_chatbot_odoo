@@ -110,13 +110,20 @@ class ChatbotLlmModel(models.Model):
 
     @api.model
     def _cron_sync_models(self):
-        """Actualiza el catálogo del proveedor configurado (tarea semanal)."""
-        config = llm_client.get_chatbot_config(self.env)
-        if not config["api_key"]:
-            return False
-        try:
-            models_data = llm_client.list_models(config)
-        except llm_client.LLMClientError as exc:
-            _logger.warning("Chatbot: no se pudo actualizar el catálogo de modelos: %s", exc.admin_message)
-            return False
-        return self._sync_provider(config["provider"], models_data)
+        """Actualiza el catálogo de los proveedores configurados (principal y respaldo; tarea semanal)."""
+        configs = [llm_client.get_chatbot_config(self.env)]
+        fallback = llm_client.get_fallback_config(self.env)
+        if fallback["active"]:
+            configs.append(fallback)
+        done = {}
+        for config in configs:
+            if not config["api_key"] or config["provider"] in done:
+                continue
+            try:
+                models_data = llm_client.list_models(config)
+            except llm_client.LLMClientError as exc:
+                _logger.warning("Chatbot: no se pudo actualizar el catálogo de %s: %s",
+                                config["provider"], exc.admin_message)
+                continue
+            done[config["provider"]] = self._sync_provider(config["provider"], models_data)
+        return done or False

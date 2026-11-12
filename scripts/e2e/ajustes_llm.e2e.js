@@ -116,6 +116,60 @@ async function guardar(p) { await p.click('.o_form_button_save'); await p.waitFo
   ok(icp('model') === 'gemini-2.5-pro', 'guardar la temperatura no reemplaza el modelo por el recomendado');
   ok(icp('api_key') === 'AIzaCLAVE-GEMINI', 'ni borra la clave');
 
+  console.log('E8. Modelo de respaldo: actualizar, probar sin guardar y guardar');
+  reset(); await p.close(); p = await login(); await abrir(p);
+  ok(!(await p.locator('div[name=chatbot_fallback_active] input').isChecked()), 'el respaldo viene desactivado');
+  ok(await p.locator('div[name=chatbot_fallback_provider] select').count() === 0, 'sus campos se ocultan mientras está desactivado');
+  await p.click('div[name=chatbot_fallback_active] input'); await p.waitForTimeout(700);
+  ok(await p.locator('div[name=chatbot_fallback_provider] select').inputValue() === '"groq"', 'al activarlo propone Groq (otro proveedor)');
+  await p.fill('div[name=chatbot_fallback_api_key] input', 'gsk_RESPALDO');
+  await boton(p, 'action_chatbot_fallback_sync_models');
+  ok(await p.locator('.o_notification:has-text("Catálogo de modelos actualizado")').count() > 0, 'actualiza el catálogo de Groq');
+  await p.click('div[name=chatbot_fallback_llm_model_id] input'); await p.fill('div[name=chatbot_fallback_llm_model_id] input', 'qwen');
+  await p.waitForTimeout(1200);
+  ok(await p.locator('.o-autocomplete--dropdown-item:has-text("gemini")').count() === 0, 'el desplegable del respaldo solo ofrece modelos de Groq');
+  await p.locator('.o-autocomplete--dropdown-item:has-text("qwen/qwen3-32b")').first().click(); await p.waitForTimeout(700);
+  await boton(p, 'action_chatbot_fallback_test_connection');
+  ok(await p.locator('.o_notification:has-text("modelo de respaldo")').count() > 0, 'la notificación indica que se probó el respaldo');
+  ok((await p.locator('div[name=chatbot_fallback_last_verified]').innerText()).includes('qwen/qwen3-32b'), 'el formulario muestra la verificación del respaldo');
+  ok(await p.locator('div[name=chatbot_fallback_active] input').isChecked() && await p.locator('div[name=chatbot_fallback_api_key] input').inputValue() === 'gsk_RESPALDO', 'el formulario conserva lo escrito');
+  ok(icp('fallback_active') !== 'True' && icp('provider') === 'gemini', 'probar no guarda nada');
+  await guardar(p);
+  ok(icp('fallback_active') === 'True' && icp('fallback_provider') === 'groq' && icp('fallback_api_key') === 'gsk_RESPALDO' && icp('fallback_model') === 'qwen/qwen3-32b', 'al Guardar se aplica el respaldo');
+  ok(icp('provider') === 'gemini' && icp('api_key') === 'AIzaCLAVE-GEMINI' && icp('model') === 'gemini-2.5-flash', 'el principal no cambia');
+  await abrir(p);
+  ok(await p.locator('div[name=chatbot_fallback_active] input').isChecked() && (await p.locator('div[name=chatbot_fallback_llm_model_id] input').inputValue()).includes('qwen'), 'al volver a Ajustes se ve el respaldo guardado');
+  ok((await modelo(p)).includes('gemini-2.5-flash') && await clave(p) === 'AIzaCLAVE-GEMINI', 'y el principal sigue igual');
+
+  console.log('E9. Respaldo igual al principal y desactivar el respaldo');
+  await p.selectOption('div[name=chatbot_fallback_provider] select', '"gemini"'); await p.waitForTimeout(700);
+  await p.click('.o_form_button_save'); await p.waitForTimeout(2500);
+  ok(await p.locator('.modal:has-text("es el mismo que el principal")').count() > 0, 'no deja usar como respaldo el mismo modelo del principal');
+  await p.keyboard.press('Escape'); await p.waitForTimeout(800);
+  ok(icp('fallback_provider') === 'groq', 'no se guarda');
+  await p.click('.o_form_button_cancel'); await p.waitForTimeout(1500);
+  await abrir(p); await p.click('div[name=chatbot_fallback_active] input'); await guardar(p);
+  ok(icp('fallback_active') === 'False', 'el respaldo queda desactivado');
+  ok(icp('fallback_api_key') === 'gsk_RESPALDO', 'su clave se conserva para volver a activarlo');
+
+  console.log('E10. Basta con que responda uno: respaldo caído al activarlo, principal disponible');
+  reset(); await p.close(); p = await login(); await abrir(p);
+  await p.click('div[name=chatbot_fallback_active] input'); await p.waitForTimeout(700);
+  await p.fill('div[name=chatbot_fallback_api_key] input', 'gsk_CAIDO');
+  await guardar(p);
+  ok(icp('fallback_active') === 'True' && icp('fallback_api_key') === 'gsk_CAIDO', 'se guarda porque el principal respondió');
+  ok(icp('fallback_last_verified').includes('No se pudo verificar'), 'el respaldo queda marcado como no verificado');
+  await abrir(p);
+  ok((await p.locator('div[name=chatbot_fallback_last_verified]').innerText()).includes('No se pudo verificar'), 'Ajustes lo muestra');
+
+  console.log('E11. Clave inválida en el respaldo: no se guarda aunque el principal responda');
+  await p.fill('div[name=chatbot_fallback_api_key] input', 'gsk_INVALIDA');
+  await p.click('.o_form_button_save'); await p.waitForTimeout(2500);
+  ok(await p.locator('.modal:has-text("modelo de respaldo falló")').count() > 0, 'explica que falló la prueba del respaldo');
+  await p.keyboard.press('Escape'); await p.waitForTimeout(800);
+  ok(icp('fallback_api_key') === 'gsk_CAIDO', 'la clave inválida no se guarda');
+  await p.click('.o_form_button_cancel'); await p.waitForTimeout(1500);
+
   await b.close();
   console.log(fallos ? `\n${fallos} comprobación(es) fallaron` : '\nTodas las comprobaciones pasaron');
   process.exit(fallos ? 1 : 0);

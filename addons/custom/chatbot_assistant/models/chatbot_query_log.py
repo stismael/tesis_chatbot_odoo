@@ -70,6 +70,11 @@ class ChatbotQueryLog(models.Model):
 
     llm_provider = fields.Char(string="Proveedor", index=True)
     llm_model = fields.Char(string="Modelo", index=True)
+    fallback_used = fields.Boolean(
+        string="Respondió el respaldo", index=True,
+        help="El modelo principal no estaba disponible y respondió el modelo de respaldo.",
+    )
+    primary_error_code = fields.Selection(ERROR_CODES, string="Fallo del modelo principal")
     tokens_prompt = fields.Integer(string="Tokens de entrada")
     tokens_output = fields.Integer(string="Tokens de salida")
     tokens_thinking = fields.Integer(string="Tokens de razonamiento")

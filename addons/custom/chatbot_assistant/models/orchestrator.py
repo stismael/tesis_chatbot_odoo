@@ -235,6 +235,8 @@ class ChatbotOrchestrator(models.AbstractModel):
             "retries": llm_meta.get("retries", 0),
             "llm_provider": llm_meta.get("provider"),
             "llm_model": llm_meta.get("model"),
+            "fallback_used": bool(llm_meta.get("fallback_used")),
+            "primary_error_code": self._valid_error_code(llm_meta.get("primary_error")),
             "tokens_prompt": llm_meta.get("tokens_prompt", 0),
             "tokens_output": llm_meta.get("tokens_output", 0),
             "tokens_thinking": llm_meta.get("tokens_thinking", 0),
@@ -251,6 +253,12 @@ class ChatbotOrchestrator(models.AbstractModel):
             "outcome": outcome,
             "log_id": log.id,
         }
+
+    @api.model
+    def _valid_error_code(self, code):
+        if not code:
+            return False
+        return code if code in dict(self._error_codes()) else "generic"
 
     @api.model
     def _error_codes(self):
