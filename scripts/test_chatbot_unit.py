@@ -95,7 +95,10 @@ def test_dataset_loads():
 def test_http_error_mapping():
     from services.llm_client import _map_http_error
     assert _map_http_error(401).code == "auth"
-    assert _map_http_error(403).code == "auth"
+    # 403 con cuerpo JSON de la API = clave sin permiso; 403 de Cloudflare (1010) = bloqueo de red.
+    assert _map_http_error(403, '{"error": {"code": 403, "status": "PERMISSION_DENIED"}}').code == "auth"
+    assert _map_http_error(403, "error code: 1010").code == "forbidden_network"
+    assert _map_http_error(403).code == "forbidden_network"
     assert _map_http_error(404).code == "model"
     assert _map_http_error(429).code == "rate_limit"
     assert _map_http_error(500).code == "server"
