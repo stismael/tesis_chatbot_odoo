@@ -24,6 +24,7 @@ ERROR_CODES = [
     ("rate_limit", "Cuota agotada (429)"),
     ("server", "Servicio caído (5xx)"),
     ("auth", "API key inválida"),
+    ("forbidden_network", "Bloqueo de red del proveedor (403)"),
     ("model", "Modelo inexistente"),
     ("blocked", "Respuesta bloqueada"),
     ("invalid_json", "JSON inválido"),
