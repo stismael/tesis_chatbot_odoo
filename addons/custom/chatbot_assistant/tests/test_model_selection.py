@@ -48,17 +48,23 @@ class TestModelSelection(ChatbotCase):
     def test_cambio_de_proveedor_usa_siempre_el_recomendado(self):
         for model in ("llama-3.3-70b-versatile", "openai/gpt-oss-120b", "qwen/qwen3-32b",
                       "deepseek-r1-distill-llama-70b"):
-            settings = self.env["res.config.settings"].new({"chatbot_provider": "groq", "chatbot_model": model})
+            settings = self.env["res.config.settings"].new({
+                "chatbot_provider": "groq", "chatbot_model": model, "chatbot_api_key": "gsk_old",
+            })
             settings.chatbot_provider = "gemini"
             settings._onchange_chatbot_provider()
             self.assertEqual(settings.chatbot_model, "gemini-2.5-flash", model)
             self.assertEqual(settings.chatbot_llm_model_id, self.gemini_flash)
+            self.assertFalse(settings.chatbot_api_key, "Al cambiar de proveedor se vacía la API Key")
 
-        settings = self.env["res.config.settings"].new({"chatbot_provider": "gemini", "chatbot_model": "gemini-2.5-pro"})
+        settings = self.env["res.config.settings"].new({
+            "chatbot_provider": "gemini", "chatbot_model": "gemini-2.5-pro", "chatbot_api_key": "AIzaOld",
+        })
         settings.chatbot_provider = "groq"
         settings._onchange_chatbot_provider()
         self.assertEqual(settings.chatbot_model, "llama-3.3-70b-versatile")
         self.assertEqual(settings.chatbot_llm_model_id, self.groq_llama)
+        self.assertFalse(settings.chatbot_api_key)
 
     # Catálogo -----------------------------------------------------------------
 

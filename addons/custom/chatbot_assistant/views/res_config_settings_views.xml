@@ -16,8 +16,8 @@
                             <field name="chatbot_provider"/>
                         </setting>
                         <setting string="API Key"
-                                 help="Obligatoria para listar modelos y chatear. Use la clave del proveedor elegido (Google AI Studio o Groq Console). No use el .env del Docker.">
-                            <field name="chatbot_api_key" password="True"/>
+                                 help="Obligatoria para listar modelos y chatear. Al cambiar de proveedor el campo se vacía: pegue la clave del proveedor elegido (Gemini: Google AI Studio; Groq: console.groq.com, gsk_...). No use el .env del Docker.">
+                            <field name="chatbot_api_key" password="True" placeholder="Pegue aquí la API Key del proveedor elegido"/>
                         </setting>
                         <setting string="Modelo"
                                  help="Solo modelos de texto del proveedor elegido. «Probar conexión» y «Actualizar modelos» usan los valores del formulario sin pedir Guardar. Al Guardar sí se vuelve a probar si cambió proveedor, key o modelo.">

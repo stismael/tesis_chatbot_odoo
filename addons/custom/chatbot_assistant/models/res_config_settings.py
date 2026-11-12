@@ -262,10 +262,13 @@ class ResConfigSettings(models.TransientModel):
 
     @api.onchange("chatbot_provider")
     def _onchange_chatbot_provider(self):
-        """Al cambiar de proveedor siempre se usa su modelo recomendado (no se adivina por el nombre)."""
+        """Al cambiar de proveedor: modelo recomendado y API Key vacía (cada proveedor tiene la suya)."""
         provider = self.chatbot_provider or "gemini"
         self.chatbot_model = RECOMMENDED[provider]
         self.chatbot_llm_model_id = self.env["chatbot.llm.model"]._find(provider, self.chatbot_model)
+        # Evita reutilizar la key del proveedor anterior (password a menudo no se reenvía bien).
+        self.chatbot_api_key = False
+        self.chatbot_last_verified = False
 
     def set_values(self):
         """Si cambió el proveedor, la API key o el modelo, prueba la conexión antes de guardar."""
