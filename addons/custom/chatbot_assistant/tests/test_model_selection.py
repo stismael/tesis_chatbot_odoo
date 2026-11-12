@@ -53,9 +53,10 @@ class TestModelSelection(ChatbotCase):
             })
             settings.chatbot_provider = "gemini"
             settings._onchange_chatbot_provider()
+            # Gemini es el proveedor guardado: se muestra su configuración (modelo y clave guardados).
             self.assertEqual(settings.chatbot_model, "gemini-2.5-flash", model)
             self.assertEqual(settings.chatbot_llm_model_id, self.gemini_flash)
-            self.assertFalse(settings.chatbot_api_key, "Al cambiar de proveedor se vacía la API Key")
+            self.assertEqual(settings.chatbot_api_key, "clave-de-prueba")
 
         settings = self.env["res.config.settings"].new({
             "chatbot_provider": "gemini", "chatbot_model": "gemini-2.5-pro", "chatbot_api_key": "AIzaOld",
@@ -64,7 +65,7 @@ class TestModelSelection(ChatbotCase):
         settings._onchange_chatbot_provider()
         self.assertEqual(settings.chatbot_model, "llama-3.3-70b-versatile")
         self.assertEqual(settings.chatbot_llm_model_id, self.groq_llama)
-        self.assertFalse(settings.chatbot_api_key)
+        self.assertFalse(settings.chatbot_api_key, "Al cambiar a otro proveedor se vacía la API Key")
 
     # Catálogo -----------------------------------------------------------------
 
@@ -162,7 +163,8 @@ class TestModelSelection(ChatbotCase):
         settings._onchange_chatbot_provider()
         settings.chatbot_provider = "gemini"
         settings._onchange_chatbot_provider()
-        self.assertFalse(settings.chatbot_api_key)
+        self.assertEqual(settings.chatbot_api_key, "clave-de-prueba", "Al volver se muestra la clave guardada")
+        # Aunque el campo llegue vacío al guardar, la clave guardada no se borra.
         mocked = self._save({"chatbot_provider": "gemini", "chatbot_api_key": False, "chatbot_temperature": 0.2})
         self.assertFalse(mocked.called)
         self.assertEqual(self.ICP.get_param("chatbot_assistant.api_key"), "clave-de-prueba")
@@ -172,6 +174,57 @@ class TestModelSelection(ChatbotCase):
             self._save({"chatbot_provider": "groq", "chatbot_api_key": "AIzaClaveDeGemini",
                         "chatbot_llm_model_id": self.groq_llama.id})
         self.assertEqual(self.ICP.get_param("chatbot_assistant.provider"), "gemini")
+
+    def test_abrir_ajustes_muestra_el_modelo_guardado(self):
+        # Al abrir Ajustes, Odoo ejecuta el onchange del proveedor: no debe reemplazar el modelo guardado.
+        self.Model._sync_provider("gemini", [model_item("gemini-2.5-flash"), model_item("gemini-2.5-pro")])
+        self.ICP.set_param("chatbot_assistant.model", "gemini-2.5-pro")
+        settings = self.env["res.config.settings"].new({"chatbot_provider": "gemini"})
+        settings._onchange_chatbot_provider()
+        self.assertEqual(settings.chatbot_model, "gemini-2.5-pro")
+        self.assertEqual(settings.chatbot_llm_model_id, self.Model._find("gemini", "gemini-2.5-pro"))
+        # Guardar otro dato no cambia el modelo.
+        mocked = self._save({"chatbot_llm_model_id": settings.chatbot_llm_model_id.id, "chatbot_temperature": 0.2})
+        self.assertFalse(mocked.called)
+        self.assertEqual(self.ICP.get_param("chatbot_assistant.model"), "gemini-2.5-pro")
+
+    def test_probar_conexion_no_cambia_la_configuracion_activa(self):
+        settings = self.env["res.config.settings"].create({
+            "chatbot_provider": "groq", "chatbot_api_key": "gsk_prueba",
+            "chatbot_llm_model_id": self.groq_llama.id,
+        })
+        with patch(TEST_CONNECTION, side_effect=connection_ok):
+            action = settings.action_chatbot_test_connection()
+        self.assertEqual(action["params"]["type"], "success")
+        # El chat sigue con lo guardado hasta pulsar Guardar.
+        self.assertEqual(self.ICP.get_param("chatbot_assistant.provider"), "gemini")
+        self.assertEqual(self.ICP.get_param("chatbot_assistant.api_key"), "clave-de-prueba")
+        self.assertEqual(self.ICP.get_param("chatbot_assistant.model"), "gemini-2.5-flash")
+        self.assertFalse(self.ICP.get_param("chatbot_assistant.last_verified"))
+        # El formulario sí muestra la verificación y conserva lo escrito.
+        self.assertIn("llama-3.3-70b-versatile", settings.chatbot_last_verified)
+        self.assertEqual((settings.chatbot_provider, settings.chatbot_api_key), ("groq", "gsk_prueba"))
+
+    def test_actualizar_modelos_no_cambia_la_configuracion_activa(self):
+        settings = self.env["res.config.settings"].create({"chatbot_provider": "groq", "chatbot_api_key": "gsk_prueba"})
+        with patch(LIST_MODELS, return_value=[model_item("llama-3.3-70b-versatile"), model_item("qwen/qwen3-32b")]):
+            settings.action_chatbot_sync_models()
+        self.assertTrue(self.Model._find("groq", "qwen/qwen3-32b"), "El catálogo sí se actualiza")
+        self.assertEqual(self.ICP.get_param("chatbot_assistant.provider"), "gemini")
+        self.assertEqual(self.ICP.get_param("chatbot_assistant.api_key"), "clave-de-prueba")
+
+    def test_guardar_despues_de_probar_aplica_la_configuracion(self):
+        settings = self.env["res.config.settings"].create({
+            "chatbot_provider": "groq", "chatbot_api_key": "gsk_prueba",
+            "chatbot_llm_model_id": self.groq_llama.id,
+        })
+        with patch(TEST_CONNECTION, side_effect=connection_ok) as mocked:
+            settings.action_chatbot_test_connection()
+            settings.execute()
+        self.assertEqual(mocked.call_count, 2, "Al Guardar se vuelve a probar la conexión")
+        self.assertEqual(self.ICP.get_param("chatbot_assistant.provider"), "groq")
+        self.assertEqual(self.ICP.get_param("chatbot_assistant.api_key"), "gsk_prueba")
+        self.assertIn("llama-3.3-70b-versatile", self.ICP.get_param("chatbot_assistant.last_verified"))
 
     def test_cambiar_solo_otros_datos_no_prueba_la_conexion(self):
         mocked = self._save({"chatbot_temperature": 0.3, "chatbot_timeout": 25})

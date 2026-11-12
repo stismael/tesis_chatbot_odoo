@@ -154,10 +154,14 @@ class ResConfigSettings(models.TransientModel):
         if check_format:
             self._chatbot_check_api_key_format(provider, api_key)
         default_model = DEFAULT_GEMINI_MODEL if provider == "gemini" else DEFAULT_GROQ_MODEL
+        model = (self.chatbot_model or default_model).strip()
+        if self.chatbot_llm_model_id and self.chatbot_llm_model_id.provider == provider:
+            # El desplegable manda: el campo de texto solo se sincroniza con el onchange del formulario.
+            model = self.chatbot_llm_model_id.model_id
         return {
             "provider": provider,
             "api_key": api_key,
-            "model": (self.chatbot_model or default_model).strip(),
+            "model": model,
             "temperature": self.chatbot_temperature if self.chatbot_temperature is not None else 0.1,
             "timeout": self.chatbot_timeout or DEFAULT_TIMEOUT,
         }
@@ -189,23 +193,6 @@ class ResConfigSettings(models.TransientModel):
                 "antigua: hay que pegar la de Groq otra vez."
             ))
 
-    def _chatbot_persist_connection_draft(self, config):
-        """
-        Persiste proveedor / API key / modelo en ICP al probar o sincronizar.
-        Así, si Ajustes se recarga, no vuelve al Gemini guardado antes.
-        """
-        if not config.get("api_key"):
-            return
-        icp = self.env["ir.config_parameter"].sudo()
-        icp.set_param("chatbot_assistant.provider", config["provider"])
-        icp.set_param("chatbot_assistant.api_key", config["api_key"])
-        icp.set_param("chatbot_assistant.model", config["model"])
-        if self.chatbot_llm_model_id and self.chatbot_llm_model_id.model_id != config["model"]:
-            # Mantener coherencia visual si el formulario sigue abierto.
-            pass
-        self.chatbot_provider = config["provider"]
-        self.chatbot_model = config["model"]
-
     def action_chatbot_sync_models(self):
         """Trae el listado vigente del proveedor elegido y sincroniza el catálogo."""
         self.ensure_one()
@@ -218,7 +205,6 @@ class ResConfigSettings(models.TransientModel):
             models_data = llm_client.list_models(config)
         except LLMClientError as exc:
             raise UserError(exc.admin_message or exc.message) from exc
-        self._chatbot_persist_connection_draft(config)
         counts = self.env["chatbot.llm.model"].sudo()._sync_provider(config["provider"], models_data)
         message = _(
             "%(provider)s: %(total)s modelos de texto. Nuevos: %(added)s · actualizados: %(updated)s · "
@@ -247,16 +233,11 @@ class ResConfigSettings(models.TransientModel):
         except LLMClientError as exc:
             raise UserError(exc.admin_message or exc.message) from exc
 
-        # Persistir lo probado para que Ajustes no vuelva a Gemini al refrescarse.
-        self._chatbot_persist_connection_draft(config)
-        verified = _("Conexión verificada el %(date)s con %(model)s") % {
+        # Solo se actualiza el formulario: la configuración del chat cambia al pulsar Guardar.
+        self.chatbot_last_verified = _("Conexión verificada el %(date)s con %(model)s") % {
             "date": self._chatbot_format_datetime(fields.Datetime.now()),
             "model": result["model"],
         }
-        self.env["ir.config_parameter"].sudo().set_param(
-            "chatbot_assistant.last_verified", verified,
-        )
-        self.chatbot_last_verified = verified
         info = _(
             "✓ Conexión exitosa · %(provider)s · %(model)s · %(latency)s ms"
         ) % {
@@ -282,8 +263,18 @@ class ResConfigSettings(models.TransientModel):
 
     @api.onchange("chatbot_provider")
     def _onchange_chatbot_provider(self):
-        """Al cambiar de proveedor: modelo recomendado y API Key vacía (cada proveedor tiene la suya)."""
+        """
+        Al cambiar a otro proveedor: modelo recomendado y API Key vacía (cada proveedor tiene la suya).
+        Si el proveedor es el guardado (al abrir Ajustes, Odoo ejecuta este onchange, o al volver al
+        proveedor original), se muestra la configuración guardada en lugar de reemplazarla.
+        """
         provider = self.chatbot_provider or "gemini"
+        saved = llm_client.get_chatbot_config(self.env)
+        if provider == saved["provider"]:
+            self.chatbot_model = saved["model"]
+            self.chatbot_llm_model_id = self.env["chatbot.llm.model"]._find(provider, saved["model"])
+            self.chatbot_api_key = saved["api_key"] or False
+            return
         self.chatbot_model = RECOMMENDED[provider]
         self.chatbot_llm_model_id = self.env["chatbot.llm.model"]._find(provider, self.chatbot_model)
         # Evita reutilizar la key del proveedor anterior (password a menudo no se reenvía bien).
