@@ -7,6 +7,8 @@ import { patch } from "@web/core/utils/patch";
 const CHATBOT_SETTINGS_BUTTONS = new Set([
     "action_chatbot_test_connection",
     "action_chatbot_sync_models",
+    "action_chatbot_fallback_test_connection",
+    "action_chatbot_fallback_sync_models",
 ]);
 
 patch(SettingsFormController.prototype, {

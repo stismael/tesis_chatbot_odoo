@@ -398,6 +398,15 @@ Aplicar cuando cada cambio esté implementado (ver `SEGUIMIENTO_CAMBIOS.md`, pun
 - [ ] Encabezado User-Agent propio en las llamadas HTTP, porque Groq (Cloudflare) bloqueaba el de
       Python con el error 403 / 1010.
 
+### Modelo de respaldo (PR #13, pedido de la tutora)
+- [ ] **Capítulo 4:** describir el modelo de respaldo: cuándo responde (fallos de disponibilidad del
+      principal; no ante respuestas defectuosas), la regla de guardado (basta con que responda uno,
+      salvo errores de configuración) y los campos de auditoría.
+- [ ] **Capítulo 5:** medir la disponibilidad del asistente con y sin respaldo, con el filtro
+      «Respondió el respaldo» de Métricas.
+- [ ] **Limitaciones:** el respaldo puede interpretar algunas consultas de forma distinta al
+      principal; conviene evaluar ambos modelos con el dataset.
+
 ### Decisiones pendientes que afectan al documento
 - [ ] **API key:** hoy se guarda en texto plano en los parámetros del sistema (solo la ven los
       administradores). Si se implementa el cifrado propuesto, actualizar el Sprint 2 y las

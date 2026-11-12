@@ -16,6 +16,9 @@ DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
 DEFAULT_TIMEOUT = 20
 MAX_RETRIES = 1  # un reintento ante timeout / cuota / 5xx (peor caso: 2 × timeout + pausa)
 RETRY_BASE_DELAY_SEC = 1.5
+# Fallos de disponibilidad del modelo principal que hacen responder al modelo de respaldo.
+# Una respuesta defectuosa (JSON inválido, bloqueada) no lo activa: el modelo sí respondió.
+FALLBACK_CODES = ("timeout", "network", "rate_limit", "server", "forbidden_network", "auth", "model", "generic")
 # Cloudflare (Groq) bloquea el User-Agent por defecto de urllib ("Python-urllib/…") con 403 / 1010.
 HTTP_USER_AGENT = (
     "odoo18-chatbot-assistant/1.0 (+https://github.com/stismael/tesis_chatbot_odoo; thesis)"
@@ -168,23 +171,34 @@ def get_chatbot_config(env):
     }
 
 
-def complete_json(env, system_prompt, user_message, meta=None, response_schema=None):
+def get_fallback_config(env, resolve_key=True):
     """
-    Llama al LLM configurado y espera una respuesta JSON (con reintentos).
-    Si se pasa `meta` (dict), se completa con provider, model, retries y tokens.
-    `response_schema` (formato de Gemini) obliga al modelo a respetar la estructura del JSON.
+    Configuración del modelo de respaldo. Si es del mismo proveedor que el principal y no tiene
+    API key propia, usa la del principal (con resolve_key=True).
     """
-    meta = meta if meta is not None else {}
-    config = get_chatbot_config(env)
-    provider = (config["provider"] or "gemini").lower()
-    meta.update({"provider": provider, "model": config["model"], "retries": 0})
-    if not config["active"]:
-        raise _user_error(USER_MESSAGES["inactive"], "inactive")
-    if not config["api_key"]:
-        raise _user_error(USER_MESSAGES["missing_key"], "missing_key")
+    icp = env["ir.config_parameter"].sudo()
+    primary = get_chatbot_config(env)
+    provider = icp.get_param(f"{PARAM_PREFIX}.fallback_provider", "groq") or "groq"
+    default_model = DEFAULT_GEMINI_MODEL if provider == "gemini" else DEFAULT_GROQ_MODEL
+    api_key = icp.get_param(f"{PARAM_PREFIX}.fallback_api_key", "") or ""
+    if resolve_key and not api_key and provider == primary["provider"]:
+        api_key = primary["api_key"]
+    active = icp.get_param(f"{PARAM_PREFIX}.fallback_active", "False")
+    return {
+        "active": str(active).lower() in ("1", "true", "yes"),
+        "provider": provider,
+        "api_key": api_key,
+        "model": icp.get_param(f"{PARAM_PREFIX}.fallback_model", default_model) or default_model,
+        "temperature": primary["temperature"],
+        "timeout": primary["timeout"],
+    }
 
-    last_exc = None
-    attempts = 1 + MAX_RETRIES
+
+def _complete_once(config, system_prompt, user_message, meta, response_schema=None,
+                   max_retries=MAX_RETRIES, retry_timeouts=True):
+    """Llama a un modelo con sus reintentos. Lanza LLMClientError si no logra una respuesta JSON."""
+    provider = (config["provider"] or "gemini").lower()
+    attempts = 1 + max_retries
     for attempt in range(attempts):
         meta["retries"] = attempt
         try:
@@ -198,25 +212,66 @@ def complete_json(env, system_prompt, user_message, meta=None, response_schema=N
             meta.update(usage)
             return _parse_json_response(raw)
         except LLMClientError as exc:
-            last_exc = exc
-            if not _is_retryable(exc) or attempt >= attempts - 1:
+            last = attempt >= attempts - 1
+            if not _is_retryable(exc) or last or (exc.code == "timeout" and not retry_timeouts):
                 _logger.warning(
-                    "LLM falló (code=%s attempt=%s/%s): %s",
-                    exc.code, attempt + 1, attempts, exc.admin_message,
+                    "LLM falló (%s/%s, code=%s attempt=%s/%s): %s",
+                    provider, config["model"], exc.code, attempt + 1, attempts, exc.admin_message,
                 )
-                code = exc.code if isinstance(exc.code, str) else "generic"
-                raise _user_error(exc.message, code) from exc
+                raise
             delay = RETRY_BASE_DELAY_SEC * (2 ** attempt)
             _logger.warning(
                 "LLM reintento %s/%s en %.1fs (code=%s): %s",
                 attempt + 1, attempts, delay, exc.code, exc.admin_message,
             )
             time.sleep(delay)
+    raise LLMClientError("generic")
 
-    raise _user_error(
-        last_exc.message if last_exc else USER_MESSAGES["generic"],
-        getattr(last_exc, "code", "generic") if last_exc else "generic",
-    )
+
+def _error_code(exc):
+    return exc.code if isinstance(exc.code, str) else "generic"
+
+
+def complete_json(env, system_prompt, user_message, meta=None, response_schema=None):
+    """
+    Llama al LLM configurado y espera una respuesta JSON (con reintentos).
+    Si el modelo principal no está disponible y hay un modelo de respaldo activo, responde el respaldo.
+    Si se pasa `meta` (dict), se completa con provider, model, retries, tokens, fallback_used y
+    primary_error (código del fallo del principal cuando se usó el respaldo).
+    `response_schema` (formato de Gemini) obliga al modelo a respetar la estructura del JSON.
+    """
+    meta = meta if meta is not None else {}
+    config = get_chatbot_config(env)
+    provider = (config["provider"] or "gemini").lower()
+    meta.update({"provider": provider, "model": config["model"], "retries": 0, "fallback_used": False})
+    if not config["active"]:
+        raise _user_error(USER_MESSAGES["inactive"], "inactive")
+    if not config["api_key"]:
+        raise _user_error(USER_MESSAGES["missing_key"], "missing_key")
+
+    fallback = get_fallback_config(env)
+    use_fallback = bool(fallback["active"] and fallback["api_key"] and fallback["model"])
+    try:
+        # Con respaldo, el principal no se reintenta: se pasa directo al respaldo para no alargar la espera.
+        return _complete_once(config, system_prompt, user_message, meta, response_schema,
+                              max_retries=0 if use_fallback else MAX_RETRIES)
+    except LLMClientError as exc:
+        code = _error_code(exc)
+        if not use_fallback or code not in FALLBACK_CODES:
+            raise _user_error(exc.message, code) from exc
+
+    _logger.warning("LLM principal no disponible (code=%s): responde el modelo de respaldo %s/%s",
+                    code, fallback["provider"], fallback["model"])
+    meta.update({
+        "provider": fallback["provider"], "model": fallback["model"], "retries": 0,
+        "fallback_used": True, "primary_error": code,
+        "tokens_prompt": 0, "tokens_output": 0, "tokens_thinking": 0,
+    })
+    try:
+        return _complete_once(fallback, system_prompt, user_message, meta, response_schema,
+                              retry_timeouts=False)
+    except LLMClientError as exc:
+        raise _user_error(exc.message, _error_code(exc)) from exc
 
 
 def test_connection(config):

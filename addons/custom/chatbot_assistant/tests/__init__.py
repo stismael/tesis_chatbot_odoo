@@ -6,3 +6,4 @@ from . import test_speed
 from . import test_model_selection
 from . import test_conversation
 from . import test_memory_and_state
+from . import test_fallback

@@ -64,6 +64,58 @@
                             <field name="chatbot_timeout"/>
                         </setting>
                     </block>
+                    <block title="Modelo de respaldo">
+                        <setting string="Usar modelo de respaldo"
+                                 help="Si el modelo principal no está disponible (tiempo agotado, cuota agotada, servicio caído, sin red o clave inválida), responde este modelo. Se recomienda otro proveedor, para que una caída del principal no lo afecte.">
+                            <field name="chatbot_fallback_active"/>
+                        </setting>
+                        <setting string="Proveedor" invisible="not chatbot_fallback_active"
+                                 help="Proveedor del modelo de respaldo.">
+                            <field name="chatbot_fallback_provider"/>
+                        </setting>
+                        <setting string="API Key" invisible="not chatbot_fallback_active"
+                                 help="Clave del proveedor de respaldo. Si es el mismo proveedor que el principal, puede quedar vacía y se usa la del principal.">
+                            <field name="chatbot_fallback_api_key" password="True" placeholder="Pegue aquí la API Key del proveedor de respaldo"/>
+                        </setting>
+                        <setting string="Modelo" invisible="not chatbot_fallback_active"
+                                 help="Solo modelos de texto del proveedor de respaldo. Al Guardar se prueba la conexión si se activó el respaldo o cambió su proveedor, key o modelo.">
+                            <field name="chatbot_fallback_llm_model_id" options="{'no_create': True, 'no_open': True}"
+                                   invisible="not chatbot_fallback_catalog_count"/>
+                            <field name="chatbot_fallback_model" invisible="chatbot_fallback_catalog_count"/>
+                            <div class="text-warning mt4" invisible="not chatbot_fallback_model_warning">
+                                <field name="chatbot_fallback_model_warning" class="text-warning"/>
+                            </div>
+                            <div class="text-info mt4" invisible="not chatbot_fallback_catalog_hint">
+                                <field name="chatbot_fallback_catalog_hint" class="text-info"/>
+                            </div>
+                            <div class="text-muted small mt4">
+                                Catálogo actualizado: <field name="chatbot_fallback_models_synced" class="d-inline"/>.
+                                La gratuidad es una estimación (la API no la informa):
+                                <field name="chatbot_fallback_pricing_url" widget="url" class="d-inline" text="ver precios del proveedor"/>
+                            </div>
+                            <div class="mt8">
+                                <button name="action_chatbot_fallback_sync_models"
+                                        type="object"
+                                        string="Actualizar modelos"
+                                        class="btn-secondary"
+                                        noSaveDialog="true"/>
+                                <button name="action_chatbot_fallback_test_connection"
+                                        type="object"
+                                        string="Probar conexión"
+                                        class="btn-primary ms-2"
+                                        noSaveDialog="true"/>
+                                <button name="%(chatbot_assistant.action_chatbot_llm_model)d"
+                                        type="action"
+                                        string="Ver catálogo"
+                                        class="btn-link ms-2"/>
+                            </div>
+                        </setting>
+                        <setting string="Estado del respaldo" invisible="not chatbot_fallback_active"
+                                 help="Última verificación de la conexión y cuántas consultas respondió el respaldo.">
+                            <div><field name="chatbot_fallback_last_verified" class="d-inline"/></div>
+                            <div><field name="chatbot_fallback_status" class="d-inline"/></div>
+                        </setting>
+                    </block>
                     <block title="Auditoría y métricas">
                         <setting string="Conservar auditoría (días)"
                                  help="Los registros de consultas más antiguos se borran automáticamente cada día. Use 0 para conservar todo (recomendado durante la evaluación de la tesis).">

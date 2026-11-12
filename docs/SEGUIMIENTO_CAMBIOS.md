@@ -22,7 +22,8 @@ Los cambios pendientes en el **documento de la tesis** están en
 | (directo a `main`, 11/11) | Ajustes del LLM: probar sin guardar, gratuidad estimada, claves por proveedor, User-Agent | Sin PR; dejó las pruebas en rojo |
 | `fix/ajustes-chatbot-regresiones` | Regresiones de Ajustes del chatbot | Fusionada en `main` (PR #10) |
 | `docs/pendientes-tesis-actualizados` | Pendientes de la tesis actualizados | Fusionada en `main` (PR #11) |
-| `fix/probar-conexion-sin-guardar` | Probar conexión sin aplicar la configuración | PR #12 |
+| `fix/probar-conexion-sin-guardar` | Probar conexión sin aplicar la configuración | Fusionada en `main` (PR #12) |
+| `feature/modelo-respaldo` | Modelo de respaldo (pedido de la tutora) | PR #13 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -33,9 +34,25 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
 
+### PR #13 · Modelo de respaldo
+- **Rama:** `feature/modelo-respaldo` · **Versión del módulo:** 18.0.1.11.0
+- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Pruebas:** 115 pruebas en Odoo 18 (23 nuevas), pruebas unitarias y prueba de extremo a extremo
+  con Chromium (11 escenarios, 52 comprobaciones); verificada la actualización desde 18.0.1.10.7.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Sección «Modelo de respaldo» en Ajustes con la misma información que el principal (proveedor, API Key, catálogo, actualizar, probar, precios, verificación y uso) | `models/res_config_settings.py`, `views/res_config_settings_views.xml`, `static/src/settings/settings_form_controller_patch.js` | Pedido de la tutora: que el asistente siga respondiendo si el modelo principal falla |
+| Si el principal no está disponible responde el respaldo; una respuesta defectuosa no lo activa; sin reintentos que alarguen la espera | `services/llm_client.py` (`complete_json`, `get_fallback_config`, `FALLBACK_CODES`) | Tolerancia a fallos de un servicio externo que el sistema no controla |
+| Al guardar basta con que responda uno de los dos; los errores de configuración siempre impiden guardar | `models/res_config_settings.py` (`_chatbot_check_connections`) | Que una caída pasajera no impida configurar, sin aceptar configuraciones que nunca funcionarían |
+| Auditoría: «Respondió el respaldo» y «Fallo del modelo principal», filtro y agrupación en Métricas | `models/chatbot_query_log.py`, `models/orchestrator.py`, `views/chatbot_query_log_views.xml` | Medir la disponibilidad con y sin respaldo (Capítulo 5) |
+| La tarea semanal actualiza también el catálogo del respaldo | `models/chatbot_llm_model.py` | Mantener al día los modelos de los dos proveedores |
+| Migración que re-enlaza parámetros por defecto borrados por versiones anteriores | `migrations/18.0.1.11.0/pre-migrate.py` | Defecto verificado: la actualización fallaba por clave duplicada |
+| Pruebas del respaldo y escenarios nuevos de extremo a extremo | `tests/test_fallback.py`, `scripts/e2e/` | Evitar regresiones |
+
 ### PR #12 · Probar conexión sin aplicar la configuración
 - **Rama:** `fix/probar-conexion-sin-guardar` · **Versión del módulo:** 18.0.1.10.7
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-11-12, con las pruebas de GitHub Actions en verde.
 - **Pruebas:** 92 pruebas en Odoo 18 (4 nuevas), pruebas unitarias y una prueba de extremo a extremo
   con Chromium (7 escenarios, 32 comprobaciones; en `main` fallaban 9).
 
@@ -384,7 +401,7 @@ Groq; los modelos Gemma que aparecen con Gemini son de Google.)
 
 **Fallos después de guardar (fuera del control del sistema)**
 - [x] Indicador en Ajustes con el último error del proveedor y su fecha.
-- [ ] (Opcional) **Modelo de respaldo**: si el principal falla (caída, cuota agotada), intentar con
+- [x] (Opcional) **Modelo de respaldo**: si el principal falla (caída, cuota agotada), intentar con
       otro configurado, incluso de otro proveedor, y registrar en el log qué modelo respondió.
 
 **Pruebas**
@@ -395,7 +412,7 @@ Groq; los modelos Gemma que aparecen con Gemini son de Google.)
 - [x] El desplegable solo muestra modelos disponibles del proveedor elegido.
 - [x] Guardar con conexión fallida no guarda y muestra el motivo; desactivar el chatbot guarda sin
       probar.
-- [ ] (Si se implementa) el modelo de respaldo responde cuando el principal falla.
+- [x] (Si se implementa) el modelo de respaldo responde cuando el principal falla.
 
 **Defecto encontrado y corregido en este paso:** el ajuste "Activar asistente" no se podía apagar.
 Odoo borra el parámetro de un booleano guardado en False; el asistente lo leía como activo y el

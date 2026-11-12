@@ -12,8 +12,10 @@ def _check(config):
     key = (config.get("api_key") or "").strip()
     if not key:
         raise llm_client.LLMClientError("missing_key")
-    if not key.startswith(PREFIX[config["provider"]]):
+    if not key.startswith(PREFIX[config["provider"]]) or "INVALIDA" in key:
         raise llm_client.LLMClientError("auth")
+    if "CAIDO" in key:  # simula un proveedor caído (fallo pasajero)
+        raise llm_client.LLMClientError("server")
 
 
 def fake_test_connection(config):
