@@ -30,6 +30,18 @@ class ChatbotLlmModel(models.Model):
         string="Disponible", default=True, index=True,
         help="Desmarcado cuando el proveedor ya no lo incluye en su listado.",
     )
+    pricing_hint = fields.Selection(
+        selection=[
+            ("free", "Gratis (estimado)"),
+            ("paid", "De pago (estimado)"),
+            ("unknown", "Sin dato"),
+        ],
+        string="Precio",
+        default="unknown",
+        index=True,
+        help="Estimación según la documentación pública del proveedor. "
+             "La API no indica si el modelo es gratuito; revise el enlace de precios.",
+    )
     recommended = fields.Boolean(string="Recomendado", compute="_compute_recommended", store=True)
     last_seen = fields.Datetime(string="Visto en el listado")
 
@@ -73,6 +85,7 @@ class ChatbotLlmModel(models.Model):
                 "description": item.get("description") or False,
                 "input_token_limit": item.get("input_token_limit") or 0,
                 "output_token_limit": item.get("output_token_limit") or 0,
+                "pricing_hint": item.get("pricing_hint") or llm_client.pricing_hint(provider, item["id"]),
                 "available": True,
                 "last_seen": now,
             }

@@ -4,10 +4,12 @@
         <field name="name">chatbot.llm.model.list</field>
         <field name="model">chatbot.llm.model</field>
         <field name="arch" type="xml">
-            <list create="false" decoration-muted="not available" decoration-bf="recommended">
+            <list create="false" decoration-muted="not available" decoration-bf="recommended"
+                  decoration-success="pricing_hint == 'free'" decoration-danger="pricing_hint == 'paid'">
                 <field name="provider"/>
                 <field name="model_id"/>
                 <field name="display_name_api"/>
+                <field name="pricing_hint" optional="show"/>
                 <field name="description" optional="show"/>
                 <field name="input_token_limit" optional="show"/>
                 <field name="output_token_limit" optional="hide"/>
@@ -26,8 +28,13 @@
                 <field name="model_id"/>
                 <filter name="available" string="Disponibles" domain="[('available', '=', True)]"/>
                 <filter name="unavailable" string="No disponibles" domain="[('available', '=', False)]"/>
+                <separator/>
+                <filter name="free_tier" string="Gratis (estimado)" domain="[('pricing_hint', '=', 'free')]"/>
+                <filter name="paid_tier" string="De pago (estimado)" domain="[('pricing_hint', '=', 'paid')]"/>
+                <filter name="unknown_tier" string="Sin dato de precio" domain="[('pricing_hint', '=', 'unknown')]"/>
                 <group expand="0" string="Agrupar por">
                     <filter name="group_provider" string="Proveedor" context="{'group_by': 'provider'}"/>
+                    <filter name="group_pricing" string="Precio" context="{'group_by': 'pricing_hint'}"/>
                 </group>
             </search>
         </field>
@@ -40,8 +47,8 @@
         <field name="context">{'search_default_available': 1, 'search_default_group_provider': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Sin modelos en el catálogo</p>
-            <p>En Ajustes del chatbot, pulse "Actualizar modelos" para traer el listado del proveedor.
-               La API no informa si un modelo es gratuito: revise la página de precios del proveedor.</p>
+            <p>En Ajustes del chatbot, elija el proveedor, pegue su API Key y pulse «Actualizar modelos».
+               La columna «Precio» es una estimación: la API no informa si el modelo es gratuito.</p>
         </field>
     </record>
 </odoo>

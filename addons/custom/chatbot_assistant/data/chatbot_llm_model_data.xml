@@ -5,11 +5,13 @@
         <field name="provider">gemini</field>
         <field name="model_id">gemini-2.5-flash</field>
         <field name="display_name_api">Gemini 2.5 Flash</field>
+        <field name="pricing_hint">free</field>
     </record>
     <record id="llm_model_groq_llama_33_70b" model="chatbot.llm.model">
         <field name="provider">groq</field>
         <field name="model_id">llama-3.3-70b-versatile</field>
         <field name="display_name_api">llama-3.3-70b-versatile</field>
+        <field name="pricing_hint">free</field>
     </record>
 
     <record id="ir_cron_chatbot_sync_models" model="ir.cron">

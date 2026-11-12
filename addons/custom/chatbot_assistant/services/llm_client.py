@@ -290,10 +290,34 @@ PRICING_URLS = {
     "groq": "https://groq.com/pricing",
 }
 
+# La API no dice si un modelo es gratuito. Estas pistas son solo orientativas
+# (documentación pública / free tier típico) y pueden cambiar.
+GEMINI_FREE_MARKERS = ("flash", "flash-lite", "gemma", "lite")
+GEMINI_PAID_MARKERS = ("-pro", "ultra", "imagen", "veo")
+
 
 def is_text_model(model_id):
     mid = (model_id or "").lower()
     return not any(marker in mid for marker in NON_TEXT_MARKERS)
+
+
+def pricing_hint(provider, model_id):
+    """
+    Estimación de gratuidad para el catálogo.
+    Retorna: 'free' | 'paid' | 'unknown'
+    """
+    mid = (model_id or "").lower()
+    provider = (provider or "").lower()
+    if provider == "groq":
+        # Groq ofrece free tier de desarrollador con límites; la mayoría de chat models aplica.
+        return "free" if is_text_model(mid) else "unknown"
+    if provider == "gemini":
+        if any(m in mid for m in GEMINI_PAID_MARKERS) and "flash" not in mid:
+            return "paid"
+        if any(m in mid for m in GEMINI_FREE_MARKERS):
+            return "free"
+        return "unknown"
+    return "unknown"
 
 
 def list_gemini_models(api_key, timeout=None):
@@ -318,11 +342,16 @@ def list_gemini_models(api_key, timeout=None):
                 "description": (item.get("description") or "")[:200],
                 "input_token_limit": int(item.get("inputTokenLimit") or 0),
                 "output_token_limit": int(item.get("outputTokenLimit") or 0),
+                "pricing_hint": pricing_hint("gemini", name),
             })
         page_token = data.get("nextPageToken")
         if not page_token:
             break
-    result.sort(key=lambda m: (0 if "flash" in m["id"].lower() else 1, m["id"]))
+    result.sort(key=lambda m: (
+        0 if m.get("pricing_hint") == "free" else 1,
+        0 if "flash" in m["id"].lower() else 1,
+        m["id"],
+    ))
     return result
 
 
@@ -343,6 +372,7 @@ def list_groq_models(api_key, timeout=None):
             "description": item.get("owned_by") or "",
             "input_token_limit": int(item.get("context_window") or 0),
             "output_token_limit": int(item.get("max_completion_tokens") or 0),
+            "pricing_hint": pricing_hint("groq", mid),
         })
     result.sort(key=lambda m: m["id"])
     return result

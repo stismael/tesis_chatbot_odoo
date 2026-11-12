@@ -53,6 +53,7 @@ class ResConfigSettings(models.TransientModel):
     chatbot_catalog_count = fields.Integer(compute="_compute_chatbot_catalog")
     chatbot_models_synced = fields.Char(string="Última actualización", compute="_compute_chatbot_catalog")
     chatbot_model_warning = fields.Char(compute="_compute_chatbot_catalog")
+    chatbot_catalog_hint = fields.Char(compute="_compute_chatbot_catalog")
     chatbot_pricing_url = fields.Char(compute="_compute_chatbot_catalog")
     chatbot_last_verified = fields.Char(
         string="Última verificación",
@@ -93,7 +94,8 @@ class ResConfigSettings(models.TransientModel):
         ICP = self.env["ir.config_parameter"].sudo()
         for record in self:
             provider = record.chatbot_provider or "gemini"
-            record.chatbot_catalog_count = Model.search_count([("provider", "=", provider), ("available", "=", True)])
+            count = Model.search_count([("provider", "=", provider), ("available", "=", True)])
+            record.chatbot_catalog_count = count
             record.chatbot_models_synced = ICP.get_param("chatbot_assistant.models_synced_%s" % provider) or _("Nunca")
             record.chatbot_pricing_url = PRICING_URLS.get(provider)
             current = Model._find(provider, record.chatbot_model)
@@ -101,6 +103,15 @@ class ResConfigSettings(models.TransientModel):
                 _("El modelo configurado ya no está disponible en %s. Elige otro.") % PROVIDER_LABELS[provider]
                 if current and not current.available else False
             )
+            # Tras instalar solo hay 1 modelo semilla por proveedor; hace falta sincronizar.
+            if count <= 1:
+                record.chatbot_catalog_hint = _(
+                    "Solo hay %(count)s modelo(s) de %(provider)s en el catálogo. "
+                    "Pegue la API Key de %(provider)s y pulse «Actualizar modelos» "
+                    "(no hace falta Guardar antes)."
+                ) % {"count": count, "provider": PROVIDER_LABELS[provider]}
+            else:
+                record.chatbot_catalog_hint = False
 
     def _compute_chatbot_llm_status(self):
         Log = self.env["chatbot.query.log"].sudo()

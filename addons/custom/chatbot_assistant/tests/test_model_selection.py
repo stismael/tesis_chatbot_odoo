@@ -97,7 +97,15 @@ class TestModelSelection(ChatbotCase):
         with patch(LIST_MODELS, return_value=[model_item("gemini-2.5-flash"), model_item("gemini-2.5-pro")]):
             action = settings.action_chatbot_sync_models()
         self.assertIn("Nuevos: 1", action["params"]["message"])
-        self.assertTrue(self.Model._find("gemini", "gemini-2.5-pro"))
+        pro = self.Model._find("gemini", "gemini-2.5-pro")
+        self.assertTrue(pro)
+        self.assertEqual(pro.pricing_hint, "paid")
+        self.assertEqual(self.Model._find("gemini", "gemini-2.5-flash").pricing_hint, "free")
+
+    def test_pricing_hint_heuristics(self):
+        self.assertEqual(llm_client.pricing_hint("gemini", "gemini-2.5-flash"), "free")
+        self.assertEqual(llm_client.pricing_hint("gemini", "gemini-2.5-pro"), "paid")
+        self.assertEqual(llm_client.pricing_hint("groq", "llama-3.3-70b-versatile"), "free")
 
     def test_aviso_si_el_modelo_configurado_ya_no_esta_disponible(self):
         self.gemini_flash.available = False
