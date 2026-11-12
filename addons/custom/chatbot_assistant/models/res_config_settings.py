@@ -188,14 +188,36 @@ class ResConfigSettings(models.TransientModel):
                 "antigua: hay que pegar la de Groq otra vez."
             ))
 
+    def _chatbot_persist_connection_draft(self, config):
+        """
+        Persiste proveedor / API key / modelo en ICP al probar o sincronizar.
+        Así, si Ajustes se recarga, no vuelve al Gemini guardado antes.
+        """
+        if not config.get("api_key"):
+            return
+        icp = self.env["ir.config_parameter"].sudo()
+        icp.set_param("chatbot_assistant.provider", config["provider"])
+        icp.set_param("chatbot_assistant.api_key", config["api_key"])
+        icp.set_param("chatbot_assistant.model", config["model"])
+        if self.chatbot_llm_model_id and self.chatbot_llm_model_id.model_id != config["model"]:
+            # Mantener coherencia visual si el formulario sigue abierto.
+            pass
+        self.chatbot_provider = config["provider"]
+        self.chatbot_model = config["model"]
+
     def action_chatbot_sync_models(self):
         """Trae el listado vigente del proveedor elegido y sincroniza el catálogo."""
         self.ensure_one()
         config = self._chatbot_runtime_config()
+        if not config.get("api_key"):
+            raise UserError(_(
+                "Pegue la API Key del proveedor elegido antes de actualizar modelos."
+            ))
         try:
             models_data = llm_client.list_models(config)
         except LLMClientError as exc:
             raise UserError(exc.admin_message or exc.message) from exc
+        self._chatbot_persist_connection_draft(config)
         counts = self.env["chatbot.llm.model"].sudo()._sync_provider(config["provider"], models_data)
         message = _(
             "%(provider)s: %(total)s modelos de texto. Nuevos: %(added)s · actualizados: %(updated)s · "
@@ -215,17 +237,27 @@ class ResConfigSettings(models.TransientModel):
     def action_chatbot_test_connection(self):
         self.ensure_one()
         config = self._chatbot_runtime_config()
+        if not config.get("api_key"):
+            raise UserError(_(
+                "Pegue la API Key del proveedor elegido antes de probar la conexión."
+            ))
         try:
             result = llm_client.test_connection(config)
         except LLMClientError as exc:
             raise UserError(exc.admin_message or exc.message) from exc
 
+        # Persistir lo probado para que Ajustes no vuelva a Gemini al refrescarse.
+        self._chatbot_persist_connection_draft(config)
+        verified = _("Conexión verificada el %(date)s con %(model)s") % {
+            "date": self._chatbot_format_datetime(fields.Datetime.now()),
+            "model": result["model"],
+        }
+        self.env["ir.config_parameter"].sudo().set_param(
+            "chatbot_assistant.last_verified", verified,
+        )
+        self.chatbot_last_verified = verified
         info = _(
-            "✓ Conexión exitosa\n"
-            "Proveedor: %(provider)s\n"
-            "Modelo: %(model)s\n"
-            "Latencia: %(latency)s ms\n"
-            "Estado: Disponible"
+            "✓ Conexión exitosa · %(provider)s · %(model)s · %(latency)s ms"
         ) % {
             "provider": result["provider"],
             "model": result["model"],
@@ -235,29 +267,16 @@ class ResConfigSettings(models.TransientModel):
             "chatbot_assistant.last_test_info",
             info,
         )
-        if (result["model"], config["provider"]) == (
-            (self.env["ir.config_parameter"].sudo().get_param("chatbot_assistant.model") or "").replace("models/", ""),
-            self.env["ir.config_parameter"].sudo().get_param("chatbot_assistant.provider"),
-        ):
-            self.env["ir.config_parameter"].sudo().set_param(
-                "chatbot_assistant.last_verified",
-                _("Conexión verificada el %(date)s con %(model)s") % {
-                    "date": self._chatbot_format_datetime(fields.Datetime.now()),
-                    "model": result["model"],
-                },
-            )
-        wizard = self.env["chatbot.llm.result.wizard"].create({
-            "title": _("Prueba de conexión"),
-            "body": info,
-            "suggested_model": False,
-        })
+        # Notificación (sin wizard): evita que Ajustes dispare "Unsaved changes" / recarga.
         return {
-            "type": "ir.actions.act_window",
-            "name": _("Prueba de conexión"),
-            "res_model": "chatbot.llm.result.wizard",
-            "res_id": wizard.id,
-            "view_mode": "form",
-            "target": "new",
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Prueba de conexión"),
+                "message": info,
+                "type": "success",
+                "sticky": False,
+            },
         }
 
     @api.onchange("chatbot_provider")

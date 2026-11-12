@@ -1,6 +1,6 @@
 {
     "name": "Chatbot Assistant",
-    "version": "18.0.1.10.4",
+    "version": "18.0.1.10.5",
     "category": "Productivity",
     "summary": "Asistente conversacional en Discuss (estilo OdooBot) para Odoo 18",
     "description": """
@@ -47,6 +47,7 @@
         "web.assets_backend": [
             "chatbot_assistant/static/src/discuss/thread_model_patch.js",
             "chatbot_assistant/static/src/discuss/composer_patch.js",
+            "chatbot_assistant/static/src/settings/settings_form_controller_patch.js",
         ],
     },
 }

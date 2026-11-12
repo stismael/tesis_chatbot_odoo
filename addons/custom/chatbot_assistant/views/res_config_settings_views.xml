@@ -49,8 +49,7 @@
                                 <button name="%(chatbot_assistant.action_chatbot_llm_model)d"
                                         type="action"
                                         string="Ver catálogo"
-                                        class="btn-link ms-2"
-                                        noSaveDialog="true"/>
+                                        class="btn-link ms-2"/>
                             </div>
                         </setting>
                         <setting string="Estado del proveedor"
