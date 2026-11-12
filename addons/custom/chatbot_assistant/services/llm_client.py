@@ -76,7 +76,12 @@ ADMIN_MESSAGES = {
     "timeout": "Timeout: el proveedor de IA no respondió a tiempo.",
     "network": "No se pudo conectar con el proveedor LLM (red).",
     "rate_limit": "Cuota/límite alcanzado (HTTP 429). Espere o cambie de modelo.",
-    "auth": "API Key inválida o sin permiso (401/403).",
+    "auth": (
+        "API Key inválida o sin permiso (401/403). "
+        "Compruebe que la clave sea del proveedor elegido "
+        "(Gemini: Google AI Studio; Groq: console.groq.com, suele empezar por gsk_) "
+        "y péguela de nuevo en Ajustes antes de probar."
+    ),
     "model": "Modelo no encontrado o no disponible (404).",
     "server": "Error del proveedor de IA (5xx). Reintente más tarde.",
     "invalid_json": "El modelo no devolvió un JSON válido.",

@@ -140,14 +140,18 @@ class ResConfigSettings(models.TransientModel):
             self.chatbot_model = self.chatbot_llm_model_id.model_id
 
     def _chatbot_runtime_config(self):
-        """Config desde el formulario; si la key viene vacía, usa la guardada en ICP."""
+        """Config desde el formulario; si la key viene vacía, usa la guardada solo si el proveedor coincide."""
         self.ensure_one()
-        api_key = (self.chatbot_api_key or "").strip()
-        if not api_key:
-            api_key = self.env["ir.config_parameter"].sudo().get_param(
-                "chatbot_assistant.api_key", ""
-            ) or ""
         provider = self.chatbot_provider or "gemini"
+        api_key = (self.chatbot_api_key or "").strip()
+        icp = self.env["ir.config_parameter"].sudo()
+        if not api_key:
+            # En Ajustes, los campos password a menudo llegan vacíos si no se vuelven a pegar.
+            # Solo reutilizar la key guardada cuando el proveedor del formulario es el mismo.
+            saved_provider = (icp.get_param("chatbot_assistant.provider") or "gemini").strip()
+            if saved_provider == provider:
+                api_key = (icp.get_param("chatbot_assistant.api_key") or "").strip()
+        self._chatbot_check_api_key_format(provider, api_key)
         default_model = DEFAULT_GEMINI_MODEL if provider == "gemini" else DEFAULT_GROQ_MODEL
         return {
             "provider": provider,
@@ -156,6 +160,33 @@ class ResConfigSettings(models.TransientModel):
             "temperature": self.chatbot_temperature if self.chatbot_temperature is not None else 0.1,
             "timeout": self.chatbot_timeout or DEFAULT_TIMEOUT,
         }
+
+    def _chatbot_check_api_key_format(self, provider, api_key):
+        """Avisa si la key parece del proveedor equivocado (Gemini vs Groq)."""
+        if not api_key:
+            return
+        key = api_key.strip()
+        if provider == "groq" and key.startswith("AIza"):
+            raise UserError(_(
+                "Esa API Key parece de Google Gemini (empieza por AIza), pero el proveedor "
+                "elegido es Groq.\n\n"
+                "1. En console.groq.com cree una clave (empieza por gsk_).\n"
+                "2. Péguela de nuevo en el campo API Key.\n"
+                "3. Pulse «Probar conexión» o «Actualizar modelos»."
+            ))
+        if provider == "gemini" and key.startswith("gsk_"):
+            raise UserError(_(
+                "Esa API Key parece de Groq (empieza por gsk_), pero el proveedor "
+                "elegido es Google Gemini.\n\n"
+                "Use una clave de Google AI Studio o cambie el proveedor a Groq."
+            ))
+        if provider == "groq" and not key.startswith("gsk_"):
+            raise UserError(_(
+                "La API Key de Groq suele empezar por gsk_. "
+                "Vuelva a pegarla completa (sin espacios) y pruebe de nuevo.\n"
+                "Si acaba de cambiar de Gemini a Groq, el campo a veces no envía la clave "
+                "antigua: hay que pegar la de Groq otra vez."
+            ))
 
     def action_chatbot_sync_models(self):
         """Trae el listado vigente del proveedor elegido y sincroniza el catálogo."""
