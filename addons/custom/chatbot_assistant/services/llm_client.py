@@ -16,6 +16,10 @@ DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
 DEFAULT_TIMEOUT = 20
 MAX_RETRIES = 1  # un reintento ante timeout / cuota / 5xx (peor caso: 2 × timeout + pausa)
 RETRY_BASE_DELAY_SEC = 1.5
+# Cloudflare (Groq) bloquea el User-Agent por defecto de urllib ("Python-urllib/…") con 403 / 1010.
+HTTP_USER_AGENT = (
+    "odoo18-chatbot-assistant/1.0 (+https://github.com/stismael/tesis_chatbot_odoo; thesis)"
+)
 
 # Mensajes para el chat (tono humano, sin jerga técnica).
 USER_MESSAGES = {
@@ -42,6 +46,10 @@ USER_MESSAGES = {
     "auth": (
         "Hay un problema con la configuración del asistente. "
         "Avísale al administrador."
+    ),
+    "forbidden_network": (
+        "No pude conectar con el servicio de IA por un bloqueo de red. "
+        "Intenta de nuevo en un momento."
     ),
     "model": (
         "Hay un problema con el modelo de IA configurado. "
@@ -81,6 +89,10 @@ ADMIN_MESSAGES = {
         "Compruebe que la clave sea del proveedor elegido "
         "(Gemini: Google AI Studio; Groq: console.groq.com, suele empezar por gsk_) "
         "y péguela de nuevo en Ajustes antes de probar."
+    ),
+    "forbidden_network": (
+        "El proveedor bloqueó la petición de red (403). "
+        "No es un problema de la API Key: revise firewall/proxy o reinicie Odoo."
     ),
     "model": "Modelo no encontrado o no disponible (404).",
     "server": "Error del proveedor de IA (5xx). Reintente más tarde.",
@@ -435,8 +447,20 @@ def _parse_json_response(raw_text):
 
 def _map_http_error(code, err_body=""):
     body_l = (err_body or "").lower()
-    if code == 401 or code == 403 or "api key not valid" in body_l or "invalid api key" in body_l:
+    # Cloudflare / WAF delante de Groq: 403 con "error code: 1010" (User-Agent bloqueado).
+    if code == 403 and (
+        "error code: 1010" in body_l
+        or "cloudflare" in body_l
+        or "attention required" in body_l
+    ):
+        return LLMClientError("forbidden_network")
+    if code == 401 or "api key not valid" in body_l or "invalid api key" in body_l:
         return LLMClientError("auth")
+    if code == 403:
+        # 403 de la API (permiso) vs red: si el cuerpo parece JSON de Groq/OpenAI, es auth.
+        if "invalid_api_key" in body_l or "incorrect api key" in body_l or '"error"' in body_l:
+            return LLMClientError("auth")
+        return LLMClientError("forbidden_network")
     if code == 404:
         return LLMClientError("model")
     if code == 429:
@@ -449,10 +473,19 @@ def _map_http_error(code, err_body=""):
     )
 
 
+def _default_http_headers(extra=None):
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": HTTP_USER_AGENT,
+        "Accept": "application/json",
+    }
+    if extra:
+        headers.update(extra)
+    return headers
+
+
 def _http_json_get(url, timeout, headers=None):
-    req_headers = {"Content-Type": "application/json"}
-    if headers:
-        req_headers.update(headers)
+    req_headers = _default_http_headers(headers)
     req = urllib.request.Request(url, headers=req_headers, method="GET")
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -473,7 +506,8 @@ def _http_json_get(url, timeout, headers=None):
 
 def _http_json(url, payload, headers, timeout):
     body = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+    req_headers = _default_http_headers(headers)
+    req = urllib.request.Request(url, data=body, headers=req_headers, method="POST")
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read().decode("utf-8"))
