@@ -18,7 +18,10 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `feature/seleccion-modelo` | Paso 4: catálogo y validación del modelo | Fusionada en `main` (PR #6) |
 | `feature/conversacion-libre` | Paso 5: conversación libre | Fusionada en `main` (PR #7) |
 | `fix/memoria-y-estado-pedido` | Paso 6: memoria de la sesión y `order_state` | Fusionada en `main` (PR #8) |
-| `fix/datos-prueba-factura-ancla` | Facturas ancla del generador y verificación del dataset | PR #9 |
+| `fix/datos-prueba-factura-ancla` | Facturas ancla del generador y verificación del dataset | Fusionada en `main` (PR #9) |
+| (directo a `main`, 11/11) | Ajustes del LLM: probar sin guardar, gratuidad estimada, claves por proveedor, User-Agent | Sin PR; dejó las pruebas en rojo |
+| `fix/ajustes-chatbot-regresiones` | Regresiones de Ajustes del chatbot | Fusionada en `main` (PR #10) |
+| `docs/pendientes-tesis-actualizados` | Pendientes de la tesis actualizados | PR #11 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -29,9 +32,30 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
 
+### PR #10 · Regresiones de Ajustes del chatbot
+- **Rama:** `fix/ajustes-chatbot-regresiones` · **Versión del módulo:** 18.0.1.10.6
+- **Estado:** fusionado el 2026-11-12, con las pruebas de GitHub Actions en verde.
+- **Contexto:** el 11/11 se subieron 5 commits directo a `main`, sin PR (versiones 18.0.1.10.1 a
+  18.0.1.10.5): probar conexión y actualizar modelos sin guardar, gratuidad estimada en el catálogo,
+  detección de claves de otro proveedor, API key vacía al cambiar de proveedor y User-Agent propio
+  para Groq. Dejaron GitHub Actions en rojo.
+- **Pruebas:** 88 pruebas en Odoo 18 (2 nuevas) y pruebas unitarias; verificada la actualización
+  desde 18.0.1.10.0.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Se conserva la API key guardada cuando el campo llega vacío y el proveedor no cambió | `models/res_config_settings.py` (`set_values`) | Defecto verificado: al cambiar de proveedor y volver al original sin pegar la clave, al Guardar se borraba y el chat dejaba de funcionar |
+| La revisión del formato de la clave (`gsk_` / `AIza`) solo se hace si cambian el proveedor, la clave o el modelo | `models/res_config_settings.py` (`_chatbot_check_before_save`) | Defecto verificado: impedía desactivar el asistente o guardar otros datos |
+| Código de error `forbidden_network` en la auditoría | `models/chatbot_query_log.py` | Que el bloqueo 403 de Cloudflare no se registre como "Otro" |
+| Pruebas ajustadas al nuevo manejo del 403 y a claves de Groq con formato `gsk_`; 2 pruebas nuevas | `scripts/test_chatbot_unit.py`, `tests/test_model_selection.py` | Volver a poner `main` en verde y evitar que los defectos regresen |
+
+**Pendiente de decisión:** "Probar conexión" y "Actualizar modelos" guardan la configuración sin
+pulsar Guardar (`_chatbot_persist_connection_draft`). Verificado: probar una clave de Groq deja el
+chat usando Groq y reemplaza la clave de Gemini, aunque luego se descarten los cambios.
+
 ### PR #9 · Facturas ancla del generador y verificación del dataset
 - **Rama:** `fix/datos-prueba-factura-ancla` · **Versión de `chatbot_test_data`:** 18.0.1.0.1
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-10-20, con las pruebas de GitHub Actions en verde.
 - **Pruebas:** base de prueba generada desde cero antes y después del cambio; las 31 consultas
   "execute" del dataset cumplen con los datos reales (antes fallaba Q002).
 
