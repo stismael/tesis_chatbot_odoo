@@ -21,7 +21,8 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `fix/datos-prueba-factura-ancla` | Facturas ancla del generador y verificación del dataset | Fusionada en `main` (PR #9) |
 | (directo a `main`, 11/11) | Ajustes del LLM: probar sin guardar, gratuidad estimada, claves por proveedor, User-Agent | Sin PR; dejó las pruebas en rojo |
 | `fix/ajustes-chatbot-regresiones` | Regresiones de Ajustes del chatbot | Fusionada en `main` (PR #10) |
-| `docs/pendientes-tesis-actualizados` | Pendientes de la tesis actualizados | PR #11 |
+| `docs/pendientes-tesis-actualizados` | Pendientes de la tesis actualizados | Fusionada en `main` (PR #11) |
+| `fix/probar-conexion-sin-guardar` | Probar conexión sin aplicar la configuración | PR #12 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -31,6 +32,20 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
+
+### PR #12 · Probar conexión sin aplicar la configuración
+- **Rama:** `fix/probar-conexion-sin-guardar` · **Versión del módulo:** 18.0.1.10.7
+- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Pruebas:** 92 pruebas en Odoo 18 (4 nuevas), pruebas unitarias y una prueba de extremo a extremo
+  con Chromium (7 escenarios, 32 comprobaciones; en `main` fallaban 9).
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| "Probar conexión" y "Actualizar modelos" ya no guardan proveedor, API key ni modelo | `models/res_config_settings.py` | Que el chat cambie solo al pulsar Guardar; antes, probar una clave de Groq reemplazaba la de Gemini aunque se descartaran los cambios |
+| El formulario guarda solo el registro temporal, evita la recarga completa y vuelve a leer ese registro | `static/src/settings/settings_form_controller_patch.js` | Que Ajustes no vuelva a Gemini y muestre la verificación y el catálogo actualizado |
+| Al abrir Ajustes se muestra la configuración guardada; solo al cambiar a otro proveedor se propone el recomendado | `models/res_config_settings.py` (`_onchange_chatbot_provider`) | Defecto presente desde el paso 4: Ajustes mostraba siempre el modelo recomendado, y guardar otro dato reemplazaba el modelo guardado |
+| La prueba de conexión usa el modelo elegido en el desplegable | `models/res_config_settings.py` (`_chatbot_runtime_config`) | Probar exactamente el modelo que se va a guardar |
+| Prueba de extremo a extremo de Ajustes con un proveedor simulado | `scripts/e2e/` | Comprobar en el navegador los flujos que tuvieron defectos |
 
 ### PR #10 · Regresiones de Ajustes del chatbot
 - **Rama:** `fix/ajustes-chatbot-regresiones` · **Versión del módulo:** 18.0.1.10.6
@@ -49,9 +64,7 @@ Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada co
 | Código de error `forbidden_network` en la auditoría | `models/chatbot_query_log.py` | Que el bloqueo 403 de Cloudflare no se registre como "Otro" |
 | Pruebas ajustadas al nuevo manejo del 403 y a claves de Groq con formato `gsk_`; 2 pruebas nuevas | `scripts/test_chatbot_unit.py`, `tests/test_model_selection.py` | Volver a poner `main` en verde y evitar que los defectos regresen |
 
-**Pendiente de decisión:** "Probar conexión" y "Actualizar modelos" guardan la configuración sin
-pulsar Guardar (`_chatbot_persist_connection_draft`). Verificado: probar una clave de Groq deja el
-chat usando Groq y reemplaza la clave de Gemini, aunque luego se descarten los cambios.
+**Decisión:** "Probar conexión" y "Actualizar modelos" ya no guardan la configuración (PR #12).
 
 ### PR #9 · Facturas ancla del generador y verificación del dataset
 - **Rama:** `fix/datos-prueba-factura-ancla` · **Versión de `chatbot_test_data`:** 18.0.1.0.1
