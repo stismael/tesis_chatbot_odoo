@@ -9,10 +9,13 @@ from odoo.tools import html2plaintext, html_escape
 
 from ..services.help_text import build_welcome_markup
 from ..services.llm_client import USER_MESSAGES
+from ..services.result_set import PREVIEW_ROWS
 
 _logger = logging.getLogger(__name__)
 
 BOT_XMLID = "chatbot_assistant.partner_chatbot_assistant"
+OPEN_RESULT_URL = "/odoo/action-chatbot_assistant.action_chatbot_open_result?active_id=%s"
+CSV_RESULT_URL = "/chatbot_assistant/resultado/%s/csv"
 WELCOME_BODY = build_welcome_markup()
 
 
@@ -44,9 +47,16 @@ class ChatbotDiscussService(models.AbstractModel):
         return text
 
     @api.model
-    def _format_reply_html(self, reply):
+    def _format_reply_html(self, reply, log_id=False, result_count=0):
         safe = html_escape(reply or "")
-        return Markup("<p>%s</p>") % Markup("<br/>").join(Markup(line) for line in safe.split("\n"))
+        body = Markup("<p>%s</p>") % Markup("<br/>").join(Markup(line) for line in safe.split("\n"))
+        if log_id and result_count:
+            links = [Markup('<a href="%s">%s</a>') % (OPEN_RESULT_URL % log_id, _("Ver todo (%s)") % result_count)]
+            if result_count > PREVIEW_ROWS:
+                links.append(Markup('<a href="%s" target="_blank">%s</a>') % (
+                    CSV_RESULT_URL % log_id, _("Descargar CSV")))
+            body += Markup("<p>%s</p>") % Markup(" · ").join(links)
+        return body
 
     @api.model
     def _is_bot_author(self, author_id):
@@ -86,6 +96,7 @@ class ChatbotDiscussService(models.AbstractModel):
 
         session = self._get_or_create_session(channel)
         log_id = False
+        result_count = 0
         try:
             self.env["chatbot.message"].create({
                 "session_id": session.id,
@@ -94,6 +105,7 @@ class ChatbotDiscussService(models.AbstractModel):
             })
             result = self.env["chatbot.orchestrator"].process_message(session, body)
             log_id = result.get("log_id")
+            result_count = result.get("result_count") or 0
             reply = result.get("reply") or _("Sin respuesta")
             self.env["chatbot.message"].create({
                 "session_id": session.id,
@@ -116,7 +128,7 @@ class ChatbotDiscussService(models.AbstractModel):
 
         reply_message = channel.with_context(chatbot_assistant_reply=True).sudo().message_post(
             author_id=bot.id,
-            body=self._format_reply_html(reply),
+            body=self._format_reply_html(reply, log_id, result_count),
             message_type="comment",
             subtype_xmlid="mail.mt_comment",
             silent=True,

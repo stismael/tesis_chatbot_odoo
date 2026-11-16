@@ -3,6 +3,7 @@
 
 import re
 
+from ..result_set import PREVIEW_ROWS, preview_note, records_ref
 from .access import scope_note
 
 STATE_LABELS = {
@@ -136,18 +137,22 @@ def _line_rows(lines_rec, currency):
 def _format_list(rows, product_label, state):
     if not rows:
         return f"No hay {state['plural']} con {product_label}."
+    shown = rows[:PREVIEW_ROWS]
     lines = [
         f"- {r['order']}: {r['quantity']:g} uds, {r['currency']} {r['price_subtotal']:.2f} — {r['partner']}"
-        for r in rows
+        for r in shown
     ]
-    return f"Pedidos con {product_label} ({len(rows)}):\n" + "\n".join(lines)
+    return (
+        f"Pedidos con {product_label} ({len(rows)}):\n" + "\n".join(lines)
+        + preview_note(len(shown), len(rows), "líneas de pedido, de la más reciente a la más antigua")
+    )
 
 
 def _sales_by_customer(env, partner, entities, user_text=""):
     state = _state_filter(entities)
     domain = _order_domain(entities, partner=partner)
     all_orders = env["sale.order"].search(domain, order="date_order desc")
-    orders = all_orders[:15]
+    orders = all_orders[:PREVIEW_ROWS]
     if not orders:
         return {
             "ok": False,
@@ -164,19 +169,25 @@ def _sales_by_customer(env, partner, entities, user_text=""):
             f"- {o.name}: {currency} {o.amount_total:.2f}"
             for o in orders
         ]
-        count = f"{len(all_orders)}"
-        if len(all_orders) > len(orders):
-            count += f"; se muestran los {len(orders)} más recientes"
-        message = f'{state["plural"].capitalize()} de "{partner.name}" ({count}):\n' + "\n".join(detail)
+        message = (
+            f'{state["plural"].capitalize()} de "{partner.name}" ({len(all_orders)}), '
+            f"por un total de {currency} {total:.2f}:\n" + "\n".join(detail)
+            + preview_note(len(orders), len(all_orders), "pedidos, del más reciente al más antiguo")
+        )
     else:
         message = (
             f'"{partner.name}" tiene {len(all_orders)} {state["count"]} '
-            f"por un total de {currency} {total:.2f}. "
-            f"Si quieres verlos, pídeme que los liste."
+            f"por un total de {currency} {total:.2f}."
         )
+        if len(all_orders) <= PREVIEW_ROWS:
+            message += " Si quieres verlos, pídeme que los liste."
 
     message += scope_note(env, "sale.order")
+    records = None
+    if len(all_orders) > PREVIEW_ROWS:
+        records = records_ref(all_orders, f'{state["plural"].capitalize()} de {partner.name}')
     return {
+        "records": records,
         "ok": True,
         "message": message,
         "data": {
@@ -238,12 +249,17 @@ def _sales_by_product(env, product, entities, partner=None, user_text=""):
     else:
         message = (
             f"{label}: {qty:g} unidades {state['verb']} en {len(orders)} {state['count']} "
-            f"({currency} {amount:.2f}). "
-            f"Si quieres el detalle por pedido, pídemelo."
+            f"({currency} {amount:.2f})."
         )
+        if len(rows) <= PREVIEW_ROWS:
+            message += " Si quieres el detalle por pedido, pídemelo."
 
     message += scope_note(env, "sale.order")
+    records = None
+    if len(rows) > PREVIEW_ROWS:
+        records = records_ref(lines_rec, f"Ventas de {label}{scope}")
     return {
+        "records": records,
         "ok": True,
         "message": message,
         "data": {

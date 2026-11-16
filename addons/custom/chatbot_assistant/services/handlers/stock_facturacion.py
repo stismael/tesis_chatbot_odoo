@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """CU-05: consultar stock actual y facturación de un producto en un periodo."""
 
+from ..result_set import records_ref
 from .access import scope_note
 from .stock import format_stock, stock_levels
 from .ventas import _find_product, _product_label
@@ -93,6 +94,9 @@ def handle(env, entities, user_text=""):
     message += scope_note(env, "account.move")
 
     return {
+        "records": records_ref(
+            invoices, f"Facturas con {label}" + (f" {period}" if date_from or date_to else ""),
+        ) if len(invoices) > 1 else None,
         "ok": True,
         "message": message,
         "data": {

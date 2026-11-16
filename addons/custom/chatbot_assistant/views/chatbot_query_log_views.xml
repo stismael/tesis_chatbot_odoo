@@ -61,6 +61,18 @@
                             <field name="tokens_thinking"/>
                         </group>
                     </group>
+                    <group string="Resultado extenso" invisible="not result_count">
+                        <group>
+                            <field name="result_title"/>
+                            <field name="result_model"/>
+                            <field name="result_count"/>
+                        </group>
+                        <group>
+                            <field name="result_views"/>
+                            <field name="csv_downloads"/>
+                            <field name="last_csv_download"/>
+                        </group>
+                    </group>
                     <group string="Pregunta">
                         <field name="query" nolabel="1" colspan="2"/>
                     </group>
@@ -100,6 +112,11 @@
                         domain="[('outcome', '=', 'internal_error')]"/>
                 <filter name="filter_fallback" string="Respondió el respaldo"
                         domain="[('fallback_used', '=', True)]"/>
+                <separator/>
+                <filter name="filter_long_result" string="Resultado extenso"
+                        domain="[('result_count', '&gt;', 0)]"/>
+                <filter name="filter_csv" string="Con descarga CSV"
+                        domain="[('csv_downloads', '&gt;', 0)]"/>
                 <separator/>
                 <filter name="filter_slow" string="Lentas (&gt; 5 s)"
                         domain="[('latency_ms', '&gt;', 5000)]"/>

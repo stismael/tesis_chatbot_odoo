@@ -3,6 +3,7 @@
 
 import re
 
+from ..result_set import PREVIEW_ROWS, preview_note, records_ref
 from .access import scope_note
 
 PAYMENT_LABELS = {
@@ -80,7 +81,8 @@ def handle(env, entities, user_text=""):
             "data": {},
         }
 
-    moves = Move.search(domain, order="invoice_date desc, id desc", limit=10)
+    all_moves = Move.search(domain, order="invoice_date desc, id desc")
+    moves = all_moves[:PREVIEW_ROWS]
     if not moves:
         if invoice_number:
             return {
@@ -146,7 +148,23 @@ def handle(env, entities, user_text=""):
             if product_rows:
                 message += f" Incluye {count} producto(s)."
     else:
-        message = "Facturas encontradas:\n" + "\n".join(lines)
+        currency = moves[0].currency_id.symbol or moves[0].currency_id.name or "USD"
+        total = sum(all_moves.mapped("amount_total"))
+        residual = sum(all_moves.mapped("amount_residual"))
+        owner = f'de "{moves[0].partner_id.name}"' if customer_name else "encontradas"
+        message = (
+            f"Facturas {owner}: {len(all_moves)}, por un total de {currency} {total:.2f} "
+            f"y un saldo pendiente de {currency} {residual:.2f}.\n"
+            + "\n".join(lines)
+            + preview_note(len(moves), len(all_moves), "facturas, de la más reciente a la más antigua")
+        )
 
     message += scope_note(env, "account.move")
-    return {"ok": True, "message": message, "data": {"invoices": data_rows, "focus": focus}}
+    result = {
+        "ok": True,
+        "message": message,
+        "data": {"invoices": data_rows, "invoice_count": len(all_moves), "focus": focus},
+    }
+    if len(all_moves) > len(moves):
+        result["records"] = records_ref(all_moves, f"Facturas de {moves[0].partner_id.name}")
+    return result
