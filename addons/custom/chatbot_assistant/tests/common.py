@@ -50,7 +50,7 @@ class ChatbotCase(TransactionCase):
         cls.stock_location = warehouse.lot_stock_id
         cls.env["stock.quant"]._update_available_quantity(cls.product, cls.stock_location, 50.0)
 
-        # 17 pedidos confirmados (más que el límite de 15 del listado); cada uno reserva 1 unidad.
+        # 17 pedidos confirmados (más que la vista previa de 5 del chat); cada uno reserva 1 unidad.
         cls.orders = cls.env["sale.order"]
         for _i in range(17):
             order = cls.env["sale.order"].create({

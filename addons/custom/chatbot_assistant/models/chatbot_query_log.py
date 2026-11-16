@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import json
 import logging
 from datetime import timedelta
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import AccessError, UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -78,6 +80,14 @@ class ChatbotQueryLog(models.Model):
     tokens_prompt = fields.Integer(string="Tokens de entrada")
     tokens_output = fields.Integer(string="Tokens de salida")
     tokens_thinking = fields.Integer(string="Tokens de razonamiento")
+    # Resultado extenso: todos los registros de la respuesta, para «Ver todo» y la descarga en CSV.
+    result_model = fields.Char(string="Modelo del resultado")
+    result_ids_json = fields.Text(string="Registros del resultado")
+    result_title = fields.Char(string="Título del resultado")
+    result_count = fields.Integer(string="Registros en el resultado")
+    result_views = fields.Integer(string="Veces que abrió «Ver todo»", aggregator="sum")
+    csv_downloads = fields.Integer(string="Descargas CSV", aggregator="sum")
+    last_csv_download = fields.Datetime(string="Última descarga CSV")
 
     reply_message_id = fields.Many2one(
         "mail.message", string="Mensaje de respuesta", ondelete="set null", index=True,
@@ -103,6 +113,37 @@ class ChatbotQueryLog(models.Model):
                 feedback = False
             if log.user_feedback != feedback:
                 log.user_feedback = feedback
+
+    def _result_records(self):
+        """
+        Registros del resultado leídos con el usuario actual: Odoo vuelve a aplicar sus permisos y
+        reglas, así que solo aparecen los que todavía puede ver.
+        """
+        self.ensure_one()
+        if not self.exists():
+            raise UserError(_("Este resultado ya no está disponible."))
+        try:
+            self.check_access("read")
+        except AccessError:
+            raise UserError(_("Este resultado pertenece a la consulta de otro usuario.")) from None
+        if not self.result_model or self.result_model not in self.env:
+            raise UserError(_("Esta respuesta no tiene un resultado para mostrar."))
+        ids = json.loads(self.result_ids_json or "[]")
+        return self.env[self.result_model].search([("id", "in", ids)])
+
+    def action_open_result(self):
+        """«Ver todo»: abre la lista nativa de Odoo con los registros exactos de la respuesta."""
+        records = self._result_records()
+        self.sudo().result_views += 1
+        return {
+            "type": "ir.actions.act_window",
+            "name": self.result_title or _("Resultado del asistente"),
+            "res_model": records._name,
+            "views": [[False, "list"], [False, "form"]],
+            "domain": [("id", "in", records.ids)],
+            "context": {"create": False},
+            "target": "current",
+        }
 
     @api.model
     def _cron_purge_old_logs(self):

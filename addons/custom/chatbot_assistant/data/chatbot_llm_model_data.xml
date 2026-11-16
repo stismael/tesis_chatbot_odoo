@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
+    <!-- forcecreate="0": si la fila se borró (y quizá se volvió a crear sin enlace al módulo), la
+         actualización no la recrea; así no choca con la restricción de clave única. -->
     <!-- Modelos recomendados: el desplegable de Ajustes funciona antes de la primera actualización. -->
-    <record id="llm_model_gemini_25_flash" model="chatbot.llm.model">
+    <record id="llm_model_gemini_25_flash" model="chatbot.llm.model" forcecreate="0">
         <field name="provider">gemini</field>
         <field name="model_id">gemini-2.5-flash</field>
         <field name="display_name_api">Gemini 2.5 Flash</field>
         <field name="pricing_hint">free</field>
     </record>
-    <record id="llm_model_groq_llama_33_70b" model="chatbot.llm.model">
+    <record id="llm_model_groq_llama_33_70b" model="chatbot.llm.model" forcecreate="0">
         <field name="provider">groq</field>
         <field name="model_id">llama-3.3-70b-versatile</field>
         <field name="display_name_api">llama-3.3-70b-versatile</field>

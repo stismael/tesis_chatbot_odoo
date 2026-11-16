@@ -1,6 +1,6 @@
 {
     "name": "Chatbot Assistant",
-    "version": "18.0.1.11.0",
+    "version": "18.0.1.12.0",
     "category": "Productivity",
     "summary": "Asistente conversacional en Discuss (estilo OdooBot) para Odoo 18",
     "description": """
@@ -32,6 +32,7 @@
         "data/ir_cron.xml",
         "data/chatbot_intent_permission_data.xml",
         "data/chatbot_llm_model_data.xml",
+        "data/chatbot_result_actions.xml",
         "views/chatbot_llm_model_views.xml",
         "views/res_config_settings_views.xml",
         "views/chatbot_llm_result_wizard_views.xml",

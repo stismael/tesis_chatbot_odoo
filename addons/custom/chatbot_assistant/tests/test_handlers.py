@@ -72,12 +72,12 @@ class TestHandlers(ChatbotCase):
         self.assertAlmostEqual(result["data"]["amount_total"], 1700.0)
         self.assertIn("17 pedido(s)", result["message"])
 
-    def test_ventas_listado_indica_que_muestra_solo_15(self):
+    def test_ventas_listado_muestra_vista_previa_de_5(self):
         result = self._run(
             "consultar_ventas_cliente", user_text="lista los pedidos", customer_name="Cliente Prueba Uno",
         )
-        self.assertIn("se muestran los 15 más recientes", result["message"])
-        self.assertEqual(result["message"].count("\n- "), 15)
+        self.assertIn("Mostrando 5 de 17 pedidos", result["message"])
+        self.assertEqual(result["message"].count("\n- "), 5)
 
     def test_ventas_fecha_final_incluye_todo_el_dia(self):
         # date_order es fecha y hora; Odoo amplía "<= AAAA-MM-DD" hasta el final de ese día.

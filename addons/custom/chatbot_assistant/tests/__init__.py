@@ -7,3 +7,5 @@ from . import test_model_selection
 from . import test_conversation
 from . import test_memory_and_state
 from . import test_fallback
+from . import test_long_results
+from . import test_upgrade_data

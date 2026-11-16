@@ -23,7 +23,8 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `fix/ajustes-chatbot-regresiones` | Regresiones de Ajustes del chatbot | Fusionada en `main` (PR #10) |
 | `docs/pendientes-tesis-actualizados` | Pendientes de la tesis actualizados | Fusionada en `main` (PR #11) |
 | `fix/probar-conexion-sin-guardar` | Probar conexión sin aplicar la configuración | Fusionada en `main` (PR #12) |
-| `feature/modelo-respaldo` | Modelo de respaldo (pedido de la tutora) | PR #13 |
+| `feature/modelo-respaldo` | Modelo de respaldo (pedido de la tutora) | Fusionada en `main` (PR #13) |
+| `feature/resultados-extensos` | Resultados extensos: vista previa, «Ver todo» y CSV (pedido de la tutora) | PR #14 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -34,9 +35,32 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
 
+### PR #14 · Resultados extensos: vista previa, «Ver todo» y descarga en CSV
+- **Rama:** `feature/resultados-extensos` · **Versión del módulo:** 18.0.1.12.0
+- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Origen:** recomendación de la tutora. Antes, el chat cortaba las facturas en 10 y los pedidos en
+  15 sin dar forma de ver el resto, y el listado de ventas de un producto mostraba todas las líneas
+  en un solo mensaje (38 líneas para FIL-M01).
+- **Pruebas:** 136 pruebas en Odoo 18 (21 nuevas, 4 de ellas con descargas reales por HTTP),
+  pruebas unitarias, verificación del dataset (31 de 31) y dos pruebas de extremo a extremo con
+  Chromium: Ajustes (52 comprobaciones) y resultados extensos sobre la base sintética
+  (9 escenarios, 23 comprobaciones). Verificada la actualización desde 18.0.1.11.0.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| El chat muestra un resumen (cantidad, total y saldo) y solo las 5 filas más recientes, con el aviso «Mostrando 5 de N» | `services/result_set.py`, `services/handlers/factura.py`, `ventas.py`, `stock_facturacion.py` | Evitar mensajes muy extensos (recomendación de la tutora) |
+| Enlace «Ver todo (N)» que abre la lista nativa de Odoo con los registros exactos de la respuesta | `models/chatbot_query_log.py` (`action_open_result`), `data/chatbot_result_actions.xml`, `models/chatbot_discuss_service.py` | Ver el resultado completo, ordenarlo, filtrarlo y abrir cada documento sin salir de Odoo |
+| Enlace «Descargar CSV» cuando el resultado pasa de 5 filas; el archivo se genera en el momento y solo con los campos autorizados (Tabla 6) | `controllers/main.py`, `services/result_set.py` (`EXPORT_COLUMNS`, `build_csv`) | Llevar resultados extensos a Excel sin exponer campos fuera del alcance |
+| «Ver todo» y el CSV vuelven a leer los registros con el usuario que los pide: solo el dueño de la consulta los abre y solo ve lo que Odoo le permite | `models/chatbot_query_log.py` (`_result_records`) | Mantener el mínimo privilegio también fuera del chat |
+| Auditoría: modelo, registros y cantidad del resultado, veces que se abrió «Ver todo», descargas CSV y fecha de la última; filtros «Resultado extenso» y «Con descarga CSV» | `models/chatbot_query_log.py`, `models/orchestrator.py`, `views/chatbot_query_log_views.xml` | Trazabilidad de los datos que salen del ERP y métricas de uso para el Capítulo 5 |
+| Defecto encontrado y corregido: «Ver todo» fallaba para un usuario normal porque Odoo exigía permiso de escritura sobre la auditoría | `data/chatbot_result_actions.xml` (acción con grupo «Usuario interno») | Que el enlace funcione para cualquier usuario, no solo para el administrador |
+| Defecto encontrado y corregido: actualizar el módulo fallaba por clave duplicada si el administrador borraba y volvía a crear una fila de permisos, un modelo del catálogo o un parámetro por defecto (mismo tipo de error que el del PR #13) | `data/default_params.xml`, `data/chatbot_intent_permission_data.xml`, `data/chatbot_llm_model_data.xml` (`forcecreate="0"`) | Que la actualización no recree datos que el administrador ya gestionó |
+| Las pruebas de Odoo en GitHub Actions se ejecutan con el servidor HTTP activo | `.github/workflows/pruebas.yml` | Probar la descarga del CSV como lo hace el navegador |
+| Pruebas nuevas y escenario e2e con la base sintética y una IA simulada | `tests/test_long_results.py`, `tests/test_upgrade_data.py`, `scripts/e2e/resultados_extensos.e2e.js`, `scripts/e2e/fake_llm/` | Evitar regresiones |
+
 ### PR #13 · Modelo de respaldo
 - **Rama:** `feature/modelo-respaldo` · **Versión del módulo:** 18.0.1.11.0
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-11-12, con las pruebas de GitHub Actions en verde.
 - **Pruebas:** 115 pruebas en Odoo 18 (23 nuevas), pruebas unitarias y prueba de extremo a extremo
   con Chromium (11 escenarios, 52 comprobaciones); verificada la actualización desde 18.0.1.10.7.
 
@@ -596,8 +620,8 @@ sin inventar una respuesta.
 - [ ] **Por alcance (otros módulos):** nómina ("¿Cuánto gana el vendedor Juan?"), compras ("¿Qué le
       compramos al proveedor X?"), saldos bancarios, CRM.
 - [ ] **Por complejidad (varios pasos):** márgenes por producto, comparar conjuntos ("clientes que
-      compraron cascos pero nunca filtros"), comparar periodos por vendedor. Listados largos se
-      limitan a 15 resultados más el total.
+      compraron cascos pero nunca filtros"), comparar periodos por vendedor. Los listados largos muestran 5
+      filas en el chat, con «Ver todo» y descarga en CSV (PR #14).
 - [ ] **Por naturaleza (no son datos):** predicciones ("¿Cuánto venderemos el próximo mes?"),
       causas ("¿Por qué bajaron las ventas?"), recomendaciones, notas internas o adjuntos.
 - [ ] **Fuera del dominio:** clima, poemas, etc. La conversación libre (punto 8) responde con

@@ -72,6 +72,7 @@ class ChatbotOrchestrator(models.AbstractModel):
         llm_ms = 0
         orm_ms = 0
         llm_meta = {}
+        records = None
 
         try:
             context = session.get_short_context()
@@ -154,6 +155,7 @@ class ChatbotOrchestrator(models.AbstractModel):
                     finally:
                         orm_ms = int((time.perf_counter() - orm_started) * 1000)
                     handler_data = result.get("data") or {}
+                    records = result.get("records") if result.get("ok") else None
                     if result.get("status") == "ambiguous":
                         session.set_pending(intent, validated["entities"])
                         status = "ambiguous"
@@ -240,6 +242,10 @@ class ChatbotOrchestrator(models.AbstractModel):
             "tokens_prompt": llm_meta.get("tokens_prompt", 0),
             "tokens_output": llm_meta.get("tokens_output", 0),
             "tokens_thinking": llm_meta.get("tokens_thinking", 0),
+            "result_model": records and records["model"],
+            "result_ids_json": records and json.dumps(records["ids"]),
+            "result_title": records and records["title"],
+            "result_count": len(records["ids"]) if records else 0,
         })
 
         return {
@@ -252,6 +258,7 @@ class ChatbotOrchestrator(models.AbstractModel):
             "llm_json": llm_json,
             "outcome": outcome,
             "log_id": log.id,
+            "result_count": log.result_count,
         }
 
     @api.model
