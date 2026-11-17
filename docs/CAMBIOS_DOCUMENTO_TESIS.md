@@ -14,6 +14,83 @@ Registro de las ediciones hechas al documento Word de la tesis (no al código; l
 
 ---
 
+## Versión 3 · 17 de noviembre de 2026
+
+**Archivo base:** versión 2 (`TESIS_ISMAEL_CALLE_v2_2026-11-17.docx`).
+**Archivo entregado:** `TESIS_ISMAEL_CALLE_v3_2026-11-17.docx`.
+**Motivo:** recomendaciones sobre el escrito (`Recomendaciones_escrito_tesis_v2.md`): separar el análisis
+(Capítulo 3), la construcción y la arquitectura (Capítulo 4) y la evaluación (Capítulo 5), con requisitos,
+planificación, decisiones y riesgos en tablas. Se movió el texto existente en lugar de reescribirlo; solo se
+redactó lo nuevo y se ajustaron tiempos verbales en los párrafos movidos («se realizará» → «se realiza»).
+
+### Capítulo 1
+
+| Dónde | Qué se cambió | Por qué |
+|---|---|---|
+| Introducción | «Solo lectura» se precisa: no crea, modifica ni elimina datos del negocio; el módulo solo registra sus conversaciones y la auditoría | El módulo sí escribe sus propios registros (sesiones, auditoría) |
+| 1.5 Estructura del documento | Párrafos de los capítulos 3, 4 y 5 según la nueva estructura (se mantiene la mención a SUS) | Coherencia con los capítulos |
+
+### Capítulo 3 · Análisis y especificación funcional
+
+| Nueva sección | Contenido | Origen |
+|---|---|---|
+| Introducción | Reescrita según la nueva estructura | — |
+| **3.1 Introducción y alcance de la solución** | Qué es el prototipo, alcance de cinco consultas de lectura, sin SQL, entorno sintético | Nuevo; el texto del entorno (antes 3.1.1) pasa al Sprint 1 |
+| **3.2 Requisitos** | **Tabla 2** RF-01 a RF-11 y **Tabla 3** RNF-01 a RNF-07, con origen y forma de verificación; el tiempo de respuesta se mide, sin umbral inventado | Nuevo |
+| 3.3 Modelos y datos involucrados | 3.3.1 Módulos y modelos de Odoo (antes 3.1.2 y 3.1.3, con la Figura 1); 3.3.2 Datos y campos autorizados (antes 3.1.4 y 3.1.6) | Movido |
+| 3.4 Casos de uso | Antes 3.2; subsecciones 3.4.1 a 3.4.6 | Renumerado |
+| 3.5 Especificación de intenciones y entidades | Antes 3.3.1 y 3.3.2. **Se eliminó 3.3.3 (bloques JSON)**: su contenido pasa a la tabla del contrato (Sprint 2) | Recomendación: JSON como tabla |
+| **3.6 Restricciones funcionales y de seguridad** | 3.6.1 Validación (antes 3.3.4); 3.6.2 Modelos, campos y operaciones (antes 3.4.3); 3.6.3 Control de permisos (antes 3.4.4, con el párrafo de reglas de registro de 3.1.1); 3.6.4 Consultas ambiguas y seguimiento (antes 3.4.5) | Reagrupado |
+| **3.7 Planificación del desarrollo iterativo** | **Tabla 19**: nueve sprints con objetivo, entregable, requisitos y PR del repositorio como evidencia | Nuevo |
+
+Salen del Capítulo 3: preparación de la base (al Sprint 1), volúmenes de la base y conjunto de evaluación
+(al Capítulo 5), flujo y capas de control (Figura 11, a 4.3.5), secuencia de una consulta (Figura 10, a
+4.3.4), tabla de intenciones y funciones y ejecución con el ORM (al Sprint 3).
+
+### Capítulo 4 · Diseño y desarrollo del prototipo
+
+| Dónde | Qué se cambió |
+|---|---|
+| Título y 4.1 | Subtítulo «Diseño y desarrollo del prototipo» y **4.1 Introducción** nueva |
+| 4.2 Desarrollo iterativo | Antes 4.1; sprints 4.2.1 a 4.2.9; referencias «sección 3.4.4/3.4.5/4.1.8» actualizadas |
+| 4.2.1 Sprint 1 | Recibe la instancia de Odoo y los pasos de preparación de la base |
+| 4.2.2 Sprint 2 | **Tabla 21** responsabilidades del orquestador (responsabilidad, entrada, procesamiento, salida, restricciones) y **Tabla 22** contrato de la salida del modelo (intent, entities, status, missing_entities, reply), con el texto de responseSchema e invalid_output que acompañaba a los JSON |
+| 4.2.3 Sprint 3 | Recibe la correspondencia intención-función (Tabla 24) y la ejecución con el ORM |
+| **4.3 Arquitectura de la solución** | 4.3.1 **Tabla 32** decisiones de diseño (intenciones + ORM frente a Text-to-SQL y ruta híbrida; módulo interno; proveedores externos; solo lectura); 4.3.2 componentes (Figura 8); 4.3.3 **Figura 9 nueva**: arquitectura general ilustrada; 4.3.4 flujo de una consulta (Figura 10) y caminos alternativos (aclaración, sin permiso, fallo del proveedor); 4.3.5 seguridad (Figura 11) y **Tabla 33** riesgos, controles y comportamiento esperado |
+| 4.4 Estrategia de pruebas | Antes 4.1.10, ahora breve (texto y Figura 12); la tabla de pruebas pasa a 5.4 |
+
+### Capítulo 5 · Evaluación y análisis de resultados (nuevo)
+
+| Sección | Contenido |
+|---|---|
+| 5.1 Introducción y diseño experimental | **Tabla 34** condiciones: versión 18.0.1.14.0, Docker, semilla fija, 106 consultas, modelos evaluados de Gemini y Groq, noviembre de 2026, pausa por cuota |
+| 5.2 Construcción y caracterización del conjunto | Antes 3.5 (sin el ejemplo JSON), en pasado, con la tabla de volúmenes de la base (Tabla 35) |
+| 5.3 Protocolo y métricas | Procedimiento del script y **Tabla 44** con las métricas tal como se calculan |
+| 5.4 Pruebas unitarias y de integración | Diferencia con la evaluación experimental y Tabla 45 de pruebas |
+
+Total: 45 tablas (antes 36) y 12 figuras (antes 11). Las referencias «Tabla N» y «Figura N» del texto se
+actualizaron automáticamente y se comprobó que ningún párrafo se perdió salvo los títulos reemplazados, los
+bloques JSON y los párrafos reescritos.
+
+### Recomendaciones no aplicadas en esta versión
+
+| Recomendación | Motivo |
+|---|---|
+| Quitar SUS, cambiar «optimización» o el título | Decisión de la tutora |
+| Unificar tiempos verbales en todo el documento | Se hará en la edición final; aquí solo en los párrafos movidos |
+| Antecedentes de tesis UPS/UDLA | Los repositorios no fueron accesibles desde el entorno de trabajo |
+| Capturas de pantalla y anexos | Requieren el entorno de la tesis; se agregan con los resultados |
+| Validación con Pydantic | El validador propio ya cumple la misma función; se explica en 3.6.1 y en la Tabla 22 |
+| Subsecciones de cuarto nivel (X.1.1.1) | El estilo Título 4 del documento no es APA; se usaron tablas |
+| Correcciones de Zotero (Balić y otras) | Se hacen en Word con Zotero |
+
+### Pendiente en el documento
+- [ ] Resultados del Capítulo 5 (5.5 en adelante) cuando termine la evaluación de Groq.
+- [ ] En Word, «actualizar campos» (F9) para regenerar índices.
+- [ ] Enlace al repositorio y etiqueta de la versión evaluada.
+
+---
+
 ## Versión 2 · 17 de noviembre de 2026
 
 **Archivo base:** versión del 9 de noviembre (`TESIS_ISMAEL_CALLE_actualizada.docx`).
