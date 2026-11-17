@@ -1,7 +1,9 @@
 #Requires -Version 5.1
 param(
     [string]$Database = 'odoo18_chatbot',
-    [int]$Limit = 0
+    [int]$Limit = 0,
+    # Pausa entre consultas (segundos): la cuota gratuita limita las peticiones por minuto.
+    [double]$PauseSeconds = 6
 )
 $ErrorActionPreference = 'Stop'
 Set-Location 'D:\odoo18-community-chatbot'
@@ -12,8 +14,11 @@ Write-Host "Ejecutando evaluación del chatbot en base '$Database'..." -Foregrou
 # Montamos temporalmente usando docker cp
 docker cp ".\data\eval\eval_dataset.jsonl" "odoo18-chatbot-odoo:/tmp/eval_dataset.jsonl"
 docker cp ".\scripts\chatbot_eval_runner.py" "odoo18-chatbot-odoo:/tmp/chatbot_eval_runner.py"
+docker cp ".\scripts\eval_reference.py" "odoo18-chatbot-odoo:/tmp/eval_reference.py"
 
-$limitLine = if ($Limit -gt 0) { "summary, rows = run_evaluation(env, '/tmp/eval_dataset.jsonl', limit=$Limit)" } else { "summary, rows = run_evaluation(env, '/tmp/eval_dataset.jsonl')" }
+$limitArg = if ($Limit -gt 0) { ", limit=$Limit" } else { "" }
+$pauseArg = ([string]$PauseSeconds).Replace(',', '.')
+$limitLine = "summary, rows = mod.run_evaluation(env, '/tmp/eval_dataset.jsonl', pause_s=$pauseArg$limitArg)"
 
 $py = @"
 import json
@@ -29,7 +34,7 @@ out_rows = Path('/tmp/eval_results.jsonl')
 out_summary.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding='utf-8')
 with out_rows.open('w', encoding='utf-8') as fh:
     for row in rows:
-        fh.write(json.dumps(row, ensure_ascii=False) + '\n')
+        fh.write(json.dumps(row, ensure_ascii=False, default=str) + '\n')
 print('=== SUMMARY ===')
 print(json.dumps(summary, indent=2, ensure_ascii=False))
 "@

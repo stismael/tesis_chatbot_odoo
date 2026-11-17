@@ -69,25 +69,33 @@ Si no aparece, cierre sesión y vuelva a entrar, o busque “Asistente ERP” co
 
 ## Evaluación automatizada (Cap. 5)
 
-Dataset: `data/eval/eval_dataset.jsonl` (50 consultas etiquetadas).
+Dataset: `data/eval/eval_dataset.jsonl` (62 consultas etiquetadas, una sola respuesta correcta por
+consulta: ejecutar, aclarar, rechazar, conversar o tratarla como consulta de datos).
 
 ```powershell
 .\scripts\run-chatbot-eval.ps1
-# opcional: -Limit 10  para prueba rápida
+# opcionales: -Limit 10 (prueba rápida) · -PauseSeconds 6 (pausa entre consultas por la cuota gratuita)
 ```
 
-Salida: `data/eval/results/eval_summary.json` con:
+En las consultas que deben ejecutarse, los datos del asistente se comparan con una **referencia
+independiente** (`scripts/eval_reference.py`): consultas directas al ORM y campos nativos de Odoo,
+sin usar las funciones internas del asistente. Los textos esperados no aceptan negaciones
+(«pagada» no coincide con «no pagada»).
 
-- Intent Accuracy
-- Entity Accuracy
-- Execution Accuracy
-- Latencia promedio (ms)
+Salida en `data/eval/results/`:
+- `eval_summary.json`: aciertos de intención, entidades y comportamiento; ejecución con datos
+  correctos; resultados por categoría; fallos del proveedor (separados de los errores de
+  interpretación); respuestas del respaldo; latencia (mediana, p95, promedio y de la IA); tokens.
+- `eval_results.jsonl`: detalle por consulta, con las diferencias de datos cuando las hay.
+
+Antes de evaluar con la IA, `scripts/verificar_dataset.py` comprueba que las funciones internas
+coinciden con la referencia en la base de pruebas.
 
 ## Decisiones de diseño (para Cap. 4)
 
 1. **Gemini Flash**: costo cero, buen español, JSON structured output.
 2. **Sin RAG**: dominio tabular cerrado + whitelist de intenciones; el contexto va en el prompt (schema injection + few-shot).
-3. **Memoria corta**: solo pending intent/entities y últimos turnos; no vector DB.
+3. **Memoria corta**: solo entidades pendientes y las últimas preguntas del usuario; las respuestas del asistente (con datos de Odoo) no se envían a la IA. Sin vector DB.
 4. **API en Ajustes**: patrón `res.config.settings` / `ir.config_parameter`.
 5. **Respuestas con plantilla + ORM**: el LLM no inventa montos; las cifras salen de Odoo.
 

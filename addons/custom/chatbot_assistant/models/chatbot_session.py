@@ -104,17 +104,19 @@ class ChatbotSession(models.Model):
         self.pending_entities_json = "{}"
 
     def get_short_context(self, max_turns=3):
-        """Memoria corta: últimos turnos + pending."""
+        """
+        Memoria corta que se envía al proveedor de IA: últimas preguntas del usuario y entidades
+        pendientes. Las respuestas del asistente no se envían, porque contienen datos de Odoo
+        (montos, saldos, existencias) que no deben salir del ERP.
+        """
         self.ensure_one()
-        messages = self.message_ids.sorted("id")[-max_turns * 2 :]
-        history = [
-            {"role": m.role, "body": m.body[:300]}
-            for m in messages
-        ]
+        questions = self.message_ids.filtered(lambda m: m.role == "user").sorted("id")
+        # La última pregunta del usuario es la que se está procesando: ya va aparte en el mensaje.
+        previous = questions[:-1][-max_turns:]
         return {
             "pending_intent": self.pending_intent or None,
             "pending_entities": self.get_pending_entities(),
-            "recent_messages": history,
+            "recent_questions": [m.body[:300] for m in previous],
         }
 
     @api.model

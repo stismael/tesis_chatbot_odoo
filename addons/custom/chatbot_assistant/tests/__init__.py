@@ -9,3 +9,4 @@ from . import test_memory_and_state
 from . import test_fallback
 from . import test_long_results
 from . import test_upgrade_data
+from . import test_privacy_context
