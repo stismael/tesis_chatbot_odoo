@@ -1,0 +1,40 @@
+flowchart LR
+    U["<small>«actor»</small><br/>Usuario de negocio"]
+    A["<small>«actor»</small><br/>Administrador<br/>del chatbot"]
+    O["<small>«sistema»</small><br/>Odoo<br/><small>permisos del usuario</small>"]
+    IA["<small>«sistema externo»</small><br/>Proveedor de IA"]
+    subgraph S["Asistente ERP"]
+        direction TB
+        C1(["CU-01 Consultar facturas"])
+        C2(["CU-02 Consultar inventario"])
+        C3(["CU-03 Consultar ventas por cliente o producto"])
+        C4(["CU-04 Consultar vendedor asignado"])
+        C5(["CU-05 Consultar stock y facturación por producto"])
+        CV(["Conversar y ver ejemplos (/help)"])
+        VT(["Ver todo / descargar CSV"])
+        VA(["Valorar la respuesta (👍 / 👎)"])
+        CF(["Configurar proveedor, modelo y respaldo"])
+        PE(["Gestionar permisos por consulta"])
+        AU(["Revisar auditoría y métricas"])
+    end
+    U --- C1
+    U --- C2
+    U --- C3
+    U --- C4
+    U --- C5
+    U --- CV
+    U --- VT
+    U --- VA
+    A --- CF
+    A --- PE
+    A --- AU
+    C1 -.- O
+    C2 -.- O
+    C3 -.- O
+    C4 -.- O
+    C5 -.- O
+    VT -.- O
+    C1 -.- IA
+    C3 -.- IA
+    C5 -.- IA
+    CV -.- IA

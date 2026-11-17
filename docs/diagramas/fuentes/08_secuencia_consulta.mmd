@@ -1,0 +1,29 @@
+sequenceDiagram
+    autonumber
+    actor U as Usuario
+    participant D as Discuss
+    participant O as Orquestador
+    participant L as Cliente de IA
+    participant P as Proveedor de IA
+    participant V as Validador
+    participant R as Permisos
+    participant H as Caso de uso
+    participant B as ORM de Odoo
+    participant A as Auditoría
+    U->>D: «¿Está pagada la factura INV/2026/00001?»
+    D->>O: process_message(sesión, texto)
+    O->>L: pregunta, fecha y memoria corta<br/>(preguntas anteriores y entidades)
+    L->>P: HTTPS (sin datos del ERP)
+    P-->>L: JSON: intención, entidades, estado
+    L-->>O: JSON
+    O->>V: validar la salida
+    V-->>O: intención y entidades válidas
+    O->>R: ¿tiene el grupo exigido?
+    R-->>O: sí
+    O->>H: handle(entidades)
+    H->>B: search / read con el usuario
+    B-->>H: registros permitidos
+    H-->>O: respuesta con plantilla
+    O->>A: registrar la consulta
+    O-->>D: respuesta
+    D-->>U: respuesta del Asistente ERP<br/>(+ «Ver todo» y CSV si es extensa)
