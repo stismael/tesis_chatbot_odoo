@@ -24,7 +24,9 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `docs/pendientes-tesis-actualizados` | Pendientes de la tesis actualizados | Fusionada en `main` (PR #11) |
 | `fix/probar-conexion-sin-guardar` | Probar conexión sin aplicar la configuración | Fusionada en `main` (PR #12) |
 | `feature/modelo-respaldo` | Modelo de respaldo (pedido de la tutora) | Fusionada en `main` (PR #13) |
-| `feature/resultados-extensos` | Resultados extensos: vista previa, «Ver todo» y CSV (pedido de la tutora) | PR #14 |
+| `feature/resultados-extensos` | Resultados extensos: vista previa, «Ver todo» y CSV (pedido de la tutora) | Fusionada en `main` (PR #14) |
+| `docs/resumen-avance-tutora` | Resumen del avance y propuestas para la tutora | Subida, sin PR |
+| `fix/privacidad-y-evaluacion` | Privacidad del contexto enviado a la IA y evaluación confiable | PR #15 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -35,9 +37,30 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
 
+### PR #15 · Privacidad del contexto enviado a la IA y evaluación confiable
+- **Rama:** `fix/privacidad-y-evaluacion` · **Versión del módulo:** 18.0.1.12.0 (sin cambios de datos)
+- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Origen:** documento de recomendaciones revisado el 2026-11-17. Se aplicaron los dos puntos que
+  señalaban problemas reales, comprobados en el código.
+- **Pruebas:** 138 pruebas en Odoo 18 (2 nuevas), pruebas unitarias (4 nuevas del evaluador),
+  verificación del dataset contra la referencia independiente (32 de 32) y corridas completas del
+  evaluador con una IA simulada perfecta (100 % en todo) y otra defectuosa (6,5 %; 0 % de entidades
+  y de ejecución). Con el evaluador anterior, la IA defectuosa obtenía 50 % de entidades y 12,9 %
+  de ejecución.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| A la IA solo se envían las preguntas anteriores del usuario y las entidades pendientes; ya no se envían las respuestas del asistente, que contienen montos, saldos y existencias | `models/chatbot_session.py` (`get_short_context`), `services/prompt_builder.py` | Que los datos de Odoo no salgan del ERP hacia Gemini o Groq (privacidad) |
+| Referencia independiente: los datos correctos de cada consulta se calculan con consultas directas al ORM y campos nativos de Odoo, sin las funciones del asistente | `scripts/eval_reference.py` | Que la evaluación no compare al asistente consigo mismo |
+| Evaluador reescrito: compara los datos devueltos con la referencia (con tolerancia), los textos no aceptan negaciones («pagada» ≠ «no pagada») ni fragmentos de números («1250» ≠ «12500»), una sola respuesta correcta por consulta | `scripts/chatbot_eval_runner.py` | Que los porcentajes del Capítulo 5 sean confiables |
+| Métricas nuevas: comportamiento, ejecución con datos correctos, resultados por categoría, fallos del proveedor separados, respuestas del respaldo, mediana y p95 de latencia, tokens, modelo usado | `scripts/chatbot_eval_runner.py` | Presentar resultados completos y comparables entre modelos |
+| Etiquetas estrictas en 6 consultas (antes aceptaban casi cualquier resultado) según los datos reales de la base; periodo esperado en las consultas con «este mes» y «en lo que va del año» | `data/eval/eval_dataset.jsonl` | Evitar aciertos inflados |
+| Defecto corregido: el script de PowerShell llamaba a la evaluación con un nombre que no existía (fallaba al ejecutarse); ahora también copia la referencia y hace una pausa entre consultas por la cuota gratuita | `scripts/run-chatbot-eval.ps1` | Que la evaluación con la IA real se pueda ejecutar |
+| La verificación del dataset usa la referencia independiente | `scripts/verificar_dataset.py` | Comprobar la base de pruebas antes de evaluar |
+
 ### PR #14 · Resultados extensos: vista previa, «Ver todo» y descarga en CSV
 - **Rama:** `feature/resultados-extensos` · **Versión del módulo:** 18.0.1.12.0
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-11-16, con las pruebas de GitHub Actions en verde.
 - **Origen:** recomendación de la tutora. Antes, el chat cortaba las facturas en 10 y los pedidos en
   15 sin dar forma de ver el resto, y el listado de ventas de un producto mostraba todas las líneas
   en un solo mensaje (38 líneas para FIL-M01).
@@ -347,8 +370,8 @@ se corrige en esa misma rama.
 
 ### Punto 6: dataset de evaluación
 - [ ] Más consultas ambiguas (hoy solo 4).
-- [ ] Etiquetas más estrictas: revisar `clarify_or_execute`, `clarify_or_not_found` y
-      `reject_or_clarify`, que aceptan casi cualquier resultado.
+- [x] Etiquetas más estrictas: se eliminaron `clarify_or_execute`, `clarify_or_not_found`,
+      `reject_or_clarify` y se compara con una referencia independiente (PR #15).
 - [ ] Más variedad: errores de tipeo, preguntas encadenadas y cambios de tema.
 - [ ] Ejecutar `run-chatbot-eval.ps1` con la API key y guardar resultados por modelo.
 

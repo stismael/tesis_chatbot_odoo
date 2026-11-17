@@ -316,6 +316,55 @@ def test_seguimiento_solo_hereda_el_sujeto():
     assert merged["customer_name"] == "Andina" and not merged["product_code"]
 
 
+def _eval_module(name):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / ("%s.py" % name))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_evaluacion_no_acepta_la_negacion():
+    runner = _eval_module("chatbot_eval_runner")
+    assert runner.contains_text("La factura INV/2026/00001 está pagada.", "pagada")
+    assert not runner.contains_text("La factura INV/2026/00001 está no pagada.", "pagada")
+    assert not runner.contains_text("estado de pago: no pagada", "pagada")
+    assert not runner.contains_text("Total 12500.00", "1250")  # número completo, no un fragmento
+    assert runner.contains_text("total de $ 1250.00 y está pagada", "1250")
+    assert runner.contains_text("Facturado entre julio", "factur")  # prefijo de palabra
+    assert runner.contains_text("tiene 5 pedidos", "pedido")
+    assert runner.contains_text("Código INV/2026/00001.", "INV/2026/00001")
+
+
+def test_evaluacion_compara_datos_con_tolerancia():
+    reference = _eval_module("eval_reference")
+    data = {"invoices": [{"payment_state": "paid", "amount_total": 1250.004}], "invoice_count": 3}
+    assert reference.compare({"invoices.0.payment_state": "paid", "invoices.0.amount_total": 1250.0}, data) == []
+    diffs = reference.compare({"invoices.0.payment_state": "paid", "invoice_count": 4}, {"invoices": [{"payment_state": "not_paid"}], "invoice_count": 3})
+    assert [d["campo"] for d in diffs] == ["invoices.0.payment_state", "invoice_count"]
+    assert reference.compare({"invoices.0.name": "X"}, {"invoices": []})
+
+
+def test_evaluacion_un_solo_comportamiento_correcto():
+    runner = _eval_module("chatbot_eval_runner")
+    clarify = {"id": "T", "expected_behavior": "clarify", "expected_intent": "consultar_stock"}
+    assert runner.behavior_ok(clarify, {"outcome": "clarification", "status": "ambiguous"})
+    assert not runner.behavior_ok(clarify, {"outcome": "answered", "status": "ready"})
+    reject = {"id": "T", "expected_behavior": "reject"}
+    assert not runner.behavior_ok(reject, {"outcome": "llm_unavailable"})
+    # Las etiquetas laxas ya no existen en el dataset.
+    path = ROOT / "data" / "eval" / "eval_dataset.jsonl"
+    behaviors = {json.loads(l)["expected_behavior"] for l in path.read_text(encoding="utf-8").splitlines() if l.strip()}
+    assert behaviors <= {"execute", "clarify", "reject", "converse", "not_conversation"}, behaviors
+
+
+def test_evaluacion_entidades():
+    runner = _eval_module("chatbot_eval_runner")
+    assert runner.entities_match({}, {"x": 1}) is None
+    assert runner.entities_match({"customer_name": "Comercial Andina"}, {"customer_name": "Comercial Andina S.A."})
+    assert not runner.entities_match({"product_code": "FIL-M01"}, {"product_code": None})
+
+
 if __name__ == "__main__":
     test_ready_factura()
     test_missing_stock()
@@ -339,4 +388,8 @@ if __name__ == "__main__":
     test_esquema_incluye_conversacion()
     test_order_state_normalizado()
     test_seguimiento_solo_hereda_el_sujeto()
+    test_evaluacion_no_acepta_la_negacion()
+    test_evaluacion_compara_datos_con_tolerancia()
+    test_evaluacion_un_solo_comportamiento_correcto()
+    test_evaluacion_entidades()
     print("OK: validator + dataset + LLM error mapping checks passed")

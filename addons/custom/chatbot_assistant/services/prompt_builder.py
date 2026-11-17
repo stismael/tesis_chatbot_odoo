@@ -114,7 +114,7 @@ Reglas:
    - consultar_stock_facturacion_producto: product_name O product_code
 4. Si falta una requerida, status=missing_information y lista missing_entities.
 5. No inventes números de factura ni códigos.
-6. Si hay contexto de sesión (pending_entities o mensajes recientes), completa entidades cuando el usuario use "este producto", "ese cliente", etc.
+6. Si hay contexto de sesión (pending_entities o preguntas recientes del usuario), completa entidades cuando el usuario use "este producto", "ese cliente", etc.
 7. "¿Cuántas ventas hay del CAS-001 / casco negro?" → consultar_ventas_cliente con product_code o product_name.
 8. Preguntas de seguimiento sobre el mismo producto/cliente NO repiten el código si ya está en contexto.
 9. Si preguntan por lo FACTURADO de un producto (cantidad o valor en facturas), con o sin el stock,
