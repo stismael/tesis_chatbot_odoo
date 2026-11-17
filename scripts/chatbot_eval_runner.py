@@ -101,10 +101,18 @@ def _ratio(hits, total):
     return round(hits / total, 4) if total else None
 
 
-def run_evaluation(env, dataset_path, limit=None, pause_s=0.0, today=None):
+def run_evaluation(env, dataset_path, limit=None, pause_s=0.0, today=None, only_ids=None):
+    """
+    `only_ids`: evalúa solo esas consultas (por ejemplo, las que cortó la cuota diaria del proveedor).
+    Si una pertenece a una secuencia, se evalúa la secuencia completa para conservar la memoria.
+    """
     reference = _load_reference()
     today = today or date.today()
     items = [json.loads(line) for line in Path(dataset_path).read_text(encoding="utf-8").splitlines() if line.strip()]
+    if only_ids:
+        wanted = set(only_ids)
+        sequences = {i.get("sequence") for i in items if i["id"] in wanted and i.get("sequence")}
+        items = [i for i in items if i["id"] in wanted or (i.get("sequence") and i["sequence"] in sequences)]
     if limit:
         items = items[:limit]
 
@@ -207,6 +215,12 @@ def summarize(rows):
             "salida": int(statistics.mean([r["tokens_output"] for r in rows])) if rows else 0,
         },
     }
+
+
+def merge_results(previous_rows, new_rows):
+    """Reemplaza en los resultados anteriores las consultas que se volvieron a evaluar."""
+    by_id = {r["id"]: r for r in new_rows}
+    return [by_id.get(r["id"], r) for r in previous_rows]
 
 
 # Ejecución directa dentro de `odoo shell` (el script de PowerShell lo importa y llama a run_evaluation).

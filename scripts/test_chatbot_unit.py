@@ -382,6 +382,13 @@ def test_dataset_bien_formado():
             last_turn[r["sequence"]] = r["turn"]
 
 
+def test_evaluacion_solo_algunas_consultas_y_union():
+    runner = _eval_module("chatbot_eval_runner")
+    rows = [{"id": "Q1", "behavior_ok": False}, {"id": "Q2", "behavior_ok": True}]
+    merged = runner.merge_results(rows, [{"id": "Q1", "behavior_ok": True}])
+    assert [r["behavior_ok"] for r in merged] == [True, True]
+
+
 if __name__ == "__main__":
     test_ready_factura()
     test_missing_stock()
@@ -410,4 +417,5 @@ if __name__ == "__main__":
     test_evaluacion_un_solo_comportamiento_correcto()
     test_evaluacion_entidades()
     test_dataset_bien_formado()
+    test_evaluacion_solo_algunas_consultas_y_union()
     print("OK: validator + dataset + LLM error mapping checks passed")
