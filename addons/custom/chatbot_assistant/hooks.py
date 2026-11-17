@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Hooks de instalación/actualización del módulo chatbot_assistant."""
-from .services.llm_client import DEFAULT_TIMEOUT
+from .services.llm_client import DEFAULT_GEMINI_MODEL, DEFAULT_TIMEOUT
 
 
 def _migrate_deprecated_model(env):
@@ -8,7 +8,7 @@ def _migrate_deprecated_model(env):
     current = (icp.get_param("chatbot_assistant.model") or "").strip()
     deprecated = {"", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-latest"}
     if current in deprecated:
-        icp.set_param("chatbot_assistant.model", "gemini-2.5-flash")
+        icp.set_param("chatbot_assistant.model", DEFAULT_GEMINI_MODEL)
 
 
 def _ensure_timeout_default(env):
