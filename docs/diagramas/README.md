@@ -20,6 +20,23 @@ generar.
 | 11 | `11_secuencia_ver_todo.png` | Secuencia: «Ver todo» y CSV | Nueva sección de resultados extensos (Capítulo 4) | — (nuevo) |
 | 12 | `12_ciclo_desarrollo.png` | Proceso: ciclo de desarrollo y pruebas | 4.1.8 Pruebas automáticas o metodología | — (nuevo) |
 
+## Diagramas ilustrados (vista general)
+
+Versión con íconos, logos y pasos numerados, más fácil de leer para alguien que no conoce UML. Sirven para
+la arquitectura, la sustentación y para abrir cada sección; los diagramas UML de arriba quedan para el
+detalle técnico.
+
+| Archivo | Muestra | Dónde va en la tesis |
+|---|---|---|
+| `ilustrados/A1_flujo_consulta.png` | Cómo se responde una consulta, en 9 pasos | Arquitectura de la solución (Capítulo 4) o junto a la Figura 1 |
+| `ilustrados/A2_tecnologias.png` | Tecnologías y despliegue (Odoo, Python, PostgreSQL, Docker, Gemini, Groq, GitHub) | Sprint 1 o arquitectura |
+| `ilustrados/A3_modelo_respaldo.png` | Cuándo responde el modelo de respaldo y la regla de guardado | Sección del modelo de respaldo |
+| `ilustrados/A4_resultados_extensos.png` | Vista previa, «Ver todo» y CSV | Sección de resultados extensos |
+
+Se generan con `node scripts/diagramas/ilustrado.js docs/diagramas/ilustrados/fuentes docs/diagramas/ilustrados`
+(requiere `npm install playwright simple-icons@13.21.0 @tabler/icons@3.24.0`). Los logos son de Simple Icons
+y los íconos de Tabler Icons, ambos de licencia libre.
+
 ## Notas para el documento
 
 - **Figura 1 actual** («Flujo de una consulta y capas de control del asistente»): se mantiene; el
