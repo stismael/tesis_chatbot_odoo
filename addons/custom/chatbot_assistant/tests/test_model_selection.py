@@ -2,7 +2,7 @@
 from unittest.mock import patch
 
 from odoo.exceptions import UserError
-from odoo.tests import tagged
+from odoo.tests import TransactionCase, tagged
 from odoo.tools.safe_eval import safe_eval
 
 from ..services import llm_client
@@ -35,7 +35,7 @@ class TestModelSelection(ChatbotCase):
         self.ICP.set_param("chatbot_assistant.active", "True")
         self.Model = self.env["chatbot.llm.model"]
         self.gemini_flash = self.env.ref("chatbot_assistant.llm_model_gemini_25_flash")
-        self.groq_llama = self.env.ref("chatbot_assistant.llm_model_groq_llama_33_70b")
+        self.groq_default = self.env.ref("chatbot_assistant.llm_model_groq_gpt_oss_120b")
 
     def _save(self, values, connection=connection_ok):
         settings = self.env["res.config.settings"].create(values)
@@ -46,7 +46,7 @@ class TestModelSelection(ChatbotCase):
     # Cambio de proveedor -----------------------------------------------------
 
     def test_cambio_de_proveedor_usa_siempre_el_recomendado(self):
-        for model in ("llama-3.3-70b-versatile", "openai/gpt-oss-120b", "qwen/qwen3-32b",
+        for model in ("openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3-32b",
                       "deepseek-r1-distill-llama-70b"):
             settings = self.env["res.config.settings"].new({
                 "chatbot_provider": "groq", "chatbot_model": model, "chatbot_api_key": "gsk_old",
@@ -63,39 +63,39 @@ class TestModelSelection(ChatbotCase):
         })
         settings.chatbot_provider = "groq"
         settings._onchange_chatbot_provider()
-        self.assertEqual(settings.chatbot_model, "llama-3.3-70b-versatile")
-        self.assertEqual(settings.chatbot_llm_model_id, self.groq_llama)
+        self.assertEqual(settings.chatbot_model, "openai/gpt-oss-120b")
+        self.assertEqual(settings.chatbot_llm_model_id, self.groq_default)
         self.assertFalse(settings.chatbot_api_key, "Al cambiar a otro proveedor se vacía la API Key")
 
     # Catálogo -----------------------------------------------------------------
 
     def test_sincronizacion_agrega_actualiza_marca_y_reactiva(self):
         counts = self.Model._sync_provider("groq", [
-            model_item("llama-3.3-70b-versatile", input_token_limit=131072),
+            model_item("openai/gpt-oss-120b", input_token_limit=131072),
             model_item("qwen/qwen3-32b"),
         ])
         self.assertEqual((counts["added"], counts["updated"]), (1, 1))
-        self.assertEqual(self.groq_llama.input_token_limit, 131072)
+        self.assertEqual(self.groq_default.input_token_limit, 131072)
         qwen = self.Model._find("groq", "qwen/qwen3-32b")
         self.assertTrue(qwen.available)
 
-        counts = self.Model._sync_provider("groq", [model_item("llama-3.3-70b-versatile")])
+        counts = self.Model._sync_provider("groq", [model_item("openai/gpt-oss-120b")])
         self.assertEqual(counts["unavailable"], 1)
         self.assertTrue(qwen.exists(), "La sincronización no borra modelos")
         self.assertFalse(qwen.available)
         self.assertTrue(self.gemini_flash.available, "Solo se toca el proveedor consultado")
 
-        counts = self.Model._sync_provider("groq", [model_item("llama-3.3-70b-versatile"), model_item("qwen/qwen3-32b")])
+        counts = self.Model._sync_provider("groq", [model_item("openai/gpt-oss-120b"), model_item("qwen/qwen3-32b")])
         self.assertEqual(counts["reactivated"], 1)
         self.assertTrue(qwen.available)
         self.assertTrue(self.ICP.get_param("chatbot_assistant.models_synced_groq"))
 
     def test_desplegable_solo_muestra_disponibles_del_proveedor(self):
-        self.Model._sync_provider("groq", [model_item("llama-3.3-70b-versatile"), model_item("qwen/qwen3-32b")])
-        self.Model._sync_provider("groq", [model_item("llama-3.3-70b-versatile")])
+        self.Model._sync_provider("groq", [model_item("openai/gpt-oss-120b"), model_item("qwen/qwen3-32b")])
+        self.Model._sync_provider("groq", [model_item("openai/gpt-oss-120b")])
         domain = self.env["res.config.settings"]._fields["chatbot_llm_model_id"].domain
         options = self.Model.search(safe_eval(domain, {"chatbot_provider": "groq"}))
-        self.assertEqual(options, self.groq_llama)
+        self.assertEqual(options, self.groq_default)
         options = self.Model.search(safe_eval(domain, {"chatbot_provider": "gemini"}))
         self.assertEqual(options, self.gemini_flash)
 
@@ -112,7 +112,7 @@ class TestModelSelection(ChatbotCase):
     def test_pricing_hint_heuristics(self):
         self.assertEqual(llm_client.pricing_hint("gemini", "gemini-2.5-flash"), "free")
         self.assertEqual(llm_client.pricing_hint("gemini", "gemini-2.5-pro"), "paid")
-        self.assertEqual(llm_client.pricing_hint("groq", "llama-3.3-70b-versatile"), "free")
+        self.assertEqual(llm_client.pricing_hint("groq", "openai/gpt-oss-120b"), "free")
 
     def test_aviso_si_el_modelo_configurado_ya_no_esta_disponible(self):
         self.gemini_flash.available = False
@@ -128,23 +128,23 @@ class TestModelSelection(ChatbotCase):
             raise LLMClientError("auth")
         with self.assertRaisesRegex(UserError, "(?s)No se guardó la configuración.*API Key inválida"):
             self._save({"chatbot_provider": "groq", "chatbot_api_key": "gsk_prueba",
-                        "chatbot_llm_model_id": self.groq_llama.id}, fail)
+                        "chatbot_llm_model_id": self.groq_default.id}, fail)
         self.assertEqual(self.ICP.get_param("chatbot_assistant.provider"), "gemini")
 
     def test_guardar_con_conexion_correcta_guarda_y_registra_la_verificacion(self):
         mocked = self._save({"chatbot_provider": "groq", "chatbot_api_key": "gsk_prueba",
-                             "chatbot_llm_model_id": self.groq_llama.id})
+                             "chatbot_llm_model_id": self.groq_default.id})
         self.assertEqual(mocked.call_count, 1)
         self.assertEqual(self.ICP.get_param("chatbot_assistant.provider"), "groq")
-        self.assertEqual(self.ICP.get_param("chatbot_assistant.model"), "llama-3.3-70b-versatile")
+        self.assertEqual(self.ICP.get_param("chatbot_assistant.model"), "openai/gpt-oss-120b")
         self.assertIn("Conexión verificada el", self.ICP.get_param("chatbot_assistant.last_verified"))
-        self.assertIn("llama-3.3-70b-versatile", self.ICP.get_param("chatbot_assistant.last_verified"))
+        self.assertIn("openai/gpt-oss-120b", self.ICP.get_param("chatbot_assistant.last_verified"))
 
     def test_desactivar_no_prueba_la_conexion(self):
         def fail(config):
             raise LLMClientError("network")
         mocked = self._save({"chatbot_active": False, "chatbot_provider": "groq",
-                             "chatbot_llm_model_id": self.groq_llama.id}, fail)
+                             "chatbot_llm_model_id": self.groq_default.id}, fail)
         self.assertFalse(mocked.called)
         # El asistente debe quedar apagado de verdad y así debe verse al volver a Ajustes.
         self.assertEqual(self.ICP.get_param("chatbot_assistant.active"), "False")
@@ -172,7 +172,7 @@ class TestModelSelection(ChatbotCase):
     def test_clave_de_otro_proveedor_se_rechaza_al_guardar(self):
         with self.assertRaisesRegex(UserError, "parece de Google Gemini"):
             self._save({"chatbot_provider": "groq", "chatbot_api_key": "AIzaClaveDeGemini",
-                        "chatbot_llm_model_id": self.groq_llama.id})
+                        "chatbot_llm_model_id": self.groq_default.id})
         self.assertEqual(self.ICP.get_param("chatbot_assistant.provider"), "gemini")
 
     def test_abrir_ajustes_muestra_el_modelo_guardado(self):
@@ -191,7 +191,7 @@ class TestModelSelection(ChatbotCase):
     def test_probar_conexion_no_cambia_la_configuracion_activa(self):
         settings = self.env["res.config.settings"].create({
             "chatbot_provider": "groq", "chatbot_api_key": "gsk_prueba",
-            "chatbot_llm_model_id": self.groq_llama.id,
+            "chatbot_llm_model_id": self.groq_default.id,
         })
         with patch(TEST_CONNECTION, side_effect=connection_ok):
             action = settings.action_chatbot_test_connection()
@@ -202,12 +202,12 @@ class TestModelSelection(ChatbotCase):
         self.assertEqual(self.ICP.get_param("chatbot_assistant.model"), "gemini-2.5-flash")
         self.assertFalse(self.ICP.get_param("chatbot_assistant.last_verified"))
         # El formulario sí muestra la verificación y conserva lo escrito.
-        self.assertIn("llama-3.3-70b-versatile", settings.chatbot_last_verified)
+        self.assertIn("openai/gpt-oss-120b", settings.chatbot_last_verified)
         self.assertEqual((settings.chatbot_provider, settings.chatbot_api_key), ("groq", "gsk_prueba"))
 
     def test_actualizar_modelos_no_cambia_la_configuracion_activa(self):
         settings = self.env["res.config.settings"].create({"chatbot_provider": "groq", "chatbot_api_key": "gsk_prueba"})
-        with patch(LIST_MODELS, return_value=[model_item("llama-3.3-70b-versatile"), model_item("qwen/qwen3-32b")]):
+        with patch(LIST_MODELS, return_value=[model_item("openai/gpt-oss-120b"), model_item("qwen/qwen3-32b")]):
             settings.action_chatbot_sync_models()
         self.assertTrue(self.Model._find("groq", "qwen/qwen3-32b"), "El catálogo sí se actualiza")
         self.assertEqual(self.ICP.get_param("chatbot_assistant.provider"), "gemini")
@@ -216,7 +216,7 @@ class TestModelSelection(ChatbotCase):
     def test_guardar_despues_de_probar_aplica_la_configuracion(self):
         settings = self.env["res.config.settings"].create({
             "chatbot_provider": "groq", "chatbot_api_key": "gsk_prueba",
-            "chatbot_llm_model_id": self.groq_llama.id,
+            "chatbot_llm_model_id": self.groq_default.id,
         })
         with patch(TEST_CONNECTION, side_effect=connection_ok) as mocked:
             settings.action_chatbot_test_connection()
@@ -224,7 +224,7 @@ class TestModelSelection(ChatbotCase):
         self.assertEqual(mocked.call_count, 2, "Al Guardar se vuelve a probar la conexión")
         self.assertEqual(self.ICP.get_param("chatbot_assistant.provider"), "groq")
         self.assertEqual(self.ICP.get_param("chatbot_assistant.api_key"), "gsk_prueba")
-        self.assertIn("llama-3.3-70b-versatile", self.ICP.get_param("chatbot_assistant.last_verified"))
+        self.assertIn("openai/gpt-oss-120b", self.ICP.get_param("chatbot_assistant.last_verified"))
 
     def test_cambiar_solo_otros_datos_no_prueba_la_conexion(self):
         mocked = self._save({"chatbot_temperature": 0.3, "chatbot_timeout": 25})
@@ -232,8 +232,8 @@ class TestModelSelection(ChatbotCase):
         self.assertEqual(self.ICP.get_param("chatbot_assistant.timeout"), "25")
 
     def test_modelo_de_otro_proveedor(self):
-        with self.assertRaisesRegex(UserError, "'llama-3.3-70b-versatile' no pertenece a Google Gemini"):
-            self._save({"chatbot_llm_model_id": False, "chatbot_model": "llama-3.3-70b-versatile"})
+        with self.assertRaisesRegex(UserError, "'openai/gpt-oss-120b' no pertenece a Google Gemini"):
+            self._save({"chatbot_llm_model_id": False, "chatbot_model": "openai/gpt-oss-120b"})
 
     # Estado del proveedor -------------------------------------------------------
 
@@ -245,3 +245,30 @@ class TestModelSelection(ChatbotCase):
         status = self.env["res.config.settings"].create({}).chatbot_llm_status
         self.assertIn("Cuota agotada (429)", status)
         self.assertIn("gemini-2.5-flash", status)
+
+
+@tagged("post_install", "-at_install", "chatbot_assistant")
+class TestRetiredGroqModel(TransactionCase):
+    """Groq retiró llama-3.3-70b-versatile: la actualización mueve la configuración guardada al recomendado."""
+
+    def test_configuracion_con_modelo_retirado_se_actualiza(self):
+        icp = self.env["ir.config_parameter"].sudo()
+        for key, value in (("provider", "groq"), ("model", "llama-3.3-70b-versatile"),
+                           ("fallback_provider", "groq"), ("fallback_model", "llama-3.3-70b-versatile")):
+            icp.set_param("chatbot_assistant." + key, value)
+        Model = self.env["chatbot.llm.model"]
+        Model.search([("provider", "=", "groq"), ("model_id", "=", llm_client.DEFAULT_GROQ_MODEL)]).unlink()
+        changed = Model._replace_retired_groq_models()
+        self.assertEqual(changed, ["chatbot_assistant.model", "chatbot_assistant.fallback_model"])
+        self.assertEqual(icp.get_param("chatbot_assistant.model"), "openai/gpt-oss-120b")
+        self.assertEqual(icp.get_param("chatbot_assistant.fallback_model"), "openai/gpt-oss-120b")
+        self.assertTrue(Model._find("groq", "openai/gpt-oss-120b"))
+
+    def test_no_toca_otros_modelos_ni_gemini(self):
+        icp = self.env["ir.config_parameter"].sudo()
+        icp.set_param("chatbot_assistant.provider", "gemini")
+        icp.set_param("chatbot_assistant.model", "gemini-2.5-flash")
+        icp.set_param("chatbot_assistant.fallback_provider", "groq")
+        icp.set_param("chatbot_assistant.fallback_model", "qwen/qwen3.8-27b")
+        self.assertEqual(self.env["chatbot.llm.model"]._replace_retired_groq_models(), [])
+        self.assertEqual(icp.get_param("chatbot_assistant.fallback_model"), "qwen/qwen3.8-27b")

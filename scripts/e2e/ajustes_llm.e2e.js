@@ -49,8 +49,8 @@ async function guardar(p) { await p.click('.o_form_button_save'); await p.waitFo
   ok(await p.locator('.o_notification:has-text("Conexión exitosa")').count() > 0, 'aparece la notificación de conexión exitosa');
   ok(await proveedor(p) === '"groq"', 'el formulario sigue en Groq (antes volvía a Gemini)');
   ok(await clave(p) === 'gsk_NUEVA', 'la API Key escrita se conserva');
-  ok((await modelo(p)).includes('llama-3.3-70b-versatile'), 'el modelo sigue siendo el de Groq');
-  ok((await p.locator('div[name=chatbot_last_verified]').innerText()).includes('llama-3.3-70b-versatile'), 'el formulario muestra la verificación');
+  ok((await modelo(p)).includes('openai/gpt-oss-120b'), 'el modelo sigue siendo el de Groq');
+  ok((await p.locator('div[name=chatbot_last_verified]').innerText()).includes('openai/gpt-oss-120b'), 'el formulario muestra la verificación');
   ok(icp('provider') === 'gemini' && icp('api_key') === 'AIzaCLAVE-GEMINI', 'el chat sigue con Gemini y su clave (no se guardó nada)');
 
   console.log('E2. Descartar después de probar: no se pierde la clave de Gemini');

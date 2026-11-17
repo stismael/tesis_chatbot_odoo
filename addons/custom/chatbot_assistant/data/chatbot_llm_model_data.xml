@@ -9,10 +9,10 @@
         <field name="display_name_api">Gemini 2.5 Flash</field>
         <field name="pricing_hint">free</field>
     </record>
-    <record id="llm_model_groq_llama_33_70b" model="chatbot.llm.model" forcecreate="0">
+    <record id="llm_model_groq_gpt_oss_120b" model="chatbot.llm.model" forcecreate="0">
         <field name="provider">groq</field>
-        <field name="model_id">llama-3.3-70b-versatile</field>
-        <field name="display_name_api">llama-3.3-70b-versatile</field>
+        <field name="model_id">openai/gpt-oss-120b</field>
+        <field name="display_name_api">openai/gpt-oss-120b</field>
         <field name="pricing_hint">free</field>
     </record>
 

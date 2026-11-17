@@ -27,7 +27,7 @@ class TestFallbackClient(ChatbotCase):
         self.ICP = self.env["ir.config_parameter"].sudo()
         for key, value in (("provider", "gemini"), ("api_key", "AIzaPRINCIPAL"), ("model", "gemini-2.5-flash"),
                            ("active", "True"), ("fallback_active", "True"), ("fallback_provider", "groq"),
-                           ("fallback_api_key", "gsk_RESPALDO"), ("fallback_model", "llama-3.3-70b-versatile")):
+                           ("fallback_api_key", "gsk_RESPALDO"), ("fallback_model", "openai/gpt-oss-120b")):
             self.ICP.set_param("chatbot_assistant." + key, value)
         sleep = patch(LLM + "time.sleep")
         sleep.start()
@@ -50,7 +50,7 @@ class TestFallbackClient(ChatbotCase):
             self.assertEqual(q.call_count, 1, code)
             self.assertTrue(meta["fallback_used"], code)
             self.assertEqual((meta["provider"], meta["model"], meta["primary_error"]),
-                             ("groq", "llama-3.3-70b-versatile", code))
+                             ("groq", "openai/gpt-oss-120b", code))
 
     def test_respuesta_defectuosa_no_activa_el_respaldo(self):
         result, meta, g, q = self._call(["esto no es JSON"], [reply()])
@@ -103,7 +103,7 @@ class TestFallbackClient(ChatbotCase):
         self.assertEqual(log.outcome, "answered")
         self.assertTrue(log.fallback_used)
         self.assertEqual(log.primary_error_code, "timeout")
-        self.assertEqual((log.llm_provider, log.llm_model), ("groq", "llama-3.3-70b-versatile"))
+        self.assertEqual((log.llm_provider, log.llm_model), ("groq", "openai/gpt-oss-120b"))
 
 
 class FallbackSettingsCase(ChatbotCase):
@@ -115,7 +115,7 @@ class FallbackSettingsCase(ChatbotCase):
         for key, value in (("provider", "gemini"), ("api_key", "AIzaPRINCIPAL"), ("model", "gemini-2.5-flash"),
                            ("active", "True")):
             self.ICP.set_param("chatbot_assistant." + key, value)
-        self.groq_llama = self.env.ref("chatbot_assistant.llm_model_groq_llama_33_70b")
+        self.groq_default = self.env.ref("chatbot_assistant.llm_model_groq_gpt_oss_120b")
         self.gemini_flash = self.env.ref("chatbot_assistant.llm_model_gemini_25_flash")
 
     def _save(self, values, connection=connection_ok):
@@ -127,7 +127,7 @@ class FallbackSettingsCase(ChatbotCase):
     def _activate(self):
         return self._save({"chatbot_fallback_active": True, "chatbot_fallback_provider": "groq",
                            "chatbot_fallback_api_key": "gsk_RESPALDO",
-                           "chatbot_fallback_llm_model_id": self.groq_llama.id})
+                           "chatbot_fallback_llm_model_id": self.groq_default.id})
 
 
 @tagged("post_install", "-at_install", "chatbot_assistant")
@@ -140,8 +140,8 @@ class TestFallbackSettings(FallbackSettingsCase):
         self.assertEqual(mocked.call_args.args[0]["provider"], "groq")
         self.assertEqual(self.ICP.get_param("chatbot_assistant.fallback_active"), "True")
         self.assertEqual(self.ICP.get_param("chatbot_assistant.fallback_api_key"), "gsk_RESPALDO")
-        self.assertEqual(self.ICP.get_param("chatbot_assistant.fallback_model"), "llama-3.3-70b-versatile")
-        self.assertIn("llama-3.3-70b-versatile", self.ICP.get_param("chatbot_assistant.fallback_last_verified"))
+        self.assertEqual(self.ICP.get_param("chatbot_assistant.fallback_model"), "openai/gpt-oss-120b")
+        self.assertIn("openai/gpt-oss-120b", self.ICP.get_param("chatbot_assistant.fallback_last_verified"))
         self.assertEqual(self.ICP.get_param("chatbot_assistant.provider"), "gemini", "el principal no cambia")
 
     def test_si_falla_la_prueba_del_respaldo_no_se_guarda(self):
@@ -150,7 +150,7 @@ class TestFallbackSettings(FallbackSettingsCase):
         with self.assertRaisesRegex(UserError, "(?s)prueba de conexión del modelo de respaldo falló"):
             self._save({"chatbot_fallback_active": True, "chatbot_fallback_provider": "groq",
                         "chatbot_fallback_api_key": "gsk_RESPALDO",
-                        "chatbot_fallback_llm_model_id": self.groq_llama.id}, fail)
+                        "chatbot_fallback_llm_model_id": self.groq_default.id}, fail)
         self.assertNotEqual(self.ICP.get_param("chatbot_assistant.fallback_active"), "True")
 
     def test_desactivar_el_respaldo_no_prueba_nada(self):
@@ -164,7 +164,7 @@ class TestFallbackSettings(FallbackSettingsCase):
     def test_con_el_asistente_apagado_no_se_prueba_el_respaldo(self):
         mocked = self._save({"chatbot_active": False, "chatbot_fallback_active": True,
                              "chatbot_fallback_provider": "groq", "chatbot_fallback_api_key": "gsk_RESPALDO",
-                             "chatbot_fallback_llm_model_id": self.groq_llama.id})
+                             "chatbot_fallback_llm_model_id": self.groq_default.id})
         self.assertFalse(mocked.called)
 
     def test_el_respaldo_no_puede_ser_igual_al_principal(self):
@@ -176,7 +176,7 @@ class TestFallbackSettings(FallbackSettingsCase):
         with self.assertRaisesRegex(UserError, "parece de Google Gemini"):
             self._save({"chatbot_fallback_active": True, "chatbot_fallback_provider": "groq",
                         "chatbot_fallback_api_key": "AIzaEQUIVOCADA",
-                        "chatbot_fallback_llm_model_id": self.groq_llama.id})
+                        "chatbot_fallback_llm_model_id": self.groq_default.id})
 
     def test_la_clave_del_respaldo_se_conserva_si_el_campo_llega_vacio(self):
         self._activate()
@@ -195,19 +195,19 @@ class TestFallbackSettings(FallbackSettingsCase):
         self.assertFalse(settings.chatbot_fallback_api_key)
         settings.chatbot_fallback_provider = "groq"
         settings._onchange_chatbot_fallback_provider()
-        self.assertEqual(settings.chatbot_fallback_llm_model_id, self.groq_llama)
+        self.assertEqual(settings.chatbot_fallback_llm_model_id, self.groq_default)
         self.assertEqual(settings.chatbot_fallback_api_key, "gsk_RESPALDO")
 
     def test_probar_y_actualizar_el_respaldo_no_cambian_la_configuracion(self):
         settings = self.env["res.config.settings"].create({
             "chatbot_fallback_active": True, "chatbot_fallback_provider": "groq",
-            "chatbot_fallback_api_key": "gsk_RESPALDO", "chatbot_fallback_llm_model_id": self.groq_llama.id,
+            "chatbot_fallback_api_key": "gsk_RESPALDO", "chatbot_fallback_llm_model_id": self.groq_default.id,
         })
         with patch(TEST_CONNECTION, side_effect=connection_ok) as mocked:
             settings.action_chatbot_fallback_test_connection()
         self.assertEqual(mocked.call_args.args[0]["provider"], "groq")
-        self.assertIn("llama-3.3-70b-versatile", settings.chatbot_fallback_last_verified)
-        with patch(LIST_MODELS, return_value=[model_item("llama-3.3-70b-versatile"), model_item("qwen/qwen3-32b")]):
+        self.assertIn("openai/gpt-oss-120b", settings.chatbot_fallback_last_verified)
+        with patch(LIST_MODELS, return_value=[model_item("openai/gpt-oss-120b"), model_item("qwen/qwen3-32b")]):
             settings.action_chatbot_fallback_sync_models()
         self.assertTrue(self.env["chatbot.llm.model"]._find("groq", "qwen/qwen3-32b"))
         self.assertNotEqual(self.ICP.get_param("chatbot_assistant.fallback_active"), "True")
@@ -253,8 +253,8 @@ class TestSaveWithOneWorkingModel(FallbackSettingsCase):
     def test_respaldo_caido_al_activarlo_se_guarda_si_el_principal_responde(self):
         mocked = self._save({"chatbot_fallback_active": True, "chatbot_fallback_provider": "groq",
                              "chatbot_fallback_api_key": "gsk_RESPALDO",
-                             "chatbot_fallback_llm_model_id": self.groq_llama.id},
-                            self._down("llama-3.3-70b-versatile", code="timeout"))
+                             "chatbot_fallback_llm_model_id": self.groq_default.id},
+                            self._down("openai/gpt-oss-120b", code="timeout"))
         self.assertEqual(mocked.call_count, 2)
         self.assertEqual(self.ICP.get_param("chatbot_assistant.fallback_active"), "True")
         self.assertIn("No se pudo verificar", self.ICP.get_param("chatbot_assistant.fallback_last_verified"))
@@ -268,7 +268,7 @@ class TestSaveWithOneWorkingModel(FallbackSettingsCase):
         self._activate()
         with self.assertRaisesRegex(UserError, "ningún modelo respondió"):
             self._save({"chatbot_llm_model_id": self.flash_lite.id},
-                       self._down("gemini-2.5-flash-lite", "llama-3.3-70b-versatile"))
+                       self._down("gemini-2.5-flash-lite", "openai/gpt-oss-120b"))
         self.assertEqual(self.ICP.get_param("chatbot_assistant.model"), "gemini-2.5-flash")
 
     def test_clave_invalida_no_se_guarda_aunque_el_otro_responda(self):
