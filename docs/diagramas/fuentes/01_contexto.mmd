@@ -1,0 +1,12 @@
+flowchart LR
+    U["<small>«actor»</small><br/>Usuario de negocio<br/><small>Ventas · Facturación · Inventario</small>"]
+    A["<small>«actor»</small><br/>Administrador del chatbot"]
+    O["<b>Odoo 18 Community</b><br/>con el Asistente ERP<br/><small>módulo chatbot_assistant</small>"]
+    subgraph EXT["Proveedores de IA"]
+        direction TB
+        G["Google AI Studio<br/><small>modelos Gemini</small>"]
+        Q["Groq<br/><small>modelos gpt-oss y Qwen</small>"]
+    end
+    U <-- "Pregunta en lenguaje natural (Discuss) /<br/>respuesta con datos de Odoo, «Ver todo» y CSV" --> O
+    A -- "Configura proveedor, modelo, respaldo y permisos;<br/>revisa auditoría y métricas" --> O
+    O <-- "Pregunta + catálogo de intenciones (HTTPS, sin datos del ERP) /<br/>intención y entidades en JSON" --> EXT

@@ -1,0 +1,15 @@
+flowchart TD
+    I([Llega una consulta]) --> C{"¿Respaldo activo<br/>con clave y modelo?"}
+    C -- No --> P1["Llamar al modelo principal<br/><small>con 1 reintento ante fallo pasajero</small>"]
+    C -- Sí --> P2["Llamar al modelo principal<br/><small>sin reintento, para no alargar la espera</small>"]
+    P1 --> OK1{"¿Respondió<br/>con JSON válido?"}
+    OK1 -- Sí --> F([Continuar con la validación])
+    OK1 -- No --> E1([Mensaje de error al usuario<br/>y registro del fallo])
+    P2 --> OK2{"¿Respondió<br/>con JSON válido?"}
+    OK2 -- Sí --> F
+    OK2 -- No --> T{"¿Tipo de fallo?"}
+    T -- "Disponibilidad: tiempo agotado, sin red,<br/>cuota agotada, servicio caído, clave inválida,<br/>modelo inexistente" --> R["Llamar al modelo de respaldo<br/><small>sin reintento por tiempo agotado</small>"]
+    T -- "Respuesta defectuosa: JSON inválido<br/>o respuesta bloqueada" --> E2([«IA respondió mal»<br/>sin usar el respaldo])
+    R --> OK3{"¿Respondió?"}
+    OK3 -- Sí --> FR(["Continuar con la validación<br/><small>auditoría: «Respondió el respaldo» y fallo del principal</small>"])
+    OK3 -- No --> E3([Mensaje de error al usuario<br/>y registro de ambos fallos])

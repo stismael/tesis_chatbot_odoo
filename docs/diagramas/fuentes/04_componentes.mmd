@@ -1,0 +1,48 @@
+flowchart TB
+    subgraph UI["Interfaz"]
+        direction LR
+        DC["discuss_channel<br/><small>detecta el mensaje</small>"]
+        DS["chatbot_discuss_service<br/><small>publica la respuesta y los enlaces</small>"]
+        CT["controllers/main<br/><small>descarga del CSV</small>"]
+        JS["static/src<br/><small>Discuss y Ajustes</small>"]
+    end
+    subgraph OR["Orquestación"]
+        direction LR
+        ORC["<b>orchestrator</b>"]
+        SES["chatbot_session<br/><small>memoria corta</small>"]
+    end
+    subgraph IA["Interpretación con IA"]
+        direction LR
+        PB["prompt_builder<br/><small>catálogo e instrucciones</small>"]
+        LC["llm_client<br/><small>Gemini · Groq · respaldo</small>"]
+        VA["validator<br/><small>salida y cifras inventadas</small>"]
+    end
+    subgraph SEG["Seguridad"]
+        direction LR
+        PER["chatbot_intent_permission<br/><small>grupo exigido por consulta</small>"]
+        RR["Reglas de registro<br/><small>sesiones y consultas propias</small>"]
+    end
+    subgraph DAT["Datos (solo lectura)"]
+        direction LR
+        H["handlers<br/><small>factura · stock · ventas ·<br/>vendedor · stock_facturacion</small>"]
+        RS["result_set<br/><small>vista previa, «Ver todo» y CSV</small>"]
+    end
+    subgraph AUD["Auditoría y configuración"]
+        direction LR
+        LOG["chatbot_query_log<br/><small>registro y métricas</small>"]
+        CFG["res_config_settings<br/><small>proveedor, clave, modelo, respaldo</small>"]
+        CAT["chatbot_llm_model<br/><small>catálogo de modelos</small>"]
+    end
+    EXT["Gemini / Groq"]
+    ORM["ORM de Odoo"]
+    DC --> DS
+    DS --> ORC
+    ORC --> SES
+    ORC --> IA
+    ORC --> SEG
+    ORC --> DAT
+    ORC --> LOG
+    LC --> EXT
+    H --> ORM
+    CT --> RS
+    CFG --> CAT

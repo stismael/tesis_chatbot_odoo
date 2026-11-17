@@ -1,0 +1,9 @@
+flowchart LR
+    A["Rama propia<br/><small>un cambio por rama</small>"] --> B["Implementación<br/>y pruebas automáticas"]
+    B --> C["Pruebas locales<br/><small>Odoo 18 · unitarias ·<br/>navegador · actualización</small>"]
+    C --> D["Pull request<br/>hacia main"]
+    D --> E{"GitHub Actions<br/><small>pruebas unitarias y<br/>pruebas en Odoo 18</small>"}
+    E -- "En rojo" --> B
+    E -- "En verde" --> F["Fusión en main"]
+    F --> G["Registro del cambio<br/><small>qué · dónde · para qué</small>"]
+    G --> A

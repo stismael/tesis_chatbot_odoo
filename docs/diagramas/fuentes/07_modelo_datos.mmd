@@ -1,0 +1,64 @@
+erDiagram
+    RES_PARTNER ||--o{ SALE_ORDER : "partner_id"
+    RES_PARTNER ||--o{ ACCOUNT_MOVE : "partner_id"
+    RES_USERS ||--o{ RES_PARTNER : "user_id (vendedor)"
+    RES_USERS ||--o{ SALE_ORDER : "user_id"
+    SALE_ORDER ||--|{ SALE_ORDER_LINE : "order_id"
+    ACCOUNT_MOVE ||--|{ ACCOUNT_MOVE_LINE : "move_id"
+    PRODUCT_PRODUCT ||--o{ SALE_ORDER_LINE : "product_id"
+    PRODUCT_PRODUCT ||--o{ ACCOUNT_MOVE_LINE : "product_id"
+    PRODUCT_PRODUCT ||--o{ STOCK_QUANT : "product_id"
+    RES_PARTNER {
+        char name
+        char email
+        char phone
+        many2one user_id
+        int customer_rank
+    }
+    RES_USERS {
+        char name
+        char login
+        many2one partner_id
+    }
+    PRODUCT_PRODUCT {
+        char name
+        char default_code
+        float list_price
+    }
+    STOCK_QUANT {
+        many2one product_id
+        many2one location_id
+        float quantity
+        float reserved_quantity
+    }
+    SALE_ORDER {
+        char name
+        many2one partner_id
+        many2one user_id
+        datetime date_order
+        monetary amount_total
+        selection state
+    }
+    SALE_ORDER_LINE {
+        many2one order_id
+        many2one product_id
+        float product_uom_qty
+        monetary price_subtotal
+    }
+    ACCOUNT_MOVE {
+        char name
+        many2one partner_id
+        date invoice_date
+        date invoice_date_due
+        monetary amount_total
+        monetary amount_residual
+        selection payment_state
+        selection state
+    }
+    ACCOUNT_MOVE_LINE {
+        many2one move_id
+        many2one product_id
+        float quantity
+        monetary price_subtotal
+        selection display_type
+    }

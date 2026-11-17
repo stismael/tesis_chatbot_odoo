@@ -1,0 +1,12 @@
+flowchart TD
+    I([El administrador pulsa Guardar]) --> X{"¿Cambió el proveedor, la clave o el modelo<br/>de algún modelo activo, o se activó el respaldo?"}
+    X -- No --> G([Se guarda sin probar la conexión])
+    X -- Sí --> V["Validaciones de configuración<br/><small>formato de la clave · modelo del proveedor elegido ·<br/>respaldo distinto del principal</small>"]
+    V -- Error --> N1([No se guarda y se explica el error])
+    V -- Correctas --> PR["Probar la conexión de los modelos cambiados"]
+    PR --> R{"Resultado"}
+    R -- "Todos responden" --> G2([Se guarda y se registra la verificación])
+    R -- "Error de configuración<br/>(clave inválida, modelo inexistente)" --> N2([No se guarda, aunque el otro modelo funcione])
+    R -- "Fallo pasajero<br/>(caída, cuota, tiempo agotado)" --> O{"¿El otro modelo<br/>responde?"}
+    O -- Sí --> G3(["Se guarda; el que falló queda<br/>«No se pudo verificar… el otro modelo respondió»"])
+    O -- No --> N3([No se guarda: «ningún modelo respondió»])
