@@ -31,10 +31,10 @@ class TestModelSelection(ChatbotCase):
         self.ICP = self.env["ir.config_parameter"].sudo()
         self.ICP.set_param("chatbot_assistant.api_key", "clave-de-prueba")
         self.ICP.set_param("chatbot_assistant.provider", "gemini")
-        self.ICP.set_param("chatbot_assistant.model", "gemini-2.5-flash")
+        self.ICP.set_param("chatbot_assistant.model", "gemini-3.1-flash-lite")
         self.ICP.set_param("chatbot_assistant.active", "True")
         self.Model = self.env["chatbot.llm.model"]
-        self.gemini_flash = self.env.ref("chatbot_assistant.llm_model_gemini_25_flash")
+        self.gemini_flash = self.env.ref("chatbot_assistant.llm_model_gemini_31_flash_lite")
         self.groq_default = self.env.ref("chatbot_assistant.llm_model_groq_gpt_oss_120b")
 
     def _save(self, values, connection=connection_ok):
@@ -54,7 +54,7 @@ class TestModelSelection(ChatbotCase):
             settings.chatbot_provider = "gemini"
             settings._onchange_chatbot_provider()
             # Gemini es el proveedor guardado: se muestra su configuración (modelo y clave guardados).
-            self.assertEqual(settings.chatbot_model, "gemini-2.5-flash", model)
+            self.assertEqual(settings.chatbot_model, "gemini-3.1-flash-lite", model)
             self.assertEqual(settings.chatbot_llm_model_id, self.gemini_flash)
             self.assertEqual(settings.chatbot_api_key, "clave-de-prueba")
 
@@ -101,16 +101,16 @@ class TestModelSelection(ChatbotCase):
 
     def test_boton_actualizar_modelos(self):
         settings = self.env["res.config.settings"].create({})
-        with patch(LIST_MODELS, return_value=[model_item("gemini-2.5-flash"), model_item("gemini-2.5-pro")]):
+        with patch(LIST_MODELS, return_value=[model_item("gemini-3.1-flash-lite"), model_item("gemini-2.5-pro")]):
             action = settings.action_chatbot_sync_models()
         self.assertIn("Nuevos: 1", action["params"]["message"])
         pro = self.Model._find("gemini", "gemini-2.5-pro")
         self.assertTrue(pro)
         self.assertEqual(pro.pricing_hint, "paid")
-        self.assertEqual(self.Model._find("gemini", "gemini-2.5-flash").pricing_hint, "free")
+        self.assertEqual(self.Model._find("gemini", "gemini-3.1-flash-lite").pricing_hint, "free")
 
     def test_pricing_hint_heuristics(self):
-        self.assertEqual(llm_client.pricing_hint("gemini", "gemini-2.5-flash"), "free")
+        self.assertEqual(llm_client.pricing_hint("gemini", "gemini-3.1-flash-lite"), "free")
         self.assertEqual(llm_client.pricing_hint("gemini", "gemini-2.5-pro"), "paid")
         self.assertEqual(llm_client.pricing_hint("groq", "openai/gpt-oss-120b"), "free")
 
@@ -177,7 +177,7 @@ class TestModelSelection(ChatbotCase):
 
     def test_abrir_ajustes_muestra_el_modelo_guardado(self):
         # Al abrir Ajustes, Odoo ejecuta el onchange del proveedor: no debe reemplazar el modelo guardado.
-        self.Model._sync_provider("gemini", [model_item("gemini-2.5-flash"), model_item("gemini-2.5-pro")])
+        self.Model._sync_provider("gemini", [model_item("gemini-3.1-flash-lite"), model_item("gemini-2.5-pro")])
         self.ICP.set_param("chatbot_assistant.model", "gemini-2.5-pro")
         settings = self.env["res.config.settings"].new({"chatbot_provider": "gemini"})
         settings._onchange_chatbot_provider()
@@ -199,7 +199,7 @@ class TestModelSelection(ChatbotCase):
         # El chat sigue con lo guardado hasta pulsar Guardar.
         self.assertEqual(self.ICP.get_param("chatbot_assistant.provider"), "gemini")
         self.assertEqual(self.ICP.get_param("chatbot_assistant.api_key"), "clave-de-prueba")
-        self.assertEqual(self.ICP.get_param("chatbot_assistant.model"), "gemini-2.5-flash")
+        self.assertEqual(self.ICP.get_param("chatbot_assistant.model"), "gemini-3.1-flash-lite")
         self.assertFalse(self.ICP.get_param("chatbot_assistant.last_verified"))
         # El formulario sí muestra la verificación y conserva lo escrito.
         self.assertIn("openai/gpt-oss-120b", settings.chatbot_last_verified)
@@ -241,10 +241,10 @@ class TestModelSelection(ChatbotCase):
         Log = self.env["chatbot.query.log"].sudo()
         self.assertEqual(self.env["res.config.settings"].create({}).chatbot_llm_status, "Sin fallas registradas.")
         Log.create({"name": "falla", "user_id": self.tester.id, "query": "x", "outcome": "llm_unavailable",
-                    "error_code": "rate_limit", "llm_model": "gemini-2.5-flash"})
+                    "error_code": "rate_limit", "llm_model": "gemini-3.1-flash-lite"})
         status = self.env["res.config.settings"].create({}).chatbot_llm_status
         self.assertIn("Cuota agotada (429)", status)
-        self.assertIn("gemini-2.5-flash", status)
+        self.assertIn("gemini-3.1-flash-lite", status)
 
 
 @tagged("post_install", "-at_install", "chatbot_assistant")
@@ -258,17 +258,27 @@ class TestRetiredGroqModel(TransactionCase):
             icp.set_param("chatbot_assistant." + key, value)
         Model = self.env["chatbot.llm.model"]
         Model.search([("provider", "=", "groq"), ("model_id", "=", llm_client.DEFAULT_GROQ_MODEL)]).unlink()
-        changed = Model._replace_retired_groq_models()
+        changed = Model._replace_retired_models()
         self.assertEqual(changed, ["chatbot_assistant.model", "chatbot_assistant.fallback_model"])
         self.assertEqual(icp.get_param("chatbot_assistant.model"), "openai/gpt-oss-120b")
         self.assertEqual(icp.get_param("chatbot_assistant.fallback_model"), "openai/gpt-oss-120b")
         self.assertTrue(Model._find("groq", "openai/gpt-oss-120b"))
 
-    def test_no_toca_otros_modelos_ni_gemini(self):
+    def test_gemini_retirado_tambien_se_actualiza(self):
         icp = self.env["ir.config_parameter"].sudo()
         icp.set_param("chatbot_assistant.provider", "gemini")
         icp.set_param("chatbot_assistant.model", "gemini-2.5-flash")
         icp.set_param("chatbot_assistant.fallback_provider", "groq")
+        icp.set_param("chatbot_assistant.fallback_model", "openai/gpt-oss-20b")
+        self.assertEqual(self.env["chatbot.llm.model"]._replace_retired_models(), ["chatbot_assistant.model"])
+        self.assertEqual(icp.get_param("chatbot_assistant.model"), "gemini-3.1-flash-lite")
+        self.assertEqual(icp.get_param("chatbot_assistant.fallback_model"), "openai/gpt-oss-20b")
+
+    def test_no_toca_otros_modelos_ni_gemini(self):
+        icp = self.env["ir.config_parameter"].sudo()
+        icp.set_param("chatbot_assistant.provider", "gemini")
+        icp.set_param("chatbot_assistant.model", "gemini-3.1-flash-lite")
+        icp.set_param("chatbot_assistant.fallback_provider", "groq")
         icp.set_param("chatbot_assistant.fallback_model", "qwen/qwen3.8-27b")
-        self.assertEqual(self.env["chatbot.llm.model"]._replace_retired_groq_models(), [])
+        self.assertEqual(self.env["chatbot.llm.model"]._replace_retired_models(), [])
         self.assertEqual(icp.get_param("chatbot_assistant.fallback_model"), "qwen/qwen3.8-27b")

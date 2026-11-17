@@ -2,7 +2,7 @@
 from odoo.addons.chatbot_assistant.services import llm_client
 
 MODELS = {
-    "gemini": ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro"],
+    "gemini": ["gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-2.5-pro"],
     "groq": ["openai/gpt-oss-120b", "qwen/qwen3-32b", "openai/gpt-oss-20b"],
 }
 PREFIX = {"gemini": "AIza", "groq": "gsk_"}

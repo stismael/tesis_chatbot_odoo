@@ -24,10 +24,10 @@ class TestUpgradeData(TransactionCase):
         self.assertEqual(rows, new_row)
 
     def test_modelo_del_catalogo_borrado_y_sincronizado(self):
-        self.env.ref("chatbot_assistant.llm_model_gemini_25_flash").unlink()
-        self.env["chatbot.llm.model"]._sync_provider("gemini", [{"id": "gemini-2.5-flash"}])
+        self.env.ref("chatbot_assistant.llm_model_gemini_31_flash_lite").unlink()
+        self.env["chatbot.llm.model"]._sync_provider("gemini", [{"id": "gemini-3.1-flash-lite"}])
         self._reload("data/chatbot_llm_model_data.xml")
-        found = self.env["chatbot.llm.model"].search([("provider", "=", "gemini"), ("model_id", "=", "gemini-2.5-flash")])
+        found = self.env["chatbot.llm.model"].search([("provider", "=", "gemini"), ("model_id", "=", "gemini-3.1-flash-lite")])
         self.assertEqual(len(found), 1)
 
     def test_parametro_borrado_y_recreado(self):

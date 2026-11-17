@@ -109,25 +109,31 @@ class ChatbotLlmModel(models.Model):
         return counts
 
     @api.model
-    def _replace_retired_groq_models(self):
+    def _replace_retired_models(self):
         """
-        Groq retiró llama-3.3-70b-versatile (el modelo recomendado hasta la versión 18.0.1.12.0).
-        Si la configuración guardada (principal o respaldo) lo usa, se cambia por el recomendado
-        actual, y se asegura que este esté en el catálogo. Retorna los parámetros cambiados.
+        Los proveedores retiraron modelos que el módulo recomendaba: Groq, llama-3.3-70b-versatile
+        (hasta 18.0.1.12.0), y Google, gemini-2.5-flash para cuentas nuevas (hasta 18.0.1.13.0).
+        Si la configuración guardada (principal o respaldo) usa un modelo retirado, se cambia por el
+        recomendado actual de su proveedor, y se asegura que este esté en el catálogo.
+        Retorna los parámetros cambiados.
         """
-        if not self._find("groq", llm_client.DEFAULT_GROQ_MODEL):
-            self.create({"provider": "groq", "model_id": llm_client.DEFAULT_GROQ_MODEL,
-                         "display_name_api": llm_client.DEFAULT_GROQ_MODEL, "pricing_hint": "free"})
+        for provider, model in llm_client.DEFAULT_MODELS.items():
+            if not self._find(provider, model):
+                self.create({"provider": provider, "model_id": model, "display_name_api": model,
+                             "pricing_hint": llm_client.pricing_hint(provider, model)})
         icp = self.env["ir.config_parameter"].sudo()
         changed = []
         for prefix in ("chatbot_assistant.", "chatbot_assistant.fallback_"):
-            if icp.get_param(prefix + "provider") == "groq" and icp.get_param(prefix + "model") in llm_client.RETIRED_GROQ_MODELS:
-                icp.set_param(prefix + "model", llm_client.DEFAULT_GROQ_MODEL)
+            provider = icp.get_param(prefix + "provider")
+            if icp.get_param(prefix + "model") in llm_client.RETIRED_MODELS.get(provider, ()):
+                icp.set_param(prefix + "model", llm_client.DEFAULT_MODELS[provider])
                 changed.append(prefix + "model")
         if changed:
-            _logger.warning("Chatbot: modelo de Groq retirado reemplazado por %s en %s",
-                            llm_client.DEFAULT_GROQ_MODEL, ", ".join(changed))
+            _logger.warning("Chatbot: modelo retirado reemplazado por el recomendado en %s", ", ".join(changed))
         return changed
+
+    # Compatibilidad con la migración 18.0.1.13.0
+    _replace_retired_groq_models = _replace_retired_models
 
     @api.model
     def _cron_sync_models(self):
