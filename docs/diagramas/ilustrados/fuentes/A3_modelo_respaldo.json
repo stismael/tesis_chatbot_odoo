@@ -1,0 +1,132 @@
+{
+ "title": "Modelo de respaldo: si el principal no está disponible, responde el otro",
+ "width": 1700,
+ "height": 720,
+ "nodes": [
+  {
+   "id": "orq",
+   "x": 150,
+   "y": 330,
+   "icon": "tabler:message-chatbot",
+   "color": "#0F6CBD",
+   "label": "Asistente ERP",
+   "sub": "consulta del usuario"
+  },
+  {
+   "id": "gemini",
+   "x": 560,
+   "y": 160,
+   "icon": "brand:googlegemini",
+   "badge": "tabler:alert-triangle",
+   "badgeColor": "#D9480F",
+   "label": "Modelo principal",
+   "sub": "ej. Gemini 2.5 Flash",
+   "labelPos": "above"
+  },
+  {
+   "id": "groq",
+   "x": 560,
+   "y": 500,
+   "icon": "tabler:bolt",
+   "color": "#F55036",
+   "label": "Modelo de respaldo",
+   "sub": "otro proveedor, ej. Groq",
+   "labelPos": "left"
+  },
+  {
+   "id": "ok",
+   "x": 1000,
+   "y": 330,
+   "icon": "tabler:circle-check",
+   "color": "#2F9E44",
+   "label": "Respuesta válida",
+   "sub": "sigue con el validador\ny los permisos"
+  },
+  {
+   "id": "audit",
+   "x": 1000,
+   "y": 590,
+   "icon": "tabler:clipboard-data",
+   "color": "#0F6CBD",
+   "label": "Auditoría",
+   "sub": "«Respondió el respaldo»\ny falla del principal",
+   "labelPos": "right"
+  }
+ ],
+ "edges": [
+  {
+   "from": "orq",
+   "to": "gemini",
+   "step": "1",
+   "label": "primer intento\n(sin reintento si hay respaldo)",
+   "labelAt": [
+    300,
+    175
+   ]
+  },
+  {
+   "from": "orq",
+   "to": "groq",
+   "dashed": true,
+   "color": "#D9480F",
+   "step": "2",
+   "stepColor": "#D9480F",
+   "label": "solo si el principal\nno está disponible",
+   "labelAt": [
+    260,
+    520
+   ]
+  },
+  {
+   "from": "gemini",
+   "to": "ok",
+   "step": "3",
+   "label": "JSON",
+   "labelDx": 40,
+   "labelDy": -30
+  },
+  {
+   "from": "groq",
+   "to": "ok",
+   "dashed": true,
+   "color": "#D9480F",
+   "step": "3",
+   "stepColor": "#D9480F",
+   "label": "JSON",
+   "labelDx": 40,
+   "labelDy": -10
+  },
+  {
+   "from": "groq",
+   "to": "audit",
+   "dashed": true,
+   "color": "#D9480F",
+   "trim": 60
+  }
+ ],
+ "notes": [
+  {
+   "x": 1220,
+   "y": 90,
+   "w": 450,
+   "fill": "#FFF4E6",
+   "stroke": "#F5C38A",
+   "text": "**Activa el respaldo (no disponible):\ntiempo agotado · sin conexión\ncuota agotada (429) · servicio caído (5xx)\nclave inválida · modelo inexistente"
+  },
+  {
+   "x": 1220,
+   "y": 260,
+   "w": 450,
+   "fill": "#F3F7FB",
+   "text": "**No lo activa (la IA respondió, pero mal):\nJSON inválido · respuesta bloqueada\n→ se registra como «IA respondió mal»"
+  },
+  {
+   "x": 1220,
+   "y": 410,
+   "w": 450,
+   "fill": "#EBFBEE",
+   "stroke": "#B2E2BE",
+   "text": "**Al guardar en Ajustes:\nbasta con que responda uno de los dos;\nun error de configuración nunca se guarda"
+  }
+ ]
+}

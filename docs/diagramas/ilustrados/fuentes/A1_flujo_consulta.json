@@ -1,0 +1,225 @@
+{
+ "title": "Asistente ERP: cómo se responde una consulta",
+ "width": 1800,
+ "height": 880,
+ "groups": [
+  {
+   "x": 470,
+   "y": 80,
+   "w": 620,
+   "h": 210,
+   "label": "Proveedores de IA (externos)",
+   "dashed": true,
+   "fill": "#FCFCFD"
+  },
+  {
+   "x": 470,
+   "y": 340,
+   "w": 1050,
+   "h": 420,
+   "label": "Módulo chatbot_assistant (Odoo 18)"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "audit",
+   "x": 860,
+   "y": 690,
+   "icon": "tabler:clipboard-data",
+   "color": "#0F6CBD",
+   "label": "Auditoría",
+   "sub": "y métricas",
+   "labelPos": "right"
+  },
+  {
+   "id": "gemini",
+   "x": 600,
+   "y": 190,
+   "icon": "brand:googlegemini",
+   "label": "Gemini",
+   "sub": "modelo principal",
+   "labelPos": "right"
+  },
+  {
+   "id": "groq",
+   "x": 880,
+   "y": 190,
+   "icon": "tabler:bolt",
+   "color": "#F55036",
+   "label": "Groq",
+   "sub": "modelo de respaldo",
+   "labelPos": "right"
+  },
+  {
+   "id": "user",
+   "x": 100,
+   "y": 470,
+   "icon": "tabler:user",
+   "color": "#0F6CBD",
+   "label": "Usuario",
+   "sub": "ventas · facturación\ninventario"
+  },
+  {
+   "id": "discuss",
+   "x": 330,
+   "y": 470,
+   "icon": "brand:odoo",
+   "label": "Chat Discuss",
+   "sub": "«Asistente ERP»"
+  },
+  {
+   "id": "orq",
+   "x": 600,
+   "y": 470,
+   "icon": "tabler:message-chatbot",
+   "color": "#0F6CBD",
+   "label": "Orquestador",
+   "sub": "memoria corta"
+  },
+  {
+   "id": "val",
+   "x": 840,
+   "y": 470,
+   "icon": "tabler:checklist",
+   "color": "#0F6CBD",
+   "label": "Validador",
+   "sub": "salida de la IA"
+  },
+  {
+   "id": "perm",
+   "x": 1080,
+   "y": 470,
+   "icon": "tabler:shield-lock",
+   "color": "#0F6CBD",
+   "label": "Permisos",
+   "sub": "grupo exigido"
+  },
+  {
+   "id": "cu",
+   "x": 1340,
+   "y": 470,
+   "icon": "tabler:list-details",
+   "color": "#0F6CBD",
+   "label": "Casos de uso",
+   "sub": "CU-01 a CU-05"
+  },
+  {
+   "id": "db",
+   "x": 1660,
+   "y": 470,
+   "icon": "brand:postgresql",
+   "label": "Datos de Odoo",
+   "sub": "ORM → PostgreSQL 16"
+  }
+ ],
+ "edges": [
+  {
+   "from": "user",
+   "to": "discuss",
+   "dy": -16,
+   "step": "1",
+   "stepDy": -40,
+   "label": "pregunta",
+   "labelDy": -112
+  },
+  {
+   "from": "discuss",
+   "to": "user",
+   "dy": 16,
+   "step": "9",
+   "stepDy": 34,
+   "label": "respuesta",
+   "labelDy": 46
+  },
+  {
+   "from": "discuss",
+   "to": "orq",
+   "dy": -16,
+   "step": "2",
+   "stepDy": -40
+  },
+  {
+   "from": "orq",
+   "to": "discuss",
+   "dy": 16,
+   "dashed": true
+  },
+  {
+   "from": "orq",
+   "to": "gemini",
+   "step": "3",
+   "stepDx": 26,
+   "stepDy": 0,
+   "label": "pregunta + catálogo",
+   "labelDx": -8,
+   "labelDy": -30,
+   "labelAnchor": "end"
+  },
+  {
+   "from": "orq",
+   "to": "groq",
+   "via": [
+    [
+     700,
+     410
+    ],
+    [
+     880,
+     410
+    ]
+   ],
+   "dashed": true,
+   "color": "#D9480F",
+   "label": "si el principal\nno responde",
+   "labelAnchor": "start",
+   "labelAt": [
+    892,
+    322
+   ]
+  },
+  {
+   "from": "orq",
+   "to": "val",
+   "step": "4",
+   "label": "JSON"
+  },
+  {
+   "from": "val",
+   "to": "perm",
+   "step": "5"
+  },
+  {
+   "from": "perm",
+   "to": "cu",
+   "step": "6"
+  },
+  {
+   "from": "cu",
+   "to": "db",
+   "step": "7",
+   "label": "solo lectura, con los\npermisos del usuario"
+  },
+  {
+   "from": "orq",
+   "to": "audit",
+   "step": "8",
+   "label": "registro",
+   "stepAt": [
+    700,
+    640
+   ],
+   "labelAt": [
+    700,
+    690
+   ]
+  }
+ ],
+ "notes": [
+  {
+   "x": 470,
+   "y": 785,
+   "w": 1050,
+   "text": "**La IA solo interpreta: nunca genera SQL ni aporta cifras. Los datos salen de Odoo con los permisos del usuario.\nSi la respuesta es extensa, el chat muestra 5 filas con «Ver todo» y «Descargar CSV»."
+  }
+ ]
+}

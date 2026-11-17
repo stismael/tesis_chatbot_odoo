@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="720" viewBox="0 0 1700 720" font-family="Arial, Helvetica, sans-serif">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#4A5560"/></marker><marker id="arrowD9480F" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#D9480F"/></marker></defs><rect width="1700" height="720" fill="#F7F8FA"/><text x="30" y="44" font-size="24" font-weight="bold" fill="#1F2A36">Modelo de respaldo: si el principal no está disponible, responde el otro</text><path d="M207.3 306.3 L502.7 183.7" fill="none" stroke="#4A5560" stroke-width="2.2"  marker-end="url(#arrow)"/><circle cx="355" cy="211" r="17" fill="#5C9E1E"/><text x="355" y="217" text-anchor="middle" font-size="17" font-weight="bold" fill="#fff">1</text><text x="300" y="175" text-anchor="middle" font-size="14.5" fill="#3B4754">primer intento</text><text x="300" y="193" text-anchor="middle" font-size="14.5" fill="#3B4754">(sin reintento si hay respaldo)</text><path d="M207.3 353.7 L502.7 476.3" fill="none" stroke="#D9480F" stroke-width="2.2" stroke-dasharray="8 6" marker-end="url(#arrowD9480F)"/><circle cx="355" cy="381" r="17" fill="#D9480F"/><text x="355" y="387" text-anchor="middle" font-size="17" font-weight="bold" fill="#fff">2</text><text x="260" y="520" text-anchor="middle" font-size="14.5" fill="#3B4754">solo si el principal</text><text x="260" y="538" text-anchor="middle" font-size="14.5" fill="#3B4754">no está disponible</text><path d="M617.8 182.3 L942.2 307.7" fill="none" stroke="#4A5560" stroke-width="2.2"  marker-end="url(#arrow)"/><circle cx="780" cy="211" r="17" fill="#5C9E1E"/><text x="780" y="217" text-anchor="middle" font-size="17" font-weight="bold" fill="#fff">3</text><text x="820" y="245" text-anchor="middle" font-size="14.5" fill="#3B4754">JSON</text><path d="M617.8 477.7 L942.2 352.3" fill="none" stroke="#D9480F" stroke-width="2.2" stroke-dasharray="8 6" marker-end="url(#arrowD9480F)"/><circle cx="780" cy="381" r="17" fill="#D9480F"/><text x="780" y="387" text-anchor="middle" font-size="17" font-weight="bold" fill="#fff">3</text><text x="820" y="435" text-anchor="middle" font-size="14.5" fill="#3B4754">JSON</text><path d="M618.8 512.0 L941.2 578.0" fill="none" stroke="#D9480F" stroke-width="2.2" stroke-dasharray="8 6" marker-end="url(#arrowD9480F)"/><rect x="104" y="284" width="92" height="92" rx="18" fill="#FFFFFF" stroke="#D5DBE1" stroke-width="1.5"/><g transform="translate(121,301)"><svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="58"
+  height="58"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="#0F6CBD"
+  stroke-width="1.6"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon icon-tabler icons-tabler-outline icon-tabler-message-chatbot"
+>
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12z" />
+  <path d="M9.5 9h.01" />
+  <path d="M14.5 9h.01" />
+  <path d="M9.5 13a3.5 3.5 0 0 0 5 0" />
+</svg></g><text x="150" y="402" text-anchor="middle" font-size="16.5" font-weight="bold" fill="#1F2A36">Asistente ERP</text><text x="150" y="422" text-anchor="middle" font-size="13.5" fill="#55636F">consulta del usuario</text><rect x="514" y="114" width="92" height="92" rx="18" fill="#FFFFFF" stroke="#D5DBE1" stroke-width="1.5"/><g transform="translate(531,131)"><svg viewBox="0 0 24 24" width="58" height="58"><path fill="#8E75B2" d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/></svg></g><g transform="translate(582,102)"><svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="30"
+  height="30"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="#D9480F"
+  stroke-width="1.6"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon icon-tabler icons-tabler-outline icon-tabler-alert-triangle"
+>
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M12 9v4" />
+  <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+  <path d="M12 16h.01" />
+</svg></g><text x="560" y="79" text-anchor="middle" font-size="16.5" font-weight="bold" fill="#1F2A36">Modelo principal</text><text x="560" y="99" text-anchor="middle" font-size="13.5" fill="#55636F">ej. Gemini 2.5 Flash</text><rect x="514" y="454" width="92" height="92" rx="18" fill="#FFFFFF" stroke="#D5DBE1" stroke-width="1.5"/><g transform="translate(531,471)"><svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="58"
+  height="58"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="#F55036"
+  stroke-width="1.6"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon icon-tabler icons-tabler-outline icon-tabler-bolt"
+>
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11" />
+</svg></g><text x="500" y="495.5" text-anchor="end" font-size="16.5" font-weight="bold" fill="#1F2A36">Modelo de respaldo</text><text x="500" y="515.5" text-anchor="end" font-size="13.5" fill="#55636F">otro proveedor, ej. Groq</text><rect x="954" y="284" width="92" height="92" rx="18" fill="#FFFFFF" stroke="#D5DBE1" stroke-width="1.5"/><g transform="translate(971,301)"><svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="58"
+  height="58"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="#2F9E44"
+  stroke-width="1.6"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon icon-tabler icons-tabler-outline icon-tabler-circle-check"
+>
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+  <path d="M9 12l2 2l4 -4" />
+</svg></g><text x="1000" y="402" text-anchor="middle" font-size="16.5" font-weight="bold" fill="#1F2A36">Respuesta válida</text><text x="1000" y="422" text-anchor="middle" font-size="13.5" fill="#55636F">sigue con el validador</text><text x="1000" y="439" text-anchor="middle" font-size="13.5" fill="#55636F">y los permisos</text><rect x="954" y="544" width="92" height="92" rx="18" fill="#FFFFFF" stroke="#D5DBE1" stroke-width="1.5"/><g transform="translate(971,561)"><svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="58"
+  height="58"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="#0F6CBD"
+  stroke-width="1.6"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon icon-tabler icons-tabler-outline icon-tabler-clipboard-data"
+>
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" />
+  <path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z" />
+  <path d="M9 17v-4" />
+  <path d="M12 17v-1" />
+  <path d="M15 17v-2" />
+  <path d="M12 17v-1" />
+</svg></g><text x="1060" y="577" text-anchor="start" font-size="16.5" font-weight="bold" fill="#1F2A36">Auditoría</text><text x="1060" y="597" text-anchor="start" font-size="13.5" fill="#55636F">«Respondió el respaldo»</text><text x="1060" y="614" text-anchor="start" font-size="13.5" fill="#55636F">y falla del principal</text><rect x="1220" y="90" width="450" height="98" rx="10" fill="#FFF4E6" stroke="#F5C38A"/><text x="1234" y="114" font-size="14" font-weight="bold" fill="#2D3A46">Activa el respaldo (no disponible):</text><text x="1234" y="133" font-size="14"  fill="#2D3A46">tiempo agotado · sin conexión</text><text x="1234" y="152" font-size="14"  fill="#2D3A46">cuota agotada (429) · servicio caído (5xx)</text><text x="1234" y="171" font-size="14"  fill="#2D3A46">clave inválida · modelo inexistente</text><rect x="1220" y="260" width="450" height="79" rx="10" fill="#F3F7FB" stroke="#C9D6E3"/><text x="1234" y="284" font-size="14" font-weight="bold" fill="#2D3A46">No lo activa (la IA respondió, pero mal):</text><text x="1234" y="303" font-size="14"  fill="#2D3A46">JSON inválido · respuesta bloqueada</text><text x="1234" y="322" font-size="14"  fill="#2D3A46">→ se registra como «IA respondió mal»</text><rect x="1220" y="410" width="450" height="79" rx="10" fill="#EBFBEE" stroke="#B2E2BE"/><text x="1234" y="434" font-size="14" font-weight="bold" fill="#2D3A46">Al guardar en Ajustes:</text><text x="1234" y="453" font-size="14"  fill="#2D3A46">basta con que responda uno de los dos;</text><text x="1234" y="472" font-size="14"  fill="#2D3A46">un error de configuración nunca se guarda</text></svg>

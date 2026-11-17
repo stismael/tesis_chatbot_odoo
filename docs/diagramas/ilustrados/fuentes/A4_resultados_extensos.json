@@ -1,0 +1,22 @@
+{
+  "title": "Resultados extensos: vista previa en el chat, «Ver todo» y CSV",
+  "width": 1700, "height": 700,
+  "nodes": [
+    {"id": "user", "x": 110, "y": 320, "icon": "tabler:user", "color": "#0F6CBD", "label": "Usuario", "sub": "«facturas de\nMotopartes Ecuador»"},
+    {"id": "chat", "x": 430, "y": 320, "icon": "tabler:messages", "color": "#0F6CBD", "label": "Respuesta en el chat", "sub": "resumen + 5 filas\n«Mostrando 5 de 12»"},
+    {"id": "ver", "x": 820, "y": 160, "icon": "tabler:list", "color": "#0F6CBD", "label": "Ver todo (12)"},
+    {"id": "csv", "x": 820, "y": 480, "icon": "tabler:file-type-csv", "color": "#2F9E44", "label": "Descargar CSV"},
+    {"id": "lista", "x": 1200, "y": 160, "icon": "brand:odoo", "label": "Lista nativa de Odoo", "sub": "ordenar · filtrar · abrir", "labelPos": "right"},
+    {"id": "excel", "x": 1200, "y": 480, "icon": "tabler:file-spreadsheet", "color": "#2F9E44", "label": "Archivo CSV", "sub": "solo campos autorizados", "labelPos": "right"}
+  ],
+  "edges": [
+    {"from": "user", "to": "chat", "step": "1", "label": "pregunta"},
+    {"from": "chat", "to": "ver", "step": "2", "stepDx": -20, "stepDy": -30},
+    {"from": "chat", "to": "csv", "step": "2", "stepDx": -20, "stepDy": 30},
+    {"from": "ver", "to": "lista", "step": "3", "label": "registros exactos\nde la respuesta"},
+    {"from": "csv", "to": "excel", "step": "3", "label": "se genera en\nel momento"}
+  ],
+  "notes": [
+    {"x": 560, "y": 600, "w": 1000, "fill": "#F3F7FB", "text": "**Seguridad: los registros se vuelven a leer con los permisos del usuario; solo el dueño de la consulta puede abrirlos (otro usuario recibe 404).\nLa auditoría registra las aperturas de «Ver todo» y las descargas CSV."}
+  ]
+}
