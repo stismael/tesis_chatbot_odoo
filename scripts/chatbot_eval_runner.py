@@ -110,11 +110,18 @@ def run_evaluation(env, dataset_path, limit=None, pause_s=0.0, today=None):
 
     orch = env["chatbot.orchestrator"]
     rows = []
+    sessions = {}  # secuencias de varios turnos: una sesión por secuencia, en orden
     for index, item in enumerate(items):
         if index and pause_s:
             time.sleep(pause_s)  # respeta el límite de peticiones por minuto de la cuota gratuita
-        print("[%s] %s" % (item["id"], item["query"]))
-        result = orch.evaluate_query(item["query"])
+        print("[%s] %s" % (item["id"], item["query"]), flush=True)
+        session = None
+        if item.get("sequence"):
+            session = sessions.get(item["sequence"])
+            if session is None:
+                session = sessions[item["sequence"]] = env["chatbot.session"].create(
+                    {"name": "Eval: secuencia %s" % item["sequence"]})
+        result = orch.evaluate_query(item["query"], session=session)
         log = env["chatbot.query.log"].browse(result.get("log_id"))
         try:
             llm_entities = (json.loads(result.get("llm_json") or "{}") or {}).get("entities") or {}
@@ -138,6 +145,7 @@ def run_evaluation(env, dataset_path, limit=None, pause_s=0.0, today=None):
         rows.append({
             "id": item["id"],
             "category": item.get("category"),
+            "sequence": item.get("sequence"),
             "query": item["query"],
             "expected_behavior": item["expected_behavior"],
             "expected_intent": expected_intent,

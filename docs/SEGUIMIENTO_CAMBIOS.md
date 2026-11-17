@@ -26,7 +26,8 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `feature/modelo-respaldo` | Modelo de respaldo (pedido de la tutora) | Fusionada en `main` (PR #13) |
 | `feature/resultados-extensos` | Resultados extensos: vista previa, «Ver todo» y CSV (pedido de la tutora) | Fusionada en `main` (PR #14) |
 | `docs/resumen-avance-tutora` | Resumen del avance y propuestas para la tutora | Subida, sin PR |
-| `fix/privacidad-y-evaluacion` | Privacidad del contexto enviado a la IA y evaluación confiable | PR #15 |
+| `fix/privacidad-y-evaluacion` | Privacidad del contexto enviado a la IA y evaluación confiable | Fusionada en `main` (PR #15) |
+| `feature/dataset-evaluacion` | Paso 8: dataset ampliado y primera evaluación con la IA real | PR #16 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -39,7 +40,7 @@ Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada co
 
 ### PR #15 · Privacidad del contexto enviado a la IA y evaluación confiable
 - **Rama:** `fix/privacidad-y-evaluacion` · **Versión del módulo:** 18.0.1.12.0 (sin cambios de datos)
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-11-17, con las pruebas de GitHub Actions en verde.
 - **Origen:** documento de recomendaciones revisado el 2026-11-17. Se aplicaron los dos puntos que
   señalaban problemas reales, comprobados en el código.
 - **Pruebas:** 138 pruebas en Odoo 18 (2 nuevas), pruebas unitarias (4 nuevas del evaluador),
