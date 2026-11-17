@@ -12,7 +12,10 @@ _logger = logging.getLogger(__name__)
 
 PARAM_PREFIX = "chatbot_assistant"
 DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
-DEFAULT_GROQ_MODEL = "llama-3.3-70b-versatile"
+# llama-3.3-70b-versatile fue retirado por Groq (noviembre de 2026). gpt-oss-120b obtuvo el mismo
+# acierto que qwen3.8-27b en la evaluación con el dataset y es el modelo más grande disponible.
+DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b"
+RETIRED_GROQ_MODELS = ("llama-3.3-70b-versatile",)
 DEFAULT_TIMEOUT = 20
 MAX_RETRIES = 1  # un reintento ante timeout / cuota / 5xx (peor caso: 2 × timeout + pausa)
 RETRY_BASE_DELAY_SEC = 1.5
@@ -453,7 +456,7 @@ def list_groq_models(api_key, timeout=None):
 def suggest_default_model(models, provider="gemini"):
     ids = [m["id"] for m in models]
     if provider == "groq":
-        for preferred in (DEFAULT_GROQ_MODEL, "llama-3.1-70b-versatile", "llama-3.1-8b-instant"):
+        for preferred in (DEFAULT_GROQ_MODEL, "openai/gpt-oss-20b", "qwen/qwen3.8-27b"):
             if preferred in ids:
                 return preferred
         return ids[0] if ids else DEFAULT_GROQ_MODEL

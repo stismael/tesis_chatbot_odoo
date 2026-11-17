@@ -109,6 +109,27 @@ class ChatbotLlmModel(models.Model):
         return counts
 
     @api.model
+    def _replace_retired_groq_models(self):
+        """
+        Groq retiró llama-3.3-70b-versatile (el modelo recomendado hasta la versión 18.0.1.12.0).
+        Si la configuración guardada (principal o respaldo) lo usa, se cambia por el recomendado
+        actual, y se asegura que este esté en el catálogo. Retorna los parámetros cambiados.
+        """
+        if not self._find("groq", llm_client.DEFAULT_GROQ_MODEL):
+            self.create({"provider": "groq", "model_id": llm_client.DEFAULT_GROQ_MODEL,
+                         "display_name_api": llm_client.DEFAULT_GROQ_MODEL, "pricing_hint": "free"})
+        icp = self.env["ir.config_parameter"].sudo()
+        changed = []
+        for prefix in ("chatbot_assistant.", "chatbot_assistant.fallback_"):
+            if icp.get_param(prefix + "provider") == "groq" and icp.get_param(prefix + "model") in llm_client.RETIRED_GROQ_MODELS:
+                icp.set_param(prefix + "model", llm_client.DEFAULT_GROQ_MODEL)
+                changed.append(prefix + "model")
+        if changed:
+            _logger.warning("Chatbot: modelo de Groq retirado reemplazado por %s en %s",
+                            llm_client.DEFAULT_GROQ_MODEL, ", ".join(changed))
+        return changed
+
+    @api.model
     def _cron_sync_models(self):
         """Actualiza el catálogo de los proveedores configurados (principal y respaldo; tarea semanal)."""
         configs = [llm_client.get_chatbot_config(self.env)]
