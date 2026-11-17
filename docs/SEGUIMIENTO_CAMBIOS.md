@@ -27,7 +27,8 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `feature/resultados-extensos` | Resultados extensos: vista previa, «Ver todo» y CSV (pedido de la tutora) | Fusionada en `main` (PR #14) |
 | `docs/resumen-avance-tutora` | Resumen del avance y propuestas para la tutora | Subida, sin PR |
 | `fix/privacidad-y-evaluacion` | Privacidad del contexto enviado a la IA y evaluación confiable | Fusionada en `main` (PR #15) |
-| `feature/dataset-evaluacion` | Paso 8: dataset ampliado y primera evaluación con la IA real | PR #16 |
+| `fix/modelo-groq-retirado` | Reemplazar el modelo de Groq retirado | Fusionada en `main` (PR #16) |
+| `feature/dataset-evaluacion` | Paso 8: dataset ampliado y primera evaluación con la IA real | PR #17 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -37,6 +38,20 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
+
+### PR #16 · Reemplazar el modelo de Groq retirado por openai/gpt-oss-120b
+- **Rama:** `fix/modelo-groq-retirado` · **Versión del módulo:** 18.0.1.13.0
+- **Estado:** fusionado el 2026-11-17, con las pruebas de GitHub Actions en verde.
+- **Origen:** defecto detectado en la primera evaluación con la IA real: Groq retiró
+  `llama-3.3-70b-versatile`, el modelo recomendado del módulo (la API responde «model_not_found»).
+- **Pruebas:** 140 pruebas en Odoo 18 (2 nuevas), pruebas unitarias, prueba de Ajustes en el
+  navegador (52 comprobaciones) y actualización desde 18.0.1.12.0 con el modelo retirado guardado.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Nuevo modelo recomendado de Groq: `openai/gpt-oss-120b` (mismo acierto que `qwen/qwen3.8-27b` en la evaluación real y el más grande disponible) | `services/llm_client.py`, `data/chatbot_llm_model_data.xml` | Que una instalación nueva con Groq funcione |
+| Migración: la configuración guardada (principal o respaldo) con el modelo retirado pasa al recomendado | `migrations/18.0.1.13.0/post-migrate.py`, `models/chatbot_llm_model.py` (`_replace_retired_groq_models`) | Que las instalaciones existentes no queden con un modelo inexistente |
+| Pruebas y IA simulada de las pruebas e2e actualizadas | `tests/`, `scripts/e2e/` | Evitar regresiones |
 
 ### PR #15 · Privacidad del contexto enviado a la IA y evaluación confiable
 - **Rama:** `fix/privacidad-y-evaluacion` · **Versión del módulo:** 18.0.1.12.0 (sin cambios de datos)
