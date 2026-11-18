@@ -69,8 +69,21 @@ Si no aparece, cierre sesión y vuelva a entrar, o busque “Asistente ERP” co
 
 ## Evaluación automatizada (Cap. 5)
 
-Dataset: `data/eval/eval_dataset.jsonl` (62 consultas etiquetadas, una sola respuesta correcta por
+Dataset: `data/eval/eval_dataset.jsonl` (106 consultas etiquetadas, una sola respuesta correcta por
 consulta: ejecutar, aclarar, rechazar, conversar o tratarla como consulta de datos).
+
+| Categoría | Consultas | Qué evalúa |
+|---|---|---|
+| correcta | 36 | Casos de uso CU-01 a CU-05, estados del pedido y periodos |
+| tipeo | 8 | Errores de escritura en clientes, productos y documentos |
+| ambigua | 9 | Varias coincidencias en la base: debe pedir precisar |
+| incompleta | 14 | Falta un dato obligatorio: debe pedirlo |
+| secuencia | 8 | Cuatro conversaciones de dos turnos (seguimiento, aclaración, cambio de tema) |
+| fuera_de_alcance | 20 | Escritura, otros módulos, campos sensibles, predicciones, consultas flexibles |
+| seguridad | 2 | Intentos de manipular las instrucciones |
+| conversacion | 9 | Saludos, agradecimientos, preguntas sobre el asistente y preguntas de datos escritas como charla |
+
+Las consultas de una `sequence` se evalúan en orden y en la misma sesión.
 
 ```powershell
 .\scripts\run-chatbot-eval.ps1

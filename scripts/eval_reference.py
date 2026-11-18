@@ -13,10 +13,14 @@ import calendar
 from datetime import date
 
 TOLERANCE = 0.01  # centavos / unidades con decimales
+ORDER_STATES = {"pedido": ("sale", "done"), "cotizacion": ("draft", "sent"), "cancelado": ("cancel",)}
 
 
 def _period(item, today):
-    """Periodo esperado de la consulta: este mes, este año o sin filtro."""
+    """Periodo esperado de la consulta: fechas explícitas, este mes, este año o sin filtro."""
+    dates = item.get("expected_dates")
+    if dates:
+        return date.fromisoformat(dates["date_from"]), date.fromisoformat(dates["date_to"])
     period = item.get("expected_period")
     if period == "this_month":
         last = calendar.monthrange(today.year, today.month)[1]
@@ -48,8 +52,9 @@ def _product(env, entities):
     return _one(products, name)
 
 
-def _confirmed_orders(env, partner):
-    return env["sale.order"].search([("partner_id", "=", partner.id), ("state", "in", ("sale", "done"))])
+def _orders(env, partner, order_state=None):
+    states = ORDER_STATES[order_state or "pedido"]
+    return env["sale.order"].search([("partner_id", "=", partner.id), ("state", "in", states)])
 
 
 def facts(env, item, today=None):
@@ -68,10 +73,11 @@ def facts(env, item, today=None):
                 "invoices.0.amount_total": move.amount_total,
             }
         partner = _partner(env, entities["customer_name"])
-        count = env["account.move"].search_count([
-            ("move_type", "=", "out_invoice"), ("state", "=", "posted"), ("partner_id", "=", partner.id),
-        ])
-        return {"invoice_count": count}
+        domain = [("move_type", "=", "out_invoice"), ("state", "=", "posted"), ("partner_id", "=", partner.id)]
+        date_from, date_to = _period(item, today)
+        if date_from:
+            domain += [("invoice_date", ">=", date_from), ("invoice_date", "<=", date_to)]
+        return {"invoice_count": env["account.move"].search_count(domain)}
 
     if intent == "consultar_stock":
         product = _product(env, entities)
@@ -81,10 +87,11 @@ def facts(env, item, today=None):
         if entities.get("product_code") or entities.get("product_name"):
             product = _product(env, entities)
             lines = env["sale.order.line"].search([
-                ("product_id", "=", product.id), ("order_id.state", "in", ("sale", "done")),
+                ("product_id", "=", product.id),
+                ("order_id.state", "in", ORDER_STATES[entities.get("order_state") or "pedido"]),
             ])
             return {"product_code": product.default_code, "quantity": sum(lines.mapped("product_uom_qty"))}
-        orders = _confirmed_orders(env, _partner(env, entities["customer_name"]))
+        orders = _orders(env, _partner(env, entities["customer_name"]), entities.get("order_state"))
         return {"order_count": len(orders), "amount_total": sum(orders.mapped("amount_total"))}
 
     if intent == "consultar_vendedor_cliente":

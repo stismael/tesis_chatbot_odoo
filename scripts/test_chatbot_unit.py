@@ -365,6 +365,30 @@ def test_evaluacion_entidades():
     assert not runner.entities_match({"product_code": "FIL-M01"}, {"product_code": None})
 
 
+def test_dataset_bien_formado():
+    """IDs únicos, comportamientos válidos, secuencias en orden y datos para comparar en cada ejecución."""
+    path = ROOT / "data" / "eval" / "eval_dataset.jsonl"
+    rows = [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+    ids = [r["id"] for r in rows]
+    assert len(ids) == len(set(ids)), "IDs repetidos"
+    assert len(rows) >= 100, len(rows)
+    last_turn = {}
+    for r in rows:
+        assert r["expected_behavior"] in ("execute", "clarify", "reject", "converse", "not_conversation"), r["id"]
+        if r["expected_behavior"] == "execute":
+            assert r.get("expected_intent") and r.get("expected_entities"), r["id"]
+        if r.get("sequence"):
+            assert r["turn"] == last_turn.get(r["sequence"], 0) + 1, r["id"]
+            last_turn[r["sequence"]] = r["turn"]
+
+
+def test_evaluacion_solo_algunas_consultas_y_union():
+    runner = _eval_module("chatbot_eval_runner")
+    rows = [{"id": "Q1", "behavior_ok": False}, {"id": "Q2", "behavior_ok": True}]
+    merged = runner.merge_results(rows, [{"id": "Q1", "behavior_ok": True}])
+    assert [r["behavior_ok"] for r in merged] == [True, True]
+
+
 if __name__ == "__main__":
     test_ready_factura()
     test_missing_stock()
@@ -392,4 +416,6 @@ if __name__ == "__main__":
     test_evaluacion_compara_datos_con_tolerancia()
     test_evaluacion_un_solo_comportamiento_correcto()
     test_evaluacion_entidades()
+    test_dataset_bien_formado()
+    test_evaluacion_solo_algunas_consultas_y_union()
     print("OK: validator + dataset + LLM error mapping checks passed")

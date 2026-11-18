@@ -47,6 +47,17 @@ with open(DATASET, encoding="utf-8") as fh:
         if not line.strip():
             continue
         item = json.loads(line)
+        if item.get("expected_behavior") == "clarify" and item.get("expected_entities"):
+            # Ambigua con datos: la función interna debe pedir precisar (varias coincidencias).
+            checked += 1
+            validated = validate_llm_output({
+                "intent": item["expected_intent"], "entities": item["expected_entities"], "status": "ready",
+            })
+            result = HANDLER_MAP[validated["intent"]](env, validated["entities"], user_text=item["query"])  # noqa: F821
+            if result.get("status") != "ambiguous":
+                failures += 1
+                print("NO CUMPLE", item["id"], "se esperaba aclaración |", (result.get("message") or "")[:160])
+            continue
         if item.get("expected_behavior") != "execute":
             continue
         checked += 1
@@ -55,7 +66,7 @@ with open(DATASET, encoding="utf-8") as fh:
             "intent": item["expected_intent"], "entities": item["expected_entities"], "status": "ready",
         })
         entities = dict(validated["entities"])
-        if item.get("expected_period"):
+        if item.get("expected_period") or item.get("expected_dates"):
             date_from, date_to = reference._period(item, date.today())
             entities.update(date_from=date_from.isoformat(), date_to=date_to.isoformat())
         result = HANDLER_MAP[validated["intent"]](env, entities, user_text=item["query"])  # noqa: F821

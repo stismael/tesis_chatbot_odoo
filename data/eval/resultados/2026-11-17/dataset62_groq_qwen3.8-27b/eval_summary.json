@@ -1,0 +1,60 @@
+{
+  "total_consultas": 62,
+  "modelos": [
+    "groq/qwen/qwen3.8-27b"
+  ],
+  "intencion": {
+    "aciertos": 61,
+    "evaluadas": 62,
+    "porcentaje": 0.9839
+  },
+  "entidades": {
+    "aciertos": 34,
+    "evaluadas": 34,
+    "porcentaje": 1.0
+  },
+  "comportamiento": {
+    "aciertos": 61,
+    "evaluadas": 62,
+    "porcentaje": 0.9839
+  },
+  "ejecucion_con_datos_correctos": {
+    "aciertos": 32,
+    "evaluadas": 32,
+    "porcentaje": 1.0
+  },
+  "por_categoria": {
+    "correcta": {
+      "total": 31,
+      "comportamiento_correcto": 31
+    },
+    "incompleta": {
+      "total": 10,
+      "comportamiento_correcto": 10
+    },
+    "ambigua": {
+      "total": 4,
+      "comportamiento_correcto": 3
+    },
+    "fuera_de_alcance": {
+      "total": 11,
+      "comportamiento_correcto": 11
+    },
+    "conversacion": {
+      "total": 6,
+      "comportamiento_correcto": 6
+    }
+  },
+  "fallos_del_proveedor": 0,
+  "respuestas_del_respaldo": 0,
+  "latencia_ms": {
+    "mediana": 1198,
+    "p95": 2357,
+    "promedio": 1351,
+    "mediana_ia": 1197
+  },
+  "tokens_promedio": {
+    "entrada": 2916,
+    "salida": 123
+  }
+}

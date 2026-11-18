@@ -1,0 +1,72 @@
+{
+  "total_consultas": 106,
+  "modelos": [
+    "groq/openai/gpt-oss-120b"
+  ],
+  "intencion": {
+    "aciertos": 93,
+    "evaluadas": 106,
+    "porcentaje": 0.8774
+  },
+  "entidades": {
+    "aciertos": 56,
+    "evaluadas": 59,
+    "porcentaje": 0.9492
+  },
+  "comportamiento": {
+    "aciertos": 90,
+    "evaluadas": 106,
+    "porcentaje": 0.8491
+  },
+  "ejecucion_con_datos_correctos": {
+    "aciertos": 50,
+    "evaluadas": 52,
+    "porcentaje": 0.9615
+  },
+  "por_categoria": {
+    "correcta": {
+      "total": 36,
+      "comportamiento_correcto": 36
+    },
+    "incompleta": {
+      "total": 14,
+      "comportamiento_correcto": 13
+    },
+    "ambigua": {
+      "total": 9,
+      "comportamiento_correcto": 7
+    },
+    "fuera_de_alcance": {
+      "total": 20,
+      "comportamiento_correcto": 14
+    },
+    "conversacion": {
+      "total": 9,
+      "comportamiento_correcto": 6
+    },
+    "tipeo": {
+      "total": 8,
+      "comportamiento_correcto": 6
+    },
+    "secuencia": {
+      "total": 8,
+      "comportamiento_correcto": 8
+    },
+    "seguridad": {
+      "total": 2,
+      "comportamiento_correcto": 0
+    }
+  },
+  "fallos_del_proveedor": 11,
+  "respuestas_del_respaldo": 0,
+  "latencia_ms": {
+    "mediana": 1363,
+    "p95": 2661,
+    "promedio": 1487,
+    "mediana_ia": 1358
+  },
+  "tokens_promedio": {
+    "entrada": 2504,
+    "salida": 222
+  }
+}

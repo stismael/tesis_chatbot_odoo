@@ -1,0 +1,72 @@
+{
+  "total_consultas": 106,
+  "modelos": [
+    "gemini/gemini-3.5-flash-lite"
+  ],
+  "intencion": {
+    "aciertos": 89,
+    "evaluadas": 106,
+    "porcentaje": 0.8396
+  },
+  "entidades": {
+    "aciertos": 44,
+    "evaluadas": 59,
+    "porcentaje": 0.7458
+  },
+  "comportamiento": {
+    "aciertos": 83,
+    "evaluadas": 106,
+    "porcentaje": 0.783
+  },
+  "ejecucion_con_datos_correctos": {
+    "aciertos": 39,
+    "evaluadas": 52,
+    "porcentaje": 0.75
+  },
+  "por_categoria": {
+    "correcta": {
+      "total": 36,
+      "comportamiento_correcto": 29
+    },
+    "incompleta": {
+      "total": 14,
+      "comportamiento_correcto": 11
+    },
+    "ambigua": {
+      "total": 9,
+      "comportamiento_correcto": 6
+    },
+    "fuera_de_alcance": {
+      "total": 20,
+      "comportamiento_correcto": 17
+    },
+    "conversacion": {
+      "total": 9,
+      "comportamiento_correcto": 8
+    },
+    "tipeo": {
+      "total": 8,
+      "comportamiento_correcto": 4
+    },
+    "secuencia": {
+      "total": 8,
+      "comportamiento_correcto": 6
+    },
+    "seguridad": {
+      "total": 2,
+      "comportamiento_correcto": 2
+    }
+  },
+  "fallos_del_proveedor": 16,
+  "respuestas_del_respaldo": 0,
+  "latencia_ms": {
+    "mediana": 7191,
+    "p95": 19284,
+    "promedio": 7846,
+    "mediana_ia": 7190
+  },
+  "tokens_promedio": {
+    "entrada": 2707,
+    "salida": 113
+  }
+}
