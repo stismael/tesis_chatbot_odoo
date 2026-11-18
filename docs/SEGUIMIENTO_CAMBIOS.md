@@ -28,7 +28,12 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `docs/resumen-avance-tutora` | Resumen del avance y propuestas para la tutora | Subida, sin PR |
 | `fix/privacidad-y-evaluacion` | Privacidad del contexto enviado a la IA y evaluación confiable | Fusionada en `main` (PR #15) |
 | `fix/modelo-groq-retirado` | Reemplazar el modelo de Groq retirado | Fusionada en `main` (PR #16) |
-| `feature/dataset-evaluacion` | Paso 8: dataset ampliado y primera evaluación con la IA real | PR #17 |
+| `docs/diagramas-tesis` | Diagramas del prototipo para la tesis | Fusionada en `main` (PR #17) |
+| `docs/diagramas-ilustrados` | Diagramas ilustrados con íconos y pasos numerados | Fusionada en `main` (PR #18) |
+| `fix/modelo-gemini-retirado` | Reemplazar el modelo de Gemini retirado | Fusionada en `main` (PR #19) |
+| `docs/cambios-documento-tesis` | Registro de los cambios del documento de la tesis (versión 2) | Fusionada en `main` (PR #20) |
+| `docs/tesis-v3-estructura` | Registro de la versión 3 del documento de la tesis | Fusionada en `main` (PR #21) |
+| `feature/dataset-evaluacion` | Paso 8: dataset ampliado y primera evaluación con la IA real | PR #22 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -38,6 +43,64 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
+
+### PR #22 · Dataset de 106 consultas y primera evaluación con la IA real
+- **Rama:** `feature/dataset-evaluacion` · **Versión del módulo:** sin cambios (solo dataset y scripts)
+- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Origen:** paso 8 del plan de avance (Capítulo 5 de la tesis).
+- **Pruebas:** 28 pruebas unitarias (estructura del dataset, evaluador y unión de resultados) y
+  141 pruebas en Odoo 18 sin cambios.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| 44 consultas nuevas (106 en total): errores de escritura, ambiguas e incompletas con datos reales, estados del pedido, fechas explícitas, cuatro secuencias de dos turnos, límites del asistente e intentos de manipulación | `data/eval/eval_dataset.jsonl` | Cubrir los casos que un usuario real escribe, no solo las consultas correctas |
+| La referencia independiente admite estado del pedido y fechas explícitas | `scripts/eval_reference.py` | Comparar también esas consultas con datos calculados fuera del asistente |
+| Las consultas de una misma secuencia comparten sesión | `scripts/chatbot_eval_runner.py` | Evaluar la memoria corta como en una conversación real |
+| Se pueden repetir solo algunas consultas (`only_ids`) y unir los resultados (`merge_results`) | `scripts/chatbot_eval_runner.py` | Completar las consultas que cortó la cuota diaria de tokens del proveedor sin repetir toda la evaluación |
+| La verificación del dataset comprueba también que las ambiguas pidan precisar | `scripts/verificar_dataset.py` | Asegurar las etiquetas antes de evaluar |
+| Resultados reales de Groq (openai/gpt-oss-120b, openai/gpt-oss-20b, qwen/qwen3.8-27b) y Gemini (gemini-3.1-flash-lite, gemini-3.5-flash-lite) | `data/eval/resultados/2026-11-17/` | Evidencia para los resultados del Capítulo 5 |
+
+### PR #21 · Registro de la versión 3 del documento de la tesis
+- **Rama:** `docs/tesis-v3-estructura` · **Estado:** fusionado el 2026-11-17, con las pruebas en verde.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Sección «Versión 3»: reestructuración de los capítulos 3, 4 y 5 (requisitos, planificación de sprints, arquitectura con decisiones y riesgos, Capítulo 5 nuevo) y recomendaciones no aplicadas con su motivo | `docs/CAMBIOS_DOCUMENTO_TESIS.md` | Trazabilidad de los cambios del documento Word |
+
+### PR #20 · Registro de los cambios del documento de la tesis
+- **Rama:** `docs/cambios-documento-tesis` · **Estado:** fusionado el 2026-11-17, con las pruebas en verde.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Registro de las versiones 1 y 2 del documento: qué se cambió, dónde y por qué, figuras y tablas nuevas, lo que no se cambió y lo pendiente | `docs/CAMBIOS_DOCUMENTO_TESIS.md`, `docs/PENDIENTES_TESIS.md` | Separar los cambios del documento de los del código |
+
+### PR #19 · Reemplazar el modelo de Gemini retirado por gemini-3.1-flash-lite
+- **Rama:** `fix/modelo-gemini-retirado` · **Versión del módulo:** 18.0.1.14.0
+- **Estado:** fusionado el 2026-11-17, con las pruebas de GitHub Actions en verde.
+- **Origen:** Google dejó de ofrecer `gemini-2.5-flash` a cuentas nuevas («no longer available to
+  new users»); una instalación nueva con el modelo por defecto fallaba.
+- **Pruebas:** 141 pruebas en Odoo 18 (1 nueva) y pruebas unitarias.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Nuevo modelo recomendado de Gemini: `gemini-3.1-flash-lite` (95,1 % de comportamiento correcto y 2,5 s de mediana en la evaluación real) | `services/llm_client.py`, `data/chatbot_llm_model_data.xml`, `data/default_params.xml`, `hooks.py` | Que una instalación nueva con Gemini funcione |
+| La migración de modelos retirados cubre los dos proveedores (`RETIRED_MODELS`, `_replace_retired_models`) | `migrations/18.0.1.14.0/post-migrate.py`, `models/chatbot_llm_model.py` | Que las instalaciones existentes no queden con un modelo inexistente |
+| Pruebas y prueba e2e de Ajustes actualizadas | `tests/`, `scripts/e2e/ajustes_llm.e2e.js` | Evitar regresiones |
+
+### PR #18 · Diagramas ilustrados con íconos y pasos numerados
+- **Rama:** `docs/diagramas-ilustrados` · **Estado:** fusionado el 2026-11-17, con las pruebas en verde.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Cuatro diagramas de vista general: flujo de una consulta en 9 pasos, tecnologías y despliegue, modelo de respaldo y resultados extensos (PNG, SVG y fuente JSON) | `docs/diagramas/ilustrados/` | Explicar la solución sin código en la tesis y en la sustentación |
+| Generador de los diagramas ilustrados | `scripts/diagramas/ilustrado.js` | Regenerarlos si cambia el prototipo |
+
+### PR #17 · Diagramas del prototipo para la tesis
+- **Rama:** `docs/diagramas-tesis` · **Estado:** fusionado el 2026-11-17, con las pruebas en verde.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Doce diagramas hechos a partir del código: contexto y contenedores, despliegue, componentes, casos de uso, clases, modelo de datos, secuencia de una consulta, respaldo, regla de guardado, «Ver todo» y CSV, y ciclo de desarrollo (PNG, SVG y fuente Mermaid) | `docs/diagramas/`, `scripts/diagramas/render.js` | Reemplazar el código de los Capítulos 3 y 4 (recomendación de la tutora) |
 
 ### PR #16 · Reemplazar el modelo de Groq retirado por openai/gpt-oss-120b
 - **Rama:** `fix/modelo-groq-retirado` · **Versión del módulo:** 18.0.1.13.0
