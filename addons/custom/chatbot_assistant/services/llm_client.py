@@ -11,11 +11,17 @@ import urllib.request
 _logger = logging.getLogger(__name__)
 
 PARAM_PREFIX = "chatbot_assistant"
-DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+# gemini-2.5-flash dejó de estar disponible para cuentas nuevas (noviembre de 2026). En la evaluación
+# real con el dataset, gemini-3.1-flash-lite obtuvo el mejor acierto y la menor latencia de los
+# modelos de Gemini disponibles.
+DEFAULT_GEMINI_MODEL = "gemini-3.1-flash-lite"
 # llama-3.3-70b-versatile fue retirado por Groq (noviembre de 2026). gpt-oss-120b obtuvo el mismo
 # acierto que qwen3.8-27b en la evaluación con el dataset y es el modelo más grande disponible.
 DEFAULT_GROQ_MODEL = "openai/gpt-oss-120b"
 RETIRED_GROQ_MODELS = ("llama-3.3-70b-versatile",)
+RETIRED_GEMINI_MODELS = ("gemini-2.5-flash",)
+RETIRED_MODELS = {"groq": RETIRED_GROQ_MODELS, "gemini": RETIRED_GEMINI_MODELS}
+DEFAULT_MODELS = {"groq": DEFAULT_GROQ_MODEL, "gemini": DEFAULT_GEMINI_MODEL}
 DEFAULT_TIMEOUT = 20
 MAX_RETRIES = 1  # un reintento ante timeout / cuota / 5xx (peor caso: 2 × timeout + pausa)
 RETRY_BASE_DELAY_SEC = 1.5
@@ -461,8 +467,8 @@ def suggest_default_model(models, provider="gemini"):
                 return preferred
         return ids[0] if ids else DEFAULT_GROQ_MODEL
     for preferred in (
-        "gemini-2.5-flash",
-        "gemini-2.0-flash",
+        DEFAULT_GEMINI_MODEL,
+        "gemini-flash-lite-latest",
         "gemini-flash-latest",
     ):
         if preferred in ids:

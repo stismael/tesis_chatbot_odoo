@@ -1,0 +1,24 @@
+flowchart TB
+    U["<small>«actor»</small><br/>Usuario / Administrador"]
+    W["<b>Navegador web</b><br/>cliente web de Odoo<br/><small>Discuss · Ajustes · Auditoría y Métricas · listas «Ver todo»</small>"]
+    subgraph DK["Docker"]
+        subgraph OD["Odoo 18 (puerto 8069)"]
+            STD["Módulos estándar<br/><small>Ventas · Inventario · Facturación · Contactos · Discuss</small>"]
+            CB["<b>Módulo chatbot_assistant</b><br/><small>orquestador · cliente de IA · validador · permisos ·<br/>funciones por caso de uso · auditoría</small>"]
+            TD["Módulo chatbot_test_data<br/><small>generador de la base sintética</small>"]
+            ORM["ORM de Odoo<br/><small>derechos de acceso y reglas de registro</small>"]
+        end
+        DB[("PostgreSQL 16<br/><small>red interna, no expuesto</small>")]
+    end
+    subgraph INT["Internet (HTTPS · JSON)"]
+        direction LR
+        G["API de Gemini<br/><small>generativelanguage.googleapis.com</small>"]
+        Q["API de Groq<br/><small>api.groq.com</small>"]
+    end
+    U --> W
+    W -- "HTTP · JSON-RPC" --> OD
+    STD --> ORM
+    CB --> ORM
+    TD --> ORM
+    ORM -- "SQL generado por Odoo" --> DB
+    CB --> INT

@@ -136,10 +136,10 @@ async function guardar(p) { await p.click('.o_form_button_save'); await p.waitFo
   ok(icp('fallback_active') !== 'True' && icp('provider') === 'gemini', 'probar no guarda nada');
   await guardar(p);
   ok(icp('fallback_active') === 'True' && icp('fallback_provider') === 'groq' && icp('fallback_api_key') === 'gsk_RESPALDO' && icp('fallback_model') === 'qwen/qwen3-32b', 'al Guardar se aplica el respaldo');
-  ok(icp('provider') === 'gemini' && icp('api_key') === 'AIzaCLAVE-GEMINI' && icp('model') === 'gemini-2.5-flash', 'el principal no cambia');
+  ok(icp('provider') === 'gemini' && icp('api_key') === 'AIzaCLAVE-GEMINI' && icp('model') === 'gemini-3.1-flash-lite', 'el principal no cambia');
   await abrir(p);
   ok(await p.locator('div[name=chatbot_fallback_active] input').isChecked() && (await p.locator('div[name=chatbot_fallback_llm_model_id] input').inputValue()).includes('qwen'), 'al volver a Ajustes se ve el respaldo guardado');
-  ok((await modelo(p)).includes('gemini-2.5-flash') && await clave(p) === 'AIzaCLAVE-GEMINI', 'y el principal sigue igual');
+  ok((await modelo(p)).includes('gemini-3.1-flash-lite') && await clave(p) === 'AIzaCLAVE-GEMINI', 'y el principal sigue igual');
 
   console.log('E9. Respaldo igual al principal y desactivar el respaldo');
   await p.selectOption('div[name=chatbot_fallback_provider] select', '"gemini"'); await p.waitForTimeout(700);

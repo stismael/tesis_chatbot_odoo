@@ -12,7 +12,7 @@
     </record>
     <record id="param_chatbot_model" model="ir.config_parameter" forcecreate="0">
         <field name="key">chatbot_assistant.model</field>
-        <field name="value">gemini-2.5-flash</field>
+        <field name="value">gemini-3.1-flash-lite</field>
     </record>
     <record id="param_chatbot_temperature" model="ir.config_parameter" forcecreate="0">
         <field name="key">chatbot_assistant.temperature</field>

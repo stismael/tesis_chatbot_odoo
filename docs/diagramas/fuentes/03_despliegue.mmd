@@ -1,0 +1,33 @@
+flowchart LR
+    subgraph HOST["Docker Compose"]
+        direction TB
+        subgraph NET["Red interna odoo_internal"]
+            direction LR
+            C1["<b>odoo18-chatbot-odoo</b><br/>imagen odoo:18.0<br/>puerto 8069"]
+            C2[("<b>odoo18-chatbot-db</b><br/>imagen postgres:16<br/>puerto 5432 solo interno")]
+        end
+        V1["./addons/custom<br/>→ /mnt/extra-addons"]
+        V2["./config/odoo.conf"]
+        V3["./runtime/odoo<br/><small>archivos adjuntos</small>"]
+        V4["./runtime/postgres<br/><small>datos de la base</small>"]
+        B["./backups"]
+    end
+    NAVE["Navegador<br/><small>localhost : 8069</small>"]
+    subgraph INT["Internet · HTTPS 443"]
+        direction TB
+        G["API de Gemini<br/><small>generativelanguage.googleapis.com</small>"]
+        Q["API de Groq<br/><small>api.groq.com</small>"]
+    end
+    subgraph GH["GitHub"]
+        R["Repositorio"]
+        CI["GitHub Actions<br/><small>pruebas unitarias y pruebas en Odoo 18</small>"]
+    end
+    NAVE --> C1
+    C1 --> C2
+    V1 -.-> C1
+    V2 -.-> C1
+    V3 -.-> C1
+    V4 -.-> C2
+    C2 -. "respaldo" .-> B
+    C1 -- "HTTPS" --> INT
+    R --> CI

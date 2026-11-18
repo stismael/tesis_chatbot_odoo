@@ -1,0 +1,30 @@
+sequenceDiagram
+    autonumber
+    actor U as Usuario
+    participant D as Discuss
+    participant O as Orquestador
+    participant H as Función del caso de uso
+    participant A as Auditoría<br/>(chatbot.query.log)
+    participant C as Controlador CSV
+    participant B as ORM de Odoo
+    U->>D: «facturas de Motopartes Ecuador»
+    D->>O: process_message
+    O->>H: handle(entidades)
+    H->>B: search (todas las facturas)
+    B-->>H: 12 facturas permitidas
+    H-->>O: resumen + 5 filas + referencia a los 12 registros
+    O->>A: guarda modelo, registros y cantidad del resultado
+    O-->>D: respuesta + «Ver todo (12)» · «Descargar CSV»
+    alt Ver todo
+        U->>A: action_open_result()
+        A->>A: ¿la consulta es del usuario?
+        A->>B: vuelve a leer los registros con el usuario
+        B-->>U: lista nativa de Odoo con los 12 registros
+    else Descargar CSV
+        U->>C: GET /chatbot_assistant/resultado/{id}/csv
+        C->>A: ¿la consulta es del usuario? (si no: 404)
+        C->>B: vuelve a leer los registros con el usuario
+        B-->>C: registros permitidos
+        C-->>U: archivo CSV con los campos autorizados
+        C->>A: suma la descarga a la auditoría
+    end

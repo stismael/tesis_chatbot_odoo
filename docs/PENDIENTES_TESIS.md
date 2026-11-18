@@ -390,22 +390,25 @@ Aplicar cuando cada cambio esté implementado (ver `SEGUIMIENTO_CAMBIOS.md`, pun
       eso no se cambió a mano.
 
 ### Cambios del código del 11/11/2026 que deben reflejarse en el Capítulo 4
-- [ ] Catálogo de modelos con **gratuidad estimada** (columna "Precio": gratis, de pago o sin dato).
+- [x] Catálogo de modelos con **gratuidad estimada** (columna "Precio": gratis, de pago o sin dato).
       Aclarar que es una estimación, porque la API no informa precios.
-- [ ] "Probar conexión" y "Actualizar modelos" funcionan sin pulsar Guardar.
-- [ ] Revisión del formato de la API key según el proveedor (Groq `gsk_…`, Gemini `AIza…`) y API key
+- [x] "Probar conexión" y "Actualizar modelos" funcionan sin pulsar Guardar.
+- [x] Revisión del formato de la API key según el proveedor (Groq `gsk_…`, Gemini `AIza…`) y API key
       vacía al cambiar de proveedor.
-- [ ] Encabezado User-Agent propio en las llamadas HTTP, porque Groq (Cloudflare) bloqueaba el de
+- [x] Encabezado User-Agent propio en las llamadas HTTP, porque Groq (Cloudflare) bloqueaba el de
       Python con el error 403 / 1010.
 
 ### Modelo de respaldo (PR #13, pedido de la tutora)
-- [ ] **Capítulo 4:** describir el modelo de respaldo: cuándo responde (fallos de disponibilidad del
+- [x] **Capítulo 4:** describir el modelo de respaldo: cuándo responde (fallos de disponibilidad del
       principal; no ante respuestas defectuosas), la regla de guardado (basta con que responda uno,
       salvo errores de configuración) y los campos de auditoría.
 - [ ] **Capítulo 5:** medir la disponibilidad del asistente con y sin respaldo, con el filtro
       «Respondió el respaldo» de Métricas.
 - [ ] **Limitaciones:** el respaldo puede interpretar algunas consultas de forma distinta al
       principal; conviene evaluar ambos modelos con el dataset.
+
+> Los cambios ya aplicados al documento Word (versión 2 del 17/11/2026) están detallados en
+> `CAMBIOS_DOCUMENTO_TESIS.md`.
 
 ### Decisiones pendientes que afectan al documento
 - [ ] **API key:** hoy se guarda en texto plano en los parámetros del sistema (solo la ven los
@@ -415,4 +418,4 @@ Aplicar cuando cada cambio esté implementado (ver `SEGUIMIENTO_CAMBIOS.md`, pun
       (3.3, 3.4, Tabla 6 como catálogo, nuevo esquema JSON del plan y diagrama de rutas).
 - [ ] **Capítulo 5:** evaluación controlada con el dataset y monitoreo con la auditoría; comparación
       de tiempos antes y después; limitaciones; trabajo futuro.
-- [ ] Diagrama de secuencia de una consulta (Capítulo 3, opcional; la Figura 1 ya muestra el flujo).
+- [x] Diagrama de secuencia de una consulta (Capítulo 3, opcional; la Figura 1 ya muestra el flujo).

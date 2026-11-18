@@ -19,7 +19,7 @@ def fake_llm(output, **meta_values):
     def _fake(env, system_prompt, user_message, meta=None, response_schema=None):
         if meta is not None:
             meta.update({
-                "provider": "gemini", "model": "gemini-2.5-flash", "retries": 0,
+                "provider": "gemini", "model": "gemini-3.1-flash-lite", "retries": 0,
                 "tokens_prompt": 1200, "tokens_output": 80, "tokens_thinking": 0,
             })
             meta.update(meta_values)
@@ -53,7 +53,7 @@ class TestMetrics(ChatbotCase):
         self.assertEqual(log.outcome, "answered")
         self.assertFalse(log.error_code)
         self.assertEqual(log.llm_provider, "gemini")
-        self.assertEqual(log.llm_model, "gemini-2.5-flash")
+        self.assertEqual(log.llm_model, "gemini-3.1-flash-lite")
         self.assertEqual(log.retries, 1)
         self.assertEqual((log.tokens_prompt, log.tokens_output, log.tokens_thinking), (1200, 80, 300))
 

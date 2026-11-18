@@ -1,0 +1,93 @@
+classDiagram
+    direction LR
+    class ChatbotSession["chatbot.session"] {
+        name : Char
+        user_id : res.users
+        discuss_channel_id : discuss.channel
+        state : Selection
+        pending_intent : Char
+        pending_entities_json : Text
+        get_short_context()
+        set_pending()
+        clear_pending()
+    }
+    class ChatbotMessage["chatbot.message"] {
+        session_id : chatbot.session
+        role : user | assistant
+        body : Text
+        intent : Char
+        status : Char
+    }
+    class ChatbotQueryLog["chatbot.query.log"] {
+        user_id : res.users
+        query, reply : Text
+        intent, status : Char
+        outcome, error_code : Selection
+        latency_ms, llm_ms, orm_ms : Integer
+        llm_provider, llm_model : Char
+        fallback_used : Boolean
+        tokens_prompt, tokens_output : Integer
+        user_feedback : Selection
+        result_model, result_count : …
+        csv_downloads : Integer
+        action_open_result()
+        _cron_purge_old_logs()
+    }
+    class ChatbotIntentPermission["chatbot.intent.permission"] {
+        intent : Selection
+        area_label : Char
+        group_ids : res.groups
+        _missing_groups(intent)
+        _allowed_intents()
+    }
+    class ChatbotLlmModel["chatbot.llm.model"] {
+        provider : gemini | groq
+        model_id : Char
+        available : Boolean
+        pricing_hint : Selection
+        recommended : Boolean
+        _sync_provider()
+        _cron_sync_models()
+    }
+    class Orchestrator["chatbot.orchestrator"] {
+        <<AbstractModel>>
+        process_message(session, text)
+        evaluate_query(text)
+        _apply_session_memory()
+    }
+    class DiscussService["chatbot.discuss.service"] {
+        <<AbstractModel>>
+        apply_logic(channel, msg_vals)
+        open_assistant_chat()
+        _format_reply_html()
+    }
+    class Settings["res.config.settings"] {
+        <<hereda>>
+        chatbot_provider, chatbot_model
+        chatbot_fallback_provider, chatbot_fallback_model
+        set_values()
+        action_chatbot_test_connection()
+        action_chatbot_sync_models()
+    }
+    class DiscussChannel["discuss.channel"] {
+        <<hereda>>
+        _message_post_after_hook()
+    }
+    class Servicios["services"] {
+        <<Python>>
+        llm_client.complete_json()
+        prompt_builder.build_user_payload()
+        validator.validate_llm_output()
+        handlers.HANDLER_MAP
+        result_set.build_csv()
+    }
+    ChatbotSession "1" *-- "0..*" ChatbotMessage : mensajes
+    ChatbotSession "1" o-- "0..*" ChatbotQueryLog : consultas
+    DiscussChannel ..> DiscussService : delega el mensaje
+    DiscussService ..> Orchestrator : process_message
+    DiscussService ..> ChatbotSession : obtiene o crea
+    Orchestrator ..> Servicios : usa
+    Orchestrator ..> ChatbotIntentPermission : comprueba
+    Orchestrator ..> ChatbotQueryLog : registra
+    Settings ..> ChatbotLlmModel : catálogo
+    Settings ..> Servicios : prueba conexión

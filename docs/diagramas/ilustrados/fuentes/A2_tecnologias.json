@@ -1,0 +1,181 @@
+{
+ "title": "Tecnologías y despliegue del prototipo",
+ "width": 1700,
+ "height": 850,
+ "groups": [
+  {
+   "x": 300,
+   "y": 80,
+   "w": 860,
+   "h": 500,
+   "label": "Servidor con Docker Compose"
+  },
+  {
+   "x": 1240,
+   "y": 80,
+   "w": 420,
+   "h": 500,
+   "label": "Internet (HTTPS)",
+   "dashed": true,
+   "fill": "#FCFCFD"
+  },
+  {
+   "x": 300,
+   "y": 610,
+   "w": 860,
+   "h": 210,
+   "label": "Desarrollo y calidad",
+   "fill": "#FFFFFF"
+  }
+ ],
+ "nodes": [
+  {
+   "id": "user",
+   "x": 120,
+   "y": 330,
+   "icon": "tabler:users",
+   "color": "#0F6CBD",
+   "label": "Usuarios",
+   "sub": "navegador web"
+  },
+  {
+   "id": "docker",
+   "x": 1080,
+   "y": 135,
+   "icon": "brand:docker",
+   "size": 44,
+   "box": false,
+   "label": "Docker",
+   "sub": "",
+   "labelPos": "left"
+  },
+  {
+   "id": "odoo",
+   "x": 500,
+   "y": 330,
+   "icon": "brand:odoo",
+   "badge": "brand:python",
+   "label": "Odoo 18 Community",
+   "sub": "Ventas · Inventario · Facturación\nDiscuss + chatbot_assistant\npuerto 8069",
+   "labelPos": "above"
+  },
+  {
+   "id": "db",
+   "x": 920,
+   "y": 470,
+   "icon": "brand:postgresql",
+   "label": "PostgreSQL 16",
+   "sub": "red interna, no expuesto",
+   "labelPos": "below"
+  },
+  {
+   "id": "gemini",
+   "x": 1450,
+   "y": 200,
+   "icon": "brand:googlegemini",
+   "label": "API de Gemini",
+   "sub": "Google AI Studio"
+  },
+  {
+   "id": "groq",
+   "x": 1450,
+   "y": 420,
+   "icon": "tabler:bolt",
+   "color": "#F55036",
+   "label": "API de Groq",
+   "sub": "gpt-oss · Qwen"
+  },
+  {
+   "id": "gh",
+   "x": 420,
+   "y": 690,
+   "icon": "brand:github",
+   "size": 46,
+   "label": "Repositorio GitHub",
+   "labelPos": "below"
+  },
+  {
+   "id": "ci",
+   "x": 820,
+   "y": 690,
+   "icon": "brand:githubactions",
+   "size": 46,
+   "label": "GitHub Actions",
+   "sub": "pruebas en cada cambio",
+   "labelPos": "below"
+  }
+ ],
+ "edges": [
+  {
+   "from": "user",
+   "to": "odoo",
+   "label": "HTTP · puerto 8069",
+   "labelDy": -64
+  },
+  {
+   "from": "odoo",
+   "to": "gemini",
+   "via": [
+    [
+     1200,
+     330
+    ],
+    [
+     1200,
+     200
+    ]
+   ],
+   "labelAt": [
+    1010,
+    315
+   ],
+   "label": "HTTPS · JSON"
+  },
+  {
+   "from": "odoo",
+   "to": "groq",
+   "via": [
+    [
+     1200,
+     330
+    ],
+    [
+     1200,
+     420
+    ]
+   ],
+   "dashed": true,
+   "color": "#D9480F"
+  },
+  {
+   "from": "odoo",
+   "to": "db",
+   "via": [
+    [
+     500,
+     470
+    ]
+   ],
+   "labelAt": [
+    700,
+    460
+   ],
+   "label": "ORM"
+  },
+  {
+   "from": "gh",
+   "to": "ci",
+   "trim": 62,
+   "label": "cada cambio",
+   "labelDy": -50
+  }
+ ],
+ "notes": [
+  {
+   "x": 330,
+   "y": 490,
+   "w": 400,
+   "text": "**Volúmenes del proyecto\n./addons/custom · ./config/odoo.conf\n./runtime (datos) · ./backups (respaldos)"
+  }
+ ]
+}
