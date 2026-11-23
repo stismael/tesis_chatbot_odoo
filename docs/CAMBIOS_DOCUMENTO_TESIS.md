@@ -14,6 +14,31 @@ Registro de las ediciones hechas al documento Word de la tesis (no al código; l
 
 ---
 
+## Versión 5 · 23 de noviembre de 2026
+
+**Archivo base:** versión 4. **Archivo entregado:** `TESIS_ISMAEL_CALLE_v5_2026-11-23.docx`.
+**Motivo:** agregar capturas reales del prototipo funcionando (antes no había ninguna).
+
+| Dónde | Qué se cambió |
+|---|---|
+| 4.2.2 Sprint 2 | Figuras 5 (consulta de una factura y del stock en el chat) y 6 (ayuda con /help) |
+| 4.2.4 Sprint 4 | Figuras 7 (usuario sin permiso para facturas) y 8 (tabla de permisos por consulta) |
+| 4.2.5 Sprint 5 | Figuras 9 (auditoría) y 10 (métricas) |
+| 4.2.6 Sprint 6 | Figura 12 (Ajustes del proveedor de IA) |
+| 4.2.7 Sprint 7 | Figura 13 (seguimiento, aclaración y rechazo en una conversación) |
+| 4.2.8 Sprint 8 | Figura 15 (modelo de respaldo en los Ajustes) |
+| 4.2.9 Sprint 9 | Figuras 17 (vista previa de un resultado extenso) y 18 (lista que abre «Ver todo») |
+| 4.2.1 Sprint 1 | Corrección: el generador garantiza al menos 25 unidades **en existencia**, no disponibles; parte queda reservada para pedidos (en la base de los scripts, 35 de 82 productos tienen 0 disponibles) |
+
+- Cada figura tiene un párrafo que la presenta, título en estilo Descripción y nota «Captura de pantalla del
+  prototipo en Odoo 18 con la base de datos sintética. Elaboración propia.».
+- Las capturas se tomaron con la base que generan los scripts del proyecto y con la IA real; el procedimiento
+  está en `docs/capturas/README.md`.
+- Total: 23 figuras (antes 12) y 49 tablas. Se renumeraron las figuras 5 a 12 anteriores y todas sus
+  referencias en el texto (comprobado una por una).
+
+---
+
 ## Versión 4 · 23 de noviembre de 2026
 
 **Archivo base:** versión 3. **Archivo entregado:** `TESIS_ISMAEL_CALLE_v4_2026-11-23.docx`.

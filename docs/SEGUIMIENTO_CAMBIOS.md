@@ -34,7 +34,8 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `docs/cambios-documento-tesis` | Registro de los cambios del documento de la tesis (versión 2) | Fusionada en `main` (PR #20) |
 | `docs/tesis-v3-estructura` | Registro de la versión 3 del documento de la tesis | Fusionada en `main` (PR #21) |
 | `feature/dataset-evaluacion` | Paso 8: dataset ampliado y primera evaluación con la IA real | Fusionada en `main` (PR #22) |
-| `feature/evaluacion-completa` | Evaluación completa de los cinco modelos (Capítulo 5) | PR #23 |
+| `feature/evaluacion-completa` | Evaluación completa de los cinco modelos (Capítulo 5) | Fusionada en `main` (PR #23) |
+| `docs/capturas-tesis` | Capturas reales del prototipo para la tesis | PR #24 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -45,9 +46,19 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
 
+### PR #24 · Capturas reales del prototipo para la tesis
+- **Rama:** `docs/capturas-tesis` · **Versión del módulo:** sin cambios
+- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Once capturas de Odoo 18 con el asistente y la IA real, sobre la base que generan los scripts del proyecto | `docs/capturas/` | Mostrar el prototipo funcionando en el Capítulo 4 (versión 5 de la tesis) |
+| Scripts para repetir las capturas: configuración, limpieza del chat, consultas y recortes | `scripts/capturas/` | Que las capturas sean reproducibles |
+| Hallazgo documentado: el generador garantiza 25 unidades en existencia, no disponibles (35 de 82 productos quedan con 0 disponibles por reservas); se corrigió el texto de la tesis y no el generador, para no alterar los datos de la evaluación | `docs/CAMBIOS_DOCUMENTO_TESIS.md` | Que la tesis describa los datos tal como son |
+
 ### PR #23 · Evaluación completa de los cinco modelos
 - **Rama:** `feature/evaluacion-completa` · **Versión del módulo:** sin cambios (solo resultados y documentación)
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-11-23, con las pruebas de GitHub Actions en verde.
 - **Origen:** completar las consultas que la cuota diaria de Groq y los tiempos de espera de Gemini dejaron
   sin evaluar el 2026-11-17 (se volvieron a evaluar el 2026-11-23 con `only_ids` y se unieron con `merge_results`).
 
