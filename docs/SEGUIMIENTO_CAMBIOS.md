@@ -33,7 +33,8 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `fix/modelo-gemini-retirado` | Reemplazar el modelo de Gemini retirado | Fusionada en `main` (PR #19) |
 | `docs/cambios-documento-tesis` | Registro de los cambios del documento de la tesis (versión 2) | Fusionada en `main` (PR #20) |
 | `docs/tesis-v3-estructura` | Registro de la versión 3 del documento de la tesis | Fusionada en `main` (PR #21) |
-| `feature/dataset-evaluacion` | Paso 8: dataset ampliado y primera evaluación con la IA real | PR #22 |
+| `feature/dataset-evaluacion` | Paso 8: dataset ampliado y primera evaluación con la IA real | Fusionada en `main` (PR #22) |
+| `feature/evaluacion-completa` | Evaluación completa de los cinco modelos (Capítulo 5) | PR #23 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -44,9 +45,20 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
 
+### PR #23 · Evaluación completa de los cinco modelos
+- **Rama:** `feature/evaluacion-completa` · **Versión del módulo:** sin cambios (solo resultados y documentación)
+- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Origen:** completar las consultas que la cuota diaria de Groq y los tiempos de espera de Gemini dejaron
+  sin evaluar el 2026-11-17 (se volvieron a evaluar el 2026-11-23 con `only_ids` y se unieron con `merge_results`).
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Resultados finales de los cinco modelos con las 106 consultas: Groq sin consultas pendientes (antes 11, 85 y 72 cortadas por la cuota); Gemini con 2 y 4 consultas sin respuesta por tiempo de espera del proveedor | `data/eval/resultados/2026-11-23/` (con `reevaluadas.txt` en cada carpeta) | Resultados del Capítulo 5 |
+| Resumen: comportamiento correcto 93,1 %–95,3 %, ejecución con datos correctos 90,0 %–98,1 %, mediana de latencia 1,1–7,0 s; ninguna respuesta con datos incorrectos | `docs/CAMBIOS_DOCUMENTO_TESIS.md` (versión 4) | Trazabilidad de las cifras de la tesis |
+
 ### PR #22 · Dataset de 106 consultas y primera evaluación con la IA real
 - **Rama:** `feature/dataset-evaluacion` · **Versión del módulo:** sin cambios (solo dataset y scripts)
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-11-18, con las pruebas de GitHub Actions en verde.
 - **Origen:** paso 8 del plan de avance (Capítulo 5 de la tesis).
 - **Pruebas:** 28 pruebas unitarias (estructura del dataset, evaluador y unión de resultados) y
   141 pruebas en Odoo 18 sin cambios.

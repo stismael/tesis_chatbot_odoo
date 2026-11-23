@@ -14,6 +14,45 @@ Registro de las ediciones hechas al documento Word de la tesis (no al código; l
 
 ---
 
+## Versión 4 · 23 de noviembre de 2026
+
+**Archivo base:** versión 3. **Archivo entregado:** `TESIS_ISMAEL_CALLE_v4_2026-11-23.docx`.
+**Motivo:** revisión completa del documento y resultados de la evaluación completa (Groq y Gemini).
+El título no se cambia: es el del tema aprobado.
+
+### Correcciones de la revisión
+
+| Dónde | Qué se cambió | Por qué |
+|---|---|---|
+| Resumen y Abstract | Redactados (tenían texto de relleno «Xxxx») con palabras clave en español e inglés | Secciones obligatorias |
+| 1.4 Metodología | «Para el desarrollo… se llevará a cabo siguiendo» → «El desarrollo… siguió»; métricas de la Fase 4 alineadas con las que se calculan (se quitó «consistencia de las respuestas», que no se mide) | Frase incompleta y coherencia con el Capítulo 5 |
+| 3.3.1, 3.3.2, 3.4.5, 3.5.1 | Futuro → presente («permitirá», «podrá», «identificará», «se considerarán»…) | El prototipo ya existe |
+| 5.4, tabla de pruebas | 141 pruebas en Odoo (antes 140); «Selección del modelo» 21 | Prueba agregada en el PR #19 |
+
+### Capítulo 5: resultados (nuevo)
+
+| Sección | Contenido |
+|---|---|
+| 5.5 Resultados generales | Tabla por modelo: intención, entidades, comportamiento y datos correctos; ninguna respuesta con datos incorrectos |
+| 5.6 Resultados por categoría | Tabla de comportamiento correcto por categoría y modelo |
+| 5.7 Latencia, consumo y disponibilidad | Mediana, p95, promedio, tokens y consultas sin respuesta (primera ejecución y final) |
+| 5.8 Análisis de errores | Nombres con errores de escritura, «Ventas de Repuestos», etiqueta de Q032, predicciones, Q076 |
+| 5.9 Discusión y limitaciones | Comparación con Text-to-SQL, modelos recomendados y cinco limitaciones |
+| Conclusiones y Recomendaciones | Capítulos nuevos: una conclusión por objetivo específico y una del objetivo general; seis recomendaciones |
+
+### Pendiente en el documento (lo hace el autor)
+- [ ] Dedicatoria y Agradecimiento (texto de relleno «Xxxx»).
+- [ ] Carátula: «Chicaiza **Espinoza**» y en la aprobación «Chicaiza **Espinosa**»; unificar. Lugar: la carátula dice
+      Cuenca y la aprobación «Loja, día de mes de año».
+- [ ] Declaración de autoría: reemplazar «(se debe colocar los nombres de los capítulos…)» y la C.I. de la directora.
+- [ ] Zotero: 2.1.1 «Según (Balić et al., 2022) (2022)» (cita duplicada); 2.4.3 «Según Mishra et al. (2022)»: la
+      cita enlazada es Katsogiannis-Meimarakis et al. (2022), revisar autor o cita; 1.4 cita a Lewis (2018) y Sauro y
+      Lewis (2016), que no están en las Referencias.
+- [ ] En Word, «actualizar campos» (F9) para regenerar los índices de contenido, tablas y figuras.
+- [ ] Decisión con la tutora: SUS (1.4 y 1.5) y la etiqueta de la consulta Q032.
+
+---
+
 ## Versión 3 · 17 de noviembre de 2026
 
 **Archivo base:** versión 2 (`TESIS_ISMAEL_CALLE_v2_2026-11-17.docx`).
