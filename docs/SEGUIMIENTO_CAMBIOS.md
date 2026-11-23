@@ -35,7 +35,8 @@ Los cambios pendientes en el **documento de la tesis** están en
 | `docs/tesis-v3-estructura` | Registro de la versión 3 del documento de la tesis | Fusionada en `main` (PR #21) |
 | `feature/dataset-evaluacion` | Paso 8: dataset ampliado y primera evaluación con la IA real | Fusionada en `main` (PR #22) |
 | `feature/evaluacion-completa` | Evaluación completa de los cinco modelos (Capítulo 5) | Fusionada en `main` (PR #23) |
-| `docs/capturas-tesis` | Capturas reales del prototipo para la tesis | PR #24 |
+| `docs/capturas-tesis` | Capturas reales del prototipo para la tesis | Fusionada en `main` (PR #24) |
+| `docs/mejora-nombre-asistente` | Mejora futura registrada: nombre del asistente configurable | PR #25 |
 
 Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 
@@ -46,9 +47,16 @@ Las ramas siguientes se crean una por paso del **plan de avance** (abajo).
 Cada vez que se aprueba y fusiona un PR en `main` se agrega aquí una entrada con **qué se hizo**,
 **dónde** (archivos) y **para qué**. Las entradas van de la más reciente a la más antigua.
 
+### PR #25 · Mejora futura: nombre del asistente configurable
+- **Rama:** `docs/mejora-nombre-asistente` · **Versión del módulo:** sin cambios (solo documentación)
+
+| Qué se hizo | Dónde | Para qué |
+|---|---|---|
+| Propuesta para parametrizar el nombre «Asistente ERP» (parámetro en Ajustes, archivos afectados, pruebas e impacto en la evaluación); no se implementa todavía | `docs/PENDIENTES_TESIS.md` (sección 8) | Poder cambiar el nombre sin modificar el código si se solicita |
+
 ### PR #24 · Capturas reales del prototipo para la tesis
 - **Rama:** `docs/capturas-tesis` · **Versión del módulo:** sin cambios
-- **Estado:** se fusiona cuando las pruebas de GitHub Actions pasen.
+- **Estado:** fusionado el 2026-11-23, con las pruebas de GitHub Actions en verde.
 
 | Qué se hizo | Dónde | Para qué |
 |---|---|---|

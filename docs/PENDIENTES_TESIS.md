@@ -419,3 +419,23 @@ Aplicar cuando cada cambio esté implementado (ver `SEGUIMIENTO_CAMBIOS.md`, pun
 - [ ] **Capítulo 5:** evaluación controlada con el dataset y monitoreo con la auditoría; comparación
       de tiempos antes y después; limitaciones; trabajo futuro.
 - [x] Diagrama de secuencia de una consulta (Capítulo 3, opcional; la Figura 1 ya muestra el flujo).
+
+## 8. Mejoras futuras del prototipo (sin implementar)
+
+### Nombre del asistente configurable
+- **Estado:** propuesta registrada el 2026-11-23; **no se cambia el código ni la tesis por ahora** (se decidió
+  mantener «Asistente ERP» para no invalidar la evaluación ni las capturas antes de la sustentación).
+- **Motivo:** si una empresa o la tutora pide otro nombre, hoy hay que editarlo en el código.
+- **Propuesta:**
+  1. Parámetro `chatbot_assistant.bot_name` con valor por defecto «Asistente ERP», editable en Ajustes como
+     «Nombre del asistente».
+  2. Al guardar, actualizar el nombre del contacto del bot en Discuss (`data/chatbot_bot_data.xml`).
+  3. Leer el nombre desde el parámetro en los textos visibles: bienvenida (`models/res_users.py`,
+     `services/help_text.py`), mensaje predeterminado (`models/orchestrator.py`), título de la ventana
+     (`models/chatbot_discuss_service.py`) y ejemplo de saludo del prompt (`services/prompt_builder.py`).
+  4. Pruebas: valor por defecto «Asistente ERP»; al cambiarlo cambian el contacto, la bienvenida y el prompt.
+- **Impacto:** con el valor por defecto el prompt es idéntico al evaluado, por lo que los resultados del
+  Capítulo 5 y las capturas siguen siendo válidos. El bot se identifica por su registro en Odoo, no por el
+  nombre, así que cambiarlo no rompe la detección del chat.
+- **En la tesis (cuando se implemente):** mencionarlo en el Sprint 6 (configuración) o en Recomendaciones como
+  adaptación a cada empresa sin modificar código.
